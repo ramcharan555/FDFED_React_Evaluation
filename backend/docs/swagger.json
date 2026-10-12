@@ -1,0 +1,3661 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/": {
+      "get": {
+        "operationId": "AppController_getWelcome",
+        "summary": "Welcome endpoint",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "API is running"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "AppController_getHealth",
+        "summary": "Health check endpoint",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "API is healthy"
+          }
+        }
+      }
+    },
+    "/api/events": {
+      "post": {
+        "operationId": "EventsController_create",
+        "summary": "Create a new event",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event created successfully"
+          },
+          "400": {
+            "description": "Bad request - missing required fields or insufficient permissions"
+          }
+        },
+        "tags": [
+          "events"
+        ]
+      },
+      "get": {
+        "operationId": "EventsController_findAll",
+        "summary": "Get all events with optional filters",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by event name, description, or location",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "description": "Filter by status",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of events"
+          }
+        },
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/events/admin": {
+      "get": {
+        "operationId": "EventsController_findAllAdmin",
+        "summary": "Get ALL events for admin dashboard (no status filter)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All events for admin view"
+          }
+        },
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/events/statistics": {
+      "get": {
+        "operationId": "EventsController_getStatistics",
+        "summary": "Get event statistics",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event statistics"
+          }
+        },
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/events/{id}": {
+      "get": {
+        "operationId": "EventsController_findOne",
+        "summary": "Get event by ID",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event details"
+          },
+          "404": {
+            "description": "Event not found"
+          }
+        },
+        "tags": [
+          "events"
+        ]
+      },
+      "put": {
+        "operationId": "EventsController_update",
+        "summary": "Update event",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Event updated successfully"
+          },
+          "400": {
+            "description": "Bad request or insufficient permissions"
+          },
+          "404": {
+            "description": "Event not found"
+          }
+        },
+        "tags": [
+          "events"
+        ]
+      },
+      "delete": {
+        "operationId": "EventsController_delete",
+        "summary": "Delete event (organizer or superuser)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event deleted successfully"
+          },
+          "400": {
+            "description": "Insufficient permissions"
+          },
+          "404": {
+            "description": "Event not found"
+          }
+        },
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/attendees": {
+      "post": {
+        "operationId": "AttendeesController_create",
+        "summary": "Create a new attendee",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateAttendeeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Attendee created successfully"
+          },
+          "400": {
+            "description": "Bad request - missing required fields or email already exists"
+          }
+        },
+        "tags": [
+          "attendees"
+        ]
+      },
+      "get": {
+        "operationId": "AttendeesController_findAll",
+        "summary": "Get all attendees",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by attendee name or email",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of attendees"
+          }
+        },
+        "tags": [
+          "attendees"
+        ]
+      }
+    },
+    "/api/attendees/statistics": {
+      "get": {
+        "operationId": "AttendeesController_getStatistics",
+        "summary": "Get attendee statistics",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendee statistics"
+          }
+        },
+        "tags": [
+          "attendees"
+        ]
+      }
+    },
+    "/api/attendees/event/{eventId}": {
+      "get": {
+        "operationId": "AttendeesController_findByEvent",
+        "summary": "Get attendees for a specific event",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of attendees for the event"
+          }
+        },
+        "tags": [
+          "attendees"
+        ]
+      }
+    },
+    "/api/attendees/{id}": {
+      "get": {
+        "operationId": "AttendeesController_findOne",
+        "summary": "Get attendee by ID",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendee details"
+          },
+          "404": {
+            "description": "Attendee not found"
+          }
+        },
+        "tags": [
+          "attendees"
+        ]
+      },
+      "put": {
+        "operationId": "AttendeesController_update",
+        "summary": "Update attendee",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAttendeeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Attendee updated successfully"
+          },
+          "400": {
+            "description": "Bad request or insufficient permissions"
+          },
+          "404": {
+            "description": "Attendee not found"
+          }
+        },
+        "tags": [
+          "attendees"
+        ]
+      },
+      "delete": {
+        "operationId": "AttendeesController_delete",
+        "summary": "Delete attendee (superuser only)",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendee deleted successfully"
+          },
+          "400": {
+            "description": "Insufficient permissions"
+          },
+          "404": {
+            "description": "Attendee not found"
+          }
+        },
+        "tags": [
+          "attendees"
+        ]
+      }
+    },
+    "/api/staff": {
+      "post": {
+        "operationId": "StaffController_create",
+        "summary": "Create a new staff member (superuser only)",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Staff created successfully"
+          },
+          "400": {
+            "description": "Bad request - insufficient permissions"
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      },
+      "get": {
+        "operationId": "StaffController_findAll",
+        "summary": "Get all staff",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by staff name, email, or role",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of staff"
+          },
+          "400": {
+            "description": "Attendees cannot view staff list"
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/staff/statistics": {
+      "get": {
+        "operationId": "StaffController_getStatistics",
+        "summary": "Get staff statistics",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Staff statistics"
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/staff/{id}": {
+      "get": {
+        "operationId": "StaffController_findOne",
+        "summary": "Get staff by ID",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Staff details"
+          },
+          "400": {
+            "description": "Attendees cannot view staff details"
+          },
+          "404": {
+            "description": "Staff not found"
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      },
+      "put": {
+        "operationId": "StaffController_update",
+        "summary": "Update staff (superuser only)",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateStaffDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Staff updated successfully"
+          },
+          "400": {
+            "description": "Bad request or insufficient permissions"
+          },
+          "404": {
+            "description": "Staff not found"
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      },
+      "delete": {
+        "operationId": "StaffController_delete",
+        "summary": "Delete staff (superuser only)",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Staff deleted successfully"
+          },
+          "400": {
+            "description": "Insufficient permissions"
+          },
+          "404": {
+            "description": "Staff not found"
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/staff/{id}/events/{eventId}": {
+      "post": {
+        "operationId": "StaffController_assignEvent",
+        "summary": "Assign event to staff (superuser only)",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event assigned successfully"
+          },
+          "400": {
+            "description": "Bad request - insufficient permissions"
+          }
+        },
+        "tags": [
+          "staff"
+        ]
+      }
+    },
+    "/api/activity-logs": {
+      "get": {
+        "operationId": "ActivityLogController_findAll",
+        "summary": "Get all activity logs",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Limit results (default: 100)",
+            "schema": {
+              "type": "number"
+            }
+          },
+          {
+            "name": "offset",
+            "required": false,
+            "in": "query",
+            "description": "Offset for pagination (default: 0)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity logs"
+          }
+        }
+      },
+      "delete": {
+        "operationId": "ActivityLogController_clearLogs",
+        "summary": "Clear all activity logs",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "All logs cleared"
+          }
+        }
+      }
+    },
+    "/api/activity-logs/by-role/{role}": {
+      "get": {
+        "operationId": "ActivityLogController_findByRole",
+        "summary": "Get activity logs by role",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "role",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity logs filtered by role"
+          }
+        }
+      }
+    },
+    "/api/activity-logs/by-action/{action}": {
+      "get": {
+        "operationId": "ActivityLogController_findByAction",
+        "summary": "Get activity logs by action",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "action",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity logs filtered by action"
+          }
+        }
+      }
+    },
+    "/api/activity-logs/statistics": {
+      "get": {
+        "operationId": "ActivityLogController_getStatistics",
+        "summary": "Get activity log statistics",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity statistics"
+          }
+        }
+      }
+    },
+    "/api/auth/login": {
+      "post": {
+        "operationId": "AuthController_login",
+        "summary": "Login with email and password",
+        "description": "Public endpoint. Returns user info and JWT token. Use token in Authorization header (Bearer token) for subsequent requests.",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LoginDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Login successful. Returns JWT token and user data.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "success": true,
+                    "message": "Login successful",
+                    "data": {
+                      "userId": "usr-admin-001",
+                      "name": "Admin User",
+                      "email": "superadmin@example.com",
+                      "userRole": "super_admin",
+                      "status": "active",
+                      "token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Account suspended/inactive or invalid input"
+          },
+          "401": {
+            "description": "Invalid email or password"
+          },
+          "429": {
+            "description": "Too many login attempts. Try again later."
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/users": {
+      "get": {
+        "operationId": "UsersController_findAll",
+        "summary": "Get all users (SUPER_ADMIN only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of all users (no passwords)"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      },
+      "post": {
+        "operationId": "UsersController_create",
+        "summary": "Create new user (SUPER_ADMIN only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "User created successfully"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "409": {
+            "description": "Email already registered"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "operationId": "UsersController_findOne",
+        "summary": "Get user by ID (SUPER_ADMIN only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User details (no password)"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      },
+      "patch": {
+        "operationId": "UsersController_update",
+        "summary": "Update user (SUPER_ADMIN or self)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "User updated"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      },
+      "delete": {
+        "operationId": "UsersController_remove",
+        "summary": "Delete user (SUPER_ADMIN only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "User deleted"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "User not found"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/{id}/status": {
+      "patch": {
+        "operationId": "UsersController_updateStatus",
+        "summary": "Update user account status (SUPER_ADMIN only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status updated"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/event-requests": {
+      "post": {
+        "operationId": "EventRequestsController_create",
+        "summary": "Create event request (CLIENT only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event request created"
+          },
+          "403": {
+            "description": "Only CLIENT can create event requests"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      },
+      "get": {
+        "operationId": "EventRequestsController_findAll",
+        "summary": "List event requests (role-filtered)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of event requests filtered by role"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}": {
+      "get": {
+        "operationId": "EventRequestsController_findOne",
+        "summary": "Get event request by ID",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event request details"
+          },
+          "404": {
+            "description": "Event request not found"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/status": {
+      "patch": {
+        "operationId": "EventRequestsController_updateStatus",
+        "summary": "Update event request status (ORGANIZER approves/rejects, CLIENT cancels)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventRequestStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Status updated. Notifies client."
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Event request not found"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-plans": {
+      "post": {
+        "operationId": "EventPlansController_create",
+        "summary": "Create event plan (EVENT_ORGANIZER)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventPlanDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event plan created. Notifies client."
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        },
+        "tags": [
+          "event-plans"
+        ]
+      },
+      "get": {
+        "operationId": "EventPlansController_findAll",
+        "summary": "List event plans (role-filtered)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event plans filtered by role"
+          }
+        },
+        "tags": [
+          "event-plans"
+        ]
+      }
+    },
+    "/api/event-plans/{id}": {
+      "get": {
+        "operationId": "EventPlansController_findOne",
+        "summary": "Get event plan by ID",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Event plan details"
+          },
+          "404": {
+            "description": "Event plan not found"
+          }
+        },
+        "tags": [
+          "event-plans"
+        ]
+      }
+    },
+    "/api/event-plans/{id}/approval": {
+      "patch": {
+        "operationId": "EventPlansController_updateApproval",
+        "summary": "Approve/reject event plan (CLIENT only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventPlanApprovalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Approval status updated. Notifies organizer."
+          },
+          "403": {
+            "description": "Only CLIENT can approve/reject"
+          },
+          "404": {
+            "description": "Event plan not found"
+          }
+        },
+        "tags": [
+          "event-plans"
+        ]
+      }
+    },
+    "/api/registrations": {
+      "post": {
+        "operationId": "RegistrationsController_create",
+        "summary": "Register for an event (ATTENDEE only). Blocks duplicate registration.",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateRegistrationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Registered successfully. Returns qrCode and verificationId."
+          },
+          "403": {
+            "description": "Only ATTENDEE can register"
+          },
+          "409": {
+            "description": "Already registered for this event"
+          }
+        },
+        "tags": [
+          "registrations"
+        ]
+      },
+      "get": {
+        "operationId": "RegistrationsController_findAll",
+        "summary": "List registrations (ATTENDEE sees own, SUPER_ADMIN/ORGANIZER sees all)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "registrations"
+        ]
+      }
+    },
+    "/api/registrations/{id}": {
+      "get": {
+        "operationId": "RegistrationsController_findOne",
+        "summary": "Get registration by ID",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Registration details with qrCode and verificationId"
+          },
+          "404": {
+            "description": "Registration not found"
+          }
+        },
+        "tags": [
+          "registrations"
+        ]
+      }
+    },
+    "/api/payments": {
+      "post": {
+        "operationId": "PaymentsController_create",
+        "summary": "Process payment (ATTENDEE only). Blocks duplicate payment.",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreatePaymentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Payment processed. Ticket confirmed."
+          },
+          "403": {
+            "description": "Only ATTENDEE can make payments"
+          },
+          "409": {
+            "description": "Payment already completed for this registration"
+          }
+        },
+        "tags": [
+          "payments"
+        ]
+      },
+      "get": {
+        "operationId": "PaymentsController_findAll",
+        "summary": "List payments (role-filtered)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/payments/{id}": {
+      "get": {
+        "operationId": "PaymentsController_findOne",
+        "summary": "Get payment by ID",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "404": {
+            "description": "Payment not found"
+          }
+        },
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/attendance/verify": {
+      "post": {
+        "operationId": "AttendanceController_verify",
+        "summary": "Verify attendee check-in using QR code or verification ID (EVENT_STAFF only)",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyAttendanceDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Attendee checked in successfully"
+          },
+          "403": {
+            "description": "Only EVENT_STAFF can verify attendance"
+          },
+          "404": {
+            "description": "No registration found for provided QR/verification ID"
+          },
+          "409": {
+            "description": "Attendee already checked in"
+          }
+        },
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/api/attendance": {
+      "get": {
+        "operationId": "AttendanceController_findAll",
+        "summary": "List attendance records",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by event ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/api/staff-assignments": {
+      "post": {
+        "operationId": "StaffAssignmentsController_create",
+        "summary": "Assign staff to event (EVENT_ORGANIZER only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffAssignmentDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Assignment created. Staff notified."
+          },
+          "403": {
+            "description": "Only EVENT_ORGANIZER can assign staff"
+          },
+          "409": {
+            "description": "Staff already assigned to this event"
+          }
+        },
+        "tags": [
+          "staff-assignments"
+        ]
+      },
+      "get": {
+        "operationId": "StaffAssignmentsController_findAll",
+        "summary": "List assignments (role-filtered: staff sees own, organizer sees own, admin sees all)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "staff-assignments"
+        ]
+      }
+    },
+    "/api/staff-assignments/{id}/status": {
+      "patch": {
+        "operationId": "StaffAssignmentsController_updateStatus",
+        "summary": "Accept/decline assignment (EVENT_STAFF). Cancel (ORGANIZER).",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAssignmentStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Assignment status updated. Organizer notified."
+          },
+          "403": {
+            "description": "Staff can only update own assignments"
+          },
+          "404": {
+            "description": "Assignment not found"
+          }
+        },
+        "tags": [
+          "staff-assignments"
+        ]
+      }
+    },
+    "/api/reports/events": {
+      "post": {
+        "operationId": "ReportsController_createEventReport",
+        "summary": "Create event report (EVENT_ORGANIZER sends final report to client)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event report created. Notifies client."
+          },
+          "403": {
+            "description": "Only EVENT_ORGANIZER can create event reports"
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      },
+      "get": {
+        "operationId": "ReportsController_findAllEventReports",
+        "summary": "List event reports (role-filtered)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/reports/staff": {
+      "post": {
+        "operationId": "ReportsController_createStaffReport",
+        "summary": "Create staff report (EVENT_STAFF only, must be assigned to event)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Staff report created. Organizer notified."
+          },
+          "403": {
+            "description": "Staff can only report for assigned events"
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      },
+      "get": {
+        "operationId": "ReportsController_findAllStaffReports",
+        "summary": "List staff reports (role-filtered)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/reviews/events": {
+      "post": {
+        "operationId": "ReviewsController_createEventReview",
+        "summary": "Submit event review (ATTENDEE or CLIENT, rating 1-5)",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateEventReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Event review submitted"
+          },
+          "403": {
+            "description": "Only ATTENDEE or CLIENT can review events"
+          }
+        },
+        "tags": [
+          "reviews"
+        ]
+      },
+      "get": {
+        "operationId": "ReviewsController_findAllEventReviews",
+        "summary": "Get event reviews",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by event ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reviews"
+        ]
+      }
+    },
+    "/api/reviews/staff": {
+      "post": {
+        "operationId": "ReviewsController_createStaffReview",
+        "summary": "Submit staff review (EVENT_ORGANIZER only, rating 1-5). Auto-updates staff rating.",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateStaffReviewDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Staff review submitted. Staff average rating recalculated."
+          },
+          "403": {
+            "description": "Only EVENT_ORGANIZER can review staff"
+          }
+        },
+        "tags": [
+          "reviews"
+        ]
+      },
+      "get": {
+        "operationId": "ReviewsController_findAllStaffReviews",
+        "summary": "Get staff reviews",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "staffId",
+            "required": false,
+            "in": "query",
+            "description": "Filter by staff ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reviews"
+        ]
+      }
+    },
+    "/api/notifications": {
+      "get": {
+        "operationId": "NotificationsController_findAll",
+        "summary": "Get notifications for the current user (requires x-user-id header)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID (required for all notification endpoints)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of notifications for this user"
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/notifications/unread-count": {
+      "get": {
+        "operationId": "NotificationsController_getUnreadCount",
+        "summary": "Get unread notification count for current user",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID (required for all notification endpoints)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/notifications/{id}/read": {
+      "patch": {
+        "operationId": "NotificationsController_markRead",
+        "summary": "Mark notification as read",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID (required for all notification endpoints)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Notification marked as read"
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/notifications/read-all": {
+      "patch": {
+        "operationId": "NotificationsController_markAllRead",
+        "summary": "Mark all notifications as read for current user",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID (required for all notification endpoints)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/analytics/dashboard": {
+      "get": {
+        "operationId": "AnalyticsController_getDashboard",
+        "summary": "Super admin dashboard — total users, events, revenue, registrations, pending requests, etc.",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for role-specific dashboard",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Dashboard analytics summary for SUPER_ADMIN",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "example": {
+                    "success": true,
+                    "data": {
+                      "users": {
+                        "total": 12,
+                        "active": 12,
+                        "byRole": {
+                          "super_admin": 1,
+                          "client": 2,
+                          "event_organizer": 3,
+                          "event_staff": 3,
+                          "attendee": 3
+                        }
+                      },
+                      "events": {
+                        "total": 4,
+                        "published": 3,
+                        "draft": 1
+                      },
+                      "eventRequests": {
+                        "total": 2,
+                        "pending": 1,
+                        "approved": 1
+                      },
+                      "registrations": {
+                        "total": 3
+                      },
+                      "payments": {
+                        "total": 2,
+                        "totalRevenue": 298
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Only SUPER_ADMIN can view analytics"
+          }
+        },
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/analytics/organizer-dashboard": {
+      "get": {
+        "operationId": "AnalyticsController_getOrganizerDashboard",
+        "summary": "Event organizer dashboard: my events, registrations, staff assignments, revenue",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for role-specific dashboard",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Organizer dashboard data"
+          },
+          "403": {
+            "description": "Access denied"
+          }
+        },
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/analytics/client-dashboard": {
+      "get": {
+        "operationId": "AnalyticsController_getClientDashboard",
+        "summary": "Client dashboard: my event requests, event plans, ongoing/completed events",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for role-specific dashboard",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client dashboard data"
+          },
+          "403": {
+            "description": "Only CLIENT can view"
+          }
+        },
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/analytics/staff-dashboard": {
+      "get": {
+        "operationId": "AnalyticsController_getStaffDashboard",
+        "summary": "Event staff dashboard: my assignments, reports submitted, available dates",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for role-specific dashboard",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Staff dashboard data"
+          },
+          "403": {
+            "description": "Only EVENT_STAFF can view"
+          }
+        },
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/analytics/attendee-dashboard": {
+      "get": {
+        "operationId": "AnalyticsController_getAttendeeDashboard",
+        "summary": "Attendee dashboard: registered events, attendance status, tickets",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for role-specific dashboard",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Attendee dashboard data"
+          },
+          "403": {
+            "description": "Only ATTENDEE can view"
+          }
+        },
+        "tags": [
+          "analytics"
+        ]
+      }
+    },
+    "/api/uploads": {
+      "post": {
+        "operationId": "UploadsController_uploadFile",
+        "summary": "Upload an event-related file",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "File uploaded successfully"
+          },
+          "400": {
+            "description": "Missing file or invalid file type"
+          }
+        },
+        "tags": [
+          "uploads"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Event Management System API",
+    "description": "Complete REST API for Event Management & Coordination with RBAC\n\n**Authentication:**\n\nAuthenticated endpoints require `Authorization: Bearer <JWT>`.\n\n**Demo Users:**\n\n- SuperAdmin: superadmin@example.com / Admin@123\n- Client: client@example.com / Client@123\n- Organizer: organizer@example.com / Organizer@123\n- Staff: staff@example.com / Staff@123\n- Attendee: attendee@example.com / Attendee@123",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      }
+    },
+    "schemas": {
+      "CreateEventDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Event name/title",
+            "example": "Tech Conference 2024"
+          },
+          "category": {
+            "type": "string",
+            "description": "Event category/type",
+            "example": "Technology"
+          },
+          "date": {
+            "type": "string",
+            "description": "Event date (YYYY-MM-DD)",
+            "example": "2024-06-15"
+          },
+          "time": {
+            "type": "string",
+            "description": "Event time (HH:MM AM/PM)",
+            "example": "09:00 AM"
+          },
+          "location": {
+            "type": "string",
+            "description": "Event location/venue",
+            "example": "Convention Center, New York"
+          },
+          "capacity": {
+            "type": "number",
+            "description": "Event capacity",
+            "example": 500
+          },
+          "ticketPrice": {
+            "type": "number",
+            "description": "Ticket price",
+            "example": 99
+          },
+          "organizerId": {
+            "type": "string",
+            "description": "Organizer ID",
+            "example": "org-001"
+          },
+          "clientId": {
+            "type": "string",
+            "description": "Client ID",
+            "example": "cli-001"
+          }
+        },
+        "required": [
+          "name",
+          "category",
+          "date",
+          "time",
+          "location",
+          "capacity",
+          "ticketPrice"
+        ]
+      },
+      "UpdateEventDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Event name"
+          },
+          "category": {
+            "type": "string",
+            "description": "Event category"
+          },
+          "date": {
+            "type": "string",
+            "description": "Event date (YYYY-MM-DD)"
+          },
+          "time": {
+            "type": "string",
+            "description": "Event time (HH:MM AM/PM)"
+          },
+          "location": {
+            "type": "string",
+            "description": "Event location"
+          },
+          "capacity": {
+            "type": "number",
+            "description": "Event capacity"
+          },
+          "ticketPrice": {
+            "type": "number",
+            "description": "Ticket price"
+          },
+          "status": {
+            "type": "string",
+            "description": "Event status",
+            "enum": [
+              "draft",
+              "published",
+              "ongoing",
+              "completed",
+              "cancelled"
+            ]
+          }
+        }
+      },
+      "CreateAttendeeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Attendee name",
+            "example": "Iris Attendee"
+          },
+          "email": {
+            "type": "string",
+            "description": "Attendee email",
+            "example": "attendee@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Attendee phone",
+            "example": "9876543210"
+          },
+          "password": {
+            "type": "string",
+            "description": "Attendee password",
+            "example": "Attendee@123"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "UpdateAttendeeDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Attendee name"
+          },
+          "email": {
+            "type": "string",
+            "description": "Attendee email"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Attendee phone"
+          },
+          "status": {
+            "type": "string",
+            "description": "Attendee status",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ]
+          }
+        }
+      },
+      "CreateStaffDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Staff member name",
+            "example": "Frank Staff"
+          },
+          "email": {
+            "type": "string",
+            "description": "Staff email",
+            "example": "staff@example.com"
+          },
+          "phone": {
+            "type": "string",
+            "description": "Staff phone",
+            "example": "9876543210"
+          },
+          "availableDates": {
+            "description": "Available dates (YYYY-MM-DD)",
+            "example": [
+              "2024-06-01",
+              "2024-06-15"
+            ],
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "password": {
+            "type": "string",
+            "description": "Staff password",
+            "example": "Staff@123"
+          }
+        },
+        "required": [
+          "name",
+          "email"
+        ]
+      },
+      "UpdateStaffDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Staff name"
+          },
+          "email": {
+            "type": "string",
+            "description": "Staff email"
+          },
+          "availableDates": {
+            "description": "Available dates (YYYY-MM-DD)",
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "status": {
+            "type": "string",
+            "description": "Staff availability status",
+            "enum": [
+              "available",
+              "unavailable",
+              "busy"
+            ]
+          },
+          "phone": {
+            "type": "string",
+            "description": "Staff phone number",
+            "example": "9876543210"
+          }
+        }
+      },
+      "LoginDto": {
+        "type": "object",
+        "properties": {
+          "email": {
+            "type": "string",
+            "description": "User email address",
+            "example": "superadmin@example.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "User password (min 6 characters)",
+            "example": "Admin@123"
+          }
+        },
+        "required": [
+          "email",
+          "password"
+        ]
+      },
+      "CreateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "Password (min 6 chars)",
+            "example": "Pass@123"
+          },
+          "userRole": {
+            "type": "string",
+            "description": "User role",
+            "enum": [
+              "super_admin",
+              "client",
+              "event_organizer",
+              "event_staff",
+              "attendee"
+            ],
+            "example": "attendee"
+          },
+          "address": {
+            "type": "string",
+            "description": "Address",
+            "example": "123 Main St"
+          },
+          "phoneNo": {
+            "type": "string",
+            "description": "Phone number (10 digits, starts with 6-9)",
+            "example": "9876543210"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "userRole"
+        ]
+      },
+      "UpdateUserDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address"
+          },
+          "address": {
+            "type": "string",
+            "description": "Address"
+          },
+          "phoneNo": {
+            "type": "string",
+            "description": "Phone number (10 digits, starts with 6-9)"
+          },
+          "status": {
+            "type": "string",
+            "description": "Account status",
+            "enum": [
+              "active",
+              "inactive",
+              "suspended"
+            ]
+          }
+        }
+      },
+      "CreateEventRequestDto": {
+        "type": "object",
+        "properties": {
+          "clientId": {
+            "type": "string",
+            "description": "Client ID",
+            "example": "cli-001"
+          },
+          "organizerId": {
+            "type": "string",
+            "description": "Organizer ID to send request to",
+            "example": "org-001"
+          },
+          "eventName": {
+            "type": "string",
+            "description": "Event name",
+            "example": "Annual Company Gala"
+          },
+          "eventDate": {
+            "type": "string",
+            "description": "Desired event date (YYYY-MM-DD)",
+            "example": "2024-09-01"
+          },
+          "budget": {
+            "type": "number",
+            "description": "Budget in INR",
+            "example": 50000
+          },
+          "capacity": {
+            "type": "number",
+            "description": "Expected capacity",
+            "example": 200
+          },
+          "requirements": {
+            "type": "string",
+            "description": "Special requirements",
+            "example": "Need catering and live band"
+          }
+        },
+        "required": [
+          "clientId",
+          "organizerId",
+          "eventName",
+          "eventDate",
+          "budget",
+          "capacity"
+        ]
+      },
+      "UpdateEventRequestStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "New status for the request",
+            "enum": [
+              "pending",
+              "approved",
+              "rejected",
+              "cancelled"
+            ],
+            "example": "approved"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CreateEventPlanDto": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "Event ID (if event already created)",
+            "example": "evt-001"
+          },
+          "clientId": {
+            "type": "string",
+            "description": "Client ID",
+            "example": "cli-001"
+          },
+          "organizerId": {
+            "type": "string",
+            "description": "Organizer ID",
+            "example": "org-001"
+          },
+          "title": {
+            "type": "string",
+            "description": "Plan title",
+            "example": "Tech Conference Full Plan"
+          },
+          "description": {
+            "type": "string",
+            "description": "Plan description",
+            "example": "Complete event plan including speakers and schedule"
+          },
+          "budget": {
+            "type": "number",
+            "description": "Budget in INR",
+            "example": 75000
+          },
+          "capacity": {
+            "type": "number",
+            "description": "Capacity",
+            "example": 500
+          }
+        },
+        "required": [
+          "clientId",
+          "organizerId",
+          "title",
+          "description",
+          "budget",
+          "capacity"
+        ]
+      },
+      "UpdateEventPlanApprovalDto": {
+        "type": "object",
+        "properties": {
+          "approvalStatus": {
+            "type": "string",
+            "description": "Approval status",
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "example": "approved"
+          }
+        },
+        "required": [
+          "approvalStatus"
+        ]
+      },
+      "CreateRegistrationDto": {
+        "type": "object",
+        "properties": {
+          "attendeeId": {
+            "type": "string",
+            "description": "Attendee ID",
+            "example": "att-001"
+          },
+          "eventId": {
+            "type": "string",
+            "description": "Event ID",
+            "example": "evt-001"
+          },
+          "ticketType": {
+            "type": "string",
+            "description": "Ticket type",
+            "example": "General Admission",
+            "enum": [
+              "General Admission",
+              "VIP",
+              "Early Bird"
+            ]
+          },
+          "additionalInfo": {
+            "type": "string",
+            "description": "Additional information",
+            "example": "Vegetarian meal preference"
+          }
+        },
+        "required": [
+          "attendeeId",
+          "eventId",
+          "ticketType"
+        ]
+      },
+      "CreatePaymentDto": {
+        "type": "object",
+        "properties": {
+          "registrationId": {
+            "type": "string",
+            "description": "Registration ID",
+            "example": "reg-001"
+          },
+          "amount": {
+            "type": "number",
+            "description": "Payment amount",
+            "example": 99
+          },
+          "paymentMethod": {
+            "type": "string",
+            "description": "Payment method",
+            "enum": [
+              "Credit Card",
+              "Debit Card",
+              "UPI",
+              "Net Banking",
+              "Cash"
+            ],
+            "example": "Credit Card"
+          },
+          "paymentDate": {
+            "type": "string",
+            "description": "Payment date (YYYY-MM-DD)",
+            "example": "2024-06-01"
+          }
+        },
+        "required": [
+          "registrationId",
+          "amount",
+          "paymentMethod",
+          "paymentDate"
+        ]
+      },
+      "VerifyAttendanceDto": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "Event ID",
+            "example": "evt-001"
+          },
+          "staffId": {
+            "type": "string",
+            "description": "Staff ID performing verification",
+            "example": "staff-001"
+          },
+          "qrCode": {
+            "type": "string",
+            "description": "QR code to verify",
+            "example": "QR-001-EVT-001"
+          },
+          "verificationId": {
+            "type": "string",
+            "description": "Verification ID",
+            "example": "VER-001-001"
+          },
+          "checkInTime": {
+            "type": "string",
+            "description": "Check-in time",
+            "example": "09:15 AM"
+          }
+        },
+        "required": [
+          "eventId",
+          "staffId",
+          "checkInTime"
+        ]
+      },
+      "CreateStaffAssignmentDto": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "Event ID",
+            "example": "evt-001"
+          },
+          "organizerId": {
+            "type": "string",
+            "description": "Organizer ID",
+            "example": "org-001"
+          },
+          "staffId": {
+            "type": "string",
+            "description": "Staff ID",
+            "example": "staff-001"
+          }
+        },
+        "required": [
+          "eventId",
+          "organizerId",
+          "staffId"
+        ]
+      },
+      "UpdateAssignmentStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "description": "Assignment status",
+            "enum": [
+              "pending",
+              "accepted",
+              "declined",
+              "completed",
+              "cancelled"
+            ],
+            "example": "accepted"
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "CreateEventReportDto": {
+        "type": "object",
+        "properties": {
+          "eventId": {
+            "type": "string",
+            "description": "Event ID",
+            "example": "evt-001"
+          },
+          "organizerId": {
+            "type": "string",
+            "description": "Organizer ID",
+            "example": "org-001"
+          },
+          "clientId": {
+            "type": "string",
+            "description": "Client ID",
+            "example": "cli-001"
+          },
+          "submittedByStaffId": {
+            "type": "string",
+            "description": "Staff ID (if submitted by staff)",
+            "example": "staff-001"
+          },
+          "reportTitle": {
+            "type": "string",
+            "description": "Report title",
+            "example": "Tech Conference 2024 - Final Report"
+          },
+          "reportDetails": {
+            "type": "string",
+            "description": "Report details",
+            "example": "Event was successful with 450 attendees."
+          },
+          "submissionDate": {
+            "type": "string",
+            "description": "Submission date (YYYY-MM-DD)",
+            "example": "2024-06-20"
+          }
+        },
+        "required": [
+          "eventId",
+          "organizerId",
+          "reportTitle",
+          "reportDetails",
+          "submissionDate"
+        ]
+      },
+      "CreateStaffReportDto": {
+        "type": "object",
+        "properties": {
+          "staffId": {
+            "type": "string",
+            "description": "Staff ID",
+            "example": "staff-001"
+          },
+          "organizerId": {
+            "type": "string",
+            "description": "Organizer ID",
+            "example": "org-001"
+          },
+          "eventId": {
+            "type": "string",
+            "description": "Event ID",
+            "example": "evt-001"
+          },
+          "reportText": {
+            "type": "string",
+            "description": "Report text",
+            "example": "Event ran smoothly. Check-in was efficient."
+          }
+        },
+        "required": [
+          "staffId",
+          "organizerId",
+          "eventId",
+          "reportText"
+        ]
+      },
+      "CreateEventReviewDto": {
+        "type": "object",
+        "properties": {
+          "reviewerId": {
+            "type": "string",
+            "description": "Reviewer ID (attendeeId or clientId)",
+            "example": "att-001"
+          },
+          "eventId": {
+            "type": "string",
+            "description": "Event ID",
+            "example": "evt-001"
+          },
+          "rating": {
+            "type": "number",
+            "description": "Rating (1–5)",
+            "minimum": 1,
+            "maximum": 5,
+            "example": 5
+          },
+          "comment": {
+            "type": "string",
+            "description": "Review comment",
+            "example": "Excellent event!"
+          }
+        },
+        "required": [
+          "reviewerId",
+          "eventId",
+          "rating",
+          "comment"
+        ]
+      },
+      "CreateStaffReviewDto": {
+        "type": "object",
+        "properties": {
+          "reviewerId": {
+            "type": "string",
+            "description": "Organizer ID (reviewer)",
+            "example": "org-001"
+          },
+          "staffId": {
+            "type": "string",
+            "description": "Staff ID being reviewed",
+            "example": "staff-001"
+          },
+          "eventId": {
+            "type": "string",
+            "description": "Event ID",
+            "example": "evt-001"
+          },
+          "rating": {
+            "type": "number",
+            "description": "Rating (1–5)",
+            "minimum": 1,
+            "maximum": 5,
+            "example": 5
+          },
+          "comment": {
+            "type": "string",
+            "description": "Review comment",
+            "example": "Very professional."
+          }
+        },
+        "required": [
+          "reviewerId",
+          "staffId",
+          "eventId",
+          "rating",
+          "comment"
+        ]
+      }
+    }
+  }
+}
