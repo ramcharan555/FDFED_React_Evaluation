@@ -1,0 +1,1018 @@
+{
+  "timestamp": "2026-08-26T09:20:24.023Z",
+  "method": "GET",
+  "url": "/api/events",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:20.755Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:20.969Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:21.199Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:21.421Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:21.665Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:21.914Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:22.146Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:22.375Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:22.600Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:22.845Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:23.072Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:23.308Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:23.551Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:23.792Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:24.030Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:24.274Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:24.537Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:24.770Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:00:43.178Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:01:07.389Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:01:07.555Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:02:20.643Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:02:20.873Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:02:21.087Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:02:21.329Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:02:21.557Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:03:08.618Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:03:58.435Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:03:58.654Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:03:58.873Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:03:59.104Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:03:59.340Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:03:59.602Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:03:59.852Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:04:00.111Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:04:00.345Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:04:00.587Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:04:00.826Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:04:01.071Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:04:01.311Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:05:32.141Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:05:32.345Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:05:32.519Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:06:01.744Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:06:02.015Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:06:02.297Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:06:02.530Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:06:02.798Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:06:03.015Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:07:50.501Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:07:50.717Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:07:50.894Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:08:01.436Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:08:01.659Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:08:01.832Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:23.466Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:23.712Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:23.933Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:24.164Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:24.398Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:24.681Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:24.974Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:25.210Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:25.467Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:25.682Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:25.910Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:26.146Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:26.426Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:26.670Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:26.890Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:27.124Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:27.349Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:27.612Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:09:27.862Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:11:12.878Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:11:13.083Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:11:13.285Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:11:13.479Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:14:07.170Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:14:07.390Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:14:07.620Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:14:07.878Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:14:08.175Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:14:08.416Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:14:08.642Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:00.286Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:00.523Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:00.736Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:00.950Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:01.185Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:01.429Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:01.714Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:01.969Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:02.261Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:02.507Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:02.734Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:02.965Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:03.216Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:03.447Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-26T10:16:03.661Z",
+  "method": "GET",
+  "url": "/api/analytics/dashboard",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FFSD_project\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-31T12:24:43.634Z",
+  "method": "POST",
+  "url": "/api/events",
+  "statusCode": 401,
+  "message": "Unauthorized",
+  "stack": "UnauthorizedException: Unauthorized\n    at RoleGuard.handleRequest (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:60:30)\n    at C:\\Users\\sai ganesh\\Downloads\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:44:124\n    at C:\\Users\\sai ganesh\\Downloads\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:83:24\n    at allFailed (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:110:18)\n    at attempt (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:183:28)\n    at strategy.fail (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:314:9)\n    at JwtStrategy.authenticate (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\passport-jwt\\lib\\strategy.js:96:21)\n    at attempt (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:378:16)\n    at authenticate (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\passport\\lib\\middleware\\authenticate.js:379:7)\n    at C:\\Users\\sai ganesh\\Downloads\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\passport\\dist\\auth.guard.js:88:3"
+}
+{
+  "timestamp": "2026-08-31T15:02:52.705Z",
+  "method": "POST",
+  "url": "/api/auth/login",
+  "statusCode": 400,
+  "message": [
+    "email should not be empty",
+    "email must be an email",
+    "password must be longer than or equal to 6 characters",
+    "password should not be empty",
+    "password must be a string"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-08-31T15:07:37.068Z",
+  "method": "GET",
+  "url": "/api/",
+  "statusCode": 404,
+  "message": "Cannot GET /api/",
+  "stack": "NotFoundException: Cannot GET /api/\n    at callback (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handle [as handle_request] (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:286:9\n    at router.process_params (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at RequestLoggingMiddleware.use (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\src\\common\\middleware\\request-logging.middleware.ts:25:5)\n    at C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handle [as handle_request] (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\layer.js:95:5)"
+}
+{
+  "timestamp": "2026-08-31T15:25:28.092Z",
+  "method": "POST",
+  "url": "/api/auth/login",
+  "statusCode": 400,
+  "message": [
+    "email should not be empty",
+    "email must be an email",
+    "password must be longer than or equal to 6 characters",
+    "password should not be empty",
+    "password must be a string"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 0)\n    at async pipesFn (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-08-31T15:46:59.426Z",
+  "method": "DELETE",
+  "url": "/api/events/1",
+  "statusCode": 404,
+  "message": "Event with ID 1 not found",
+  "stack": "NotFoundException: Event with ID 1 not found\n    at EventsService.delete (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\src\\modules\\events\\events.service.ts:174:23)\n    at EventsController.delete (C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\src\\modules\\events\\events.controller.ts:116:37)\n    at C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Mithin Reddy\\Downloads\\10_Penguin_fixed_verified (3)\\10_Penguin_fixed_verified\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-08-31T18:52:31.246Z",
+  "method": "POST",
+  "url": "/api/events",
+  "statusCode": 400,
+  "message": [
+    "property status should not exist",
+    "property description should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-08-31T18:52:36.326Z",
+  "method": "DELETE",
+  "url": "/api/events/114",
+  "statusCode": 404,
+  "message": "Event with ID 114 not found",
+  "stack": "NotFoundException: Event with ID 114 not found\n    at EventsService.delete (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\src\\modules\\events\\events.service.ts:174:23)\n    at EventsController.delete (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\src\\modules\\events\\events.controller.ts:116:37)\n    at C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-08-31T18:52:41.153Z",
+  "method": "DELETE",
+  "url": "/api/events/113",
+  "statusCode": 404,
+  "message": "Event with ID 113 not found",
+  "stack": "NotFoundException: Event with ID 113 not found\n    at EventsService.delete (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\src\\modules\\events\\events.service.ts:174:23)\n    at EventsController.delete (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\src\\modules\\events\\events.controller.ts:116:37)\n    at C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-08-31T18:52:45.037Z",
+  "method": "DELETE",
+  "url": "/api/events/112",
+  "statusCode": 404,
+  "message": "Event with ID 112 not found",
+  "stack": "NotFoundException: Event with ID 112 not found\n    at EventsService.delete (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\src\\modules\\events\\events.service.ts:174:23)\n    at EventsController.delete (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\src\\modules\\events\\events.controller.ts:116:37)\n    at C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-08-31T18:52:48.714Z",
+  "method": "DELETE",
+  "url": "/api/events/111",
+  "statusCode": 404,
+  "message": "Event with ID 111 not found",
+  "stack": "NotFoundException: Event with ID 111 not found\n    at EventsService.delete (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\src\\modules\\events\\events.service.ts:174:23)\n    at EventsController.delete (C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\src\\modules\\events\\events.controller.ts:116:37)\n    at C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Lucky\\Downloads\\10_Penguin\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-09-01T03:56:03.226Z",
+  "method": "POST",
+  "url": "/api/staff-assignments",
+  "statusCode": 404,
+  "message": "Event 1 not found",
+  "stack": "NotFoundException: Event 1 not found\n    at StaffAssignmentsService.create (C:\\Users\\sai ganesh\\Downloads\\FFSD__FINAL22\\10_Penguin\\backend\\src\\modules\\staff-assignments\\staff-assignments.service.ts:18:23)\n    at StaffAssignmentsController.create (C:\\Users\\sai ganesh\\Downloads\\FFSD__FINAL22\\10_Penguin\\backend\\src\\modules\\staff-assignments\\staff-assignments.controller.ts:25:25)\n    at C:\\Users\\sai ganesh\\Downloads\\FFSD__FINAL22\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\sai ganesh\\Downloads\\FFSD__FINAL22\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\sai ganesh\\Downloads\\FFSD__FINAL22\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-06T09:19:19.805Z",
+  "method": "POST",
+  "url": "/api/auth/login",
+  "statusCode": 401,
+  "message": "Invalid email or password",
+  "stack": "UnauthorizedException: Invalid email or password\n    at AuthService.login (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\src\\modules\\auth\\auth.service.ts:33:13)\n    at AuthController.login (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\src\\modules\\auth\\auth.controller.ts:42:29)\n    at C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-06T09:19:29.920Z",
+  "method": "POST",
+  "url": "/api/auth/login",
+  "statusCode": 401,
+  "message": "Invalid email or password",
+  "stack": "UnauthorizedException: Invalid email or password\n    at AuthService.login (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\src\\modules\\auth\\auth.service.ts:33:13)\n    at AuthController.login (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\src\\modules\\auth\\auth.controller.ts:42:29)\n    at C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-07T05:54:26.121Z",
+  "method": "PUT",
+  "url": "/api/events/4",
+  "statusCode": 400,
+  "message": [
+    "property description should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-07T05:54:36.077Z",
+  "method": "DELETE",
+  "url": "/api/events/4",
+  "statusCode": 404,
+  "message": "Event with ID 4 not found",
+  "stack": "NotFoundException: Event with ID 4 not found\n    at EventsService.delete (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\src\\modules\\events\\events.service.ts:174:23)\n    at EventsController.delete (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\src\\modules\\events\\events.controller.ts:116:37)\n    at C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-07T06:31:59.044Z",
+  "method": "POST",
+  "url": "/api/staff-assignments",
+  "statusCode": 404,
+  "message": "Event 2 not found",
+  "stack": "NotFoundException: Event 2 not found\n    at StaffAssignmentsService.create (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\src\\modules\\staff-assignments\\staff-assignments.service.ts:18:23)\n    at StaffAssignmentsController.create (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\src\\modules\\staff-assignments\\staff-assignments.controller.ts:25:25)\n    at C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-07T06:33:15.221Z",
+  "method": "POST",
+  "url": "/api/events",
+  "statusCode": 400,
+  "message": [
+    "property status should not exist",
+    "property description should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-07T07:20:13.911Z",
+  "method": "POST",
+  "url": "/api/events",
+  "statusCode": 400,
+  "message": [
+    "property status should not exist",
+    "property description should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-10T18:24:49.694Z",
+  "method": "POST",
+  "url": "/api/registrations",
+  "statusCode": 404,
+  "message": "Attendee usr-attendee-001 not found",
+  "stack": "NotFoundException: Attendee usr-attendee-001 not found\n    at RegistrationsService.create (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\src\\modules\\registrations\\registrations.service.ts:18:29)\n    at RegistrationsController.create (C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\src\\modules\\registrations\\registrations.controller.ts:25:25)\n    at C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\sai ganesh\\Downloads\\10_Penguin_EventFlow_ROLE_COMPLETE\\10_Penguin\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-11T05:49:32.347Z",
+  "method": "GET",
+  "url": "/favicon.ico",
+  "statusCode": 404,
+  "message": "Cannot GET /favicon.ico",
+  "stack": "NotFoundException: Cannot GET /favicon.ico\n    at callback (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handle [as handle_request] (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:286:9\n    at router.process_params (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at RequestLoggingMiddleware.use (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\src\\common\\middleware\\request-logging.middleware.ts:25:5)\n    at C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handle [as handle_request] (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\layer.js:95:5)"
+}
+{
+  "timestamp": "2026-10-11T10:11:25.297Z",
+  "method": "POST",
+  "url": "/api/events",
+  "statusCode": 400,
+  "message": [
+    "property status should not exist",
+    "property description should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30\n    at async C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-11T10:13:56.323Z",
+  "method": "DELETE",
+  "url": "/api/events/2",
+  "statusCode": 404,
+  "message": "Event with ID 2 not found",
+  "stack": "NotFoundException: Event with ID 2 not found\n    at EventsService.delete (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\src\\modules\\events\\events.service.ts:174:23)\n    at EventsController.delete (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\src\\modules\\events\\events.controller.ts:116:37)\n    at C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}
+{
+  "timestamp": "2026-10-11T10:14:01.425Z",
+  "method": "DELETE",
+  "url": "/api/events/4",
+  "statusCode": 404,
+  "message": "Event with ID 4 not found",
+  "stack": "NotFoundException: Event with ID 4 not found\n    at EventsService.delete (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\src\\modules\\events\\events.service.ts:174:23)\n    at EventsController.delete (C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\src\\modules\\events\\events.controller.ts:116:37)\n    at C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:46:28\n    at async C:\\Users\\Mithin Reddy\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:17"
+}

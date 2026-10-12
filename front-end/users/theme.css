@@ -1,0 +1,189 @@
+:root[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f5f4ff;
+  --surface: #ffffff;
+  --surface2: #f0efff;
+  --surface3: #e6e4ff;
+  --border: #dedcff;
+  --border2: #c9c6ef;
+  --accent: #9fa0ff;
+  --accent-dim: rgba(111, 104, 218, .12);
+  --accent-glow: rgba(111, 104, 218, .22);
+  --green: #12866b;
+  --green-dim: rgba(18, 134, 107, .1);
+  --red: #d74545;
+  --red-dim: rgba(215, 69, 69, .1);
+  --yellow: #a77700;
+  --yellow-dim: rgba(167, 119, 0, .1);
+  --blue: #2873b6;
+  --blue-dim: rgba(40, 115, 182, .1);
+  --orange: #b96013;
+  --orange-dim: rgba(185, 96, 19, .1);
+  --text: #20283a;
+  --text2: #606d82;
+  --text3: #8590a2;
+  --shadow: 0 4px 20px rgba(32, 40, 58, .08);
+  --shadow-lg: 0 8px 40px rgba(32, 40, 58, .12);
+}
+
+:root[data-theme="light"] .sidebar {
+  --surface: #202033;
+  --surface2: #29293f;
+  --surface3: #34344d;
+  --border: #38384f;
+  --border2: #4a4965;
+  --text: #f2f1ff;
+  --text2: #c0bfd8;
+  --text3: #9291ac;
+}
+
+:root[data-theme="light"] .l-nav {
+  background: rgba(255, 255, 255, .9);
+}
+
+:root[data-theme="light"] .btn-primary {
+  background: #29283f !important;
+  border: 1px solid #49466e;
+  color: #f7f6ff !important;
+  transition: none;
+}
+
+:root[data-theme="light"] .btn-primary:hover {
+  background: #393750 !important;
+}
+
+.l-nav {
+  padding-left: 68px;
+}
+
+.l-nav-logo,
+.login-logo,
+.sidebar .sb-logo-mark {
+  max-width: 100%;
+  min-width: 0;
+  white-space: nowrap;
+}
+
+.l-nav-logo {
+  font-size: clamp(16px, 2vw, 22px);
+}
+
+.login-logo {
+  font-size: clamp(20px, 5vw, 28px);
+}
+
+.sidebar .sb-logo-mark {
+  font-size: clamp(16px, 1.25vw, 20px);
+}
+
+.sidebar .sb-logo {
+  padding-left: 68px;
+}
+
+.theme-toggle {
+  position: fixed;
+  z-index: 1000;
+  top: 10px;
+  left: 10px;
+  display: grid;
+  width: 44px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--border2);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+  box-shadow: var(--shadow);
+  transition: background-color .2s ease, border-color .2s ease, color .2s ease;
+}
+
+.theme-toggle:hover {
+  border-color: var(--accent);
+}
+
+.theme-toggle:focus-visible {
+  outline: 3px solid var(--accent-glow);
+  outline-offset: 2px;
+}
+
+.theme-toggle svg {
+  width: 19px;
+  height: 19px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.theme-toggle .theme-icon-light,
+.theme-toggle[aria-pressed="true"] .theme-icon-dark {
+  display: none;
+}
+
+.theme-toggle[aria-pressed="true"] .theme-icon-light {
+  display: block;
+}
+
+.password-field {
+  position: relative;
+  display: block;
+  width: 100%;
+}
+
+.password-field > input {
+  padding-right: 44px !important;
+}
+
+.password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 10px;
+  display: grid;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  place-items: center;
+  transform: translateY(-50%);
+  border-radius: 7px;
+  background: transparent;
+  color: var(--text2);
+}
+
+.password-toggle:hover {
+  background: var(--surface3);
+  color: var(--text);
+}
+
+.password-toggle:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.password-toggle svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.8;
+}
+
+.password-toggle .eye-off {
+  display: none;
+}
+
+.password-toggle[aria-pressed="true"] .eye-on {
+  display: none;
+}
+
+.password-toggle[aria-pressed="true"] .eye-off {
+  display: block;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .theme-toggle {
+    transition: none;
+  }
+}

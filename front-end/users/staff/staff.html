@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <script>
+    // Avoid showing the landing page for a frame before a saved session is restored.
+    try {
+      if (sessionStorage.getItem('ef_cu')) document.documentElement.classList.add('restoring-session');
+    } catch (e) { }
+  </script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>EventFlow – Event Registration & Attendee Management</title>
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="staff.css">
+  <link rel="stylesheet" href="../theme.css">
+  <script src="../theme.js"></script>
+  <meta name="eventflow-role" content="Staff">
+</head>
+<body data-eventflow-role="staff">
+<div id="landing">
+<nav class="l-nav">
+<span class="l-nav-logo">⚡ EventFlow</span>
+<div class="l-nav-links">
+<a href="javascript:showPage('find-events')">Find Events</a>
+<a href="javascript:showPage('gallery')">Gallery</a>
+<a href="javascript:showPage('about')">About Us</a>
+<a href="javascript:showPage('contact')">Contact</a>
+</div>
+<div class="l-nav-actions">
+<button class="btn btn-ghost btn-sm" onclick="gotoLogin('attendee')">Sign In</button>
+</div>
+</nav>
+<section class="hero">
+<div class="hero-bg">
+<div class="orb1"></div>
+<div class="orb2"></div>
+<div class="grid-lines"></div>
+</div>
+<div class="hero-content">
+<div class="hero-pill"> Event Registration &amp; Attendee Management Platform</div>
+<h1 class="hero-h1">The Smartest Way to<br/><span class="grad">Manage Events</span></h1>
+<p class="hero-p">EventFlow unifies event planning, attendee registration, staff coordination, and real-time
+          on-site verification in one centralized platform.</p>
+<div class="hero-btns">
+<button class="btn btn-primary btn-lg" onclick="showPage('find-events')">🎟️ Explore Events</button>
+</div>
+<div class="hero-stats">
+<div class="hero-stat">
+<div class="hero-stat-val" style="color:var(--accent)">2,400+</div>
+<div class="hero-stat-lbl">Events Managed</div>
+</div>
+<div class="hero-stat">
+<div class="hero-stat-val" style="color:var(--green)">98K+</div>
+<div class="hero-stat-lbl">Attendees Registered</div>
+</div>
+<div class="hero-stat">
+<div class="hero-stat-val" style="color:var(--yellow)">500+</div>
+<div class="hero-stat-lbl">Organizers Onboard</div>
+</div>
+<div class="hero-stat">
+<div class="hero-stat-val" style="color:var(--blue)">99.8%</div>
+<div class="hero-stat-lbl">Platform Uptime</div>
+</div>
+</div>
+</div>
+</section>
+<section class="l-section l-section-alt" id="features">
+<div class="l-eyebrow">Platform Features</div>
+<h2 class="l-heading">Everything You Need</h2>
+<p class="l-desc">A complete toolkit designed for every role in the event ecosystem.</p>
+<div class="features-grid">
+<div class="feat-card">
+<div class="feat-icon" style="background:var(--accent-dim);color:var(--accent)">📋</div>
+<div class="feat-title">Smart Registration</div>
+<p class="feat-desc">Streamlined attendee registration with instant QR ticket generation, automated email
+            confirmations, and real-time capacity tracking.</p>
+</div>
+<div class="feat-card">
+<div class="feat-icon" style="background:var(--green-dim);color:var(--green)">👥</div>
+<div class="feat-title">Staff Coordination</div>
+<p class="feat-desc">Assign staff with availability tracking, role management, and budget controls. Staff can
+            accept or decline assignments in real time.</p>
+</div>
+<div class="feat-card">
+<div class="feat-icon" style="background:var(--blue-dim);color:var(--blue)">✅</div>
+<div class="feat-title">Live Verification</div>
+<p class="feat-desc">On-site QR code scanning for fast and accurate attendee check-in. Eliminate queues and
+            manual entry errors completely.</p>
+</div>
+<div class="feat-card">
+<div class="feat-icon" style="background:var(--yellow-dim);color:var(--yellow)">💳</div>
+<div class="feat-title">Secure Payments</div>
+<p class="feat-desc">Integrated payment processing for paid events with instant receipt generation, refund
+            workflows, and revenue reporting.</p>
+</div>
+<div class="feat-card">
+<div class="feat-icon" style="background:var(--orange-dim);color:var(--orange)">📊</div>
+<div class="feat-title">Analytics &amp; Reports</div>
+<p class="feat-desc">Live dashboards with registration rates, revenue breakdowns, attendance heat maps, and
+            post-event performance summaries.</p>
+</div>
+<div class="feat-card">
+<div class="feat-icon" style="background:var(--red-dim);color:var(--red)">🔔</div>
+<div class="feat-title">Smart Notifications</div>
+<p class="feat-desc">Automated reminders, status updates, and confirmations keep clients, attendees, and staff
+            informed throughout the event lifecycle.</p>
+</div>
+</div>
+</section>
+<section class="l-section" id="roles">
+<div class="text-center">
+<div class="l-eyebrow">Role-Based Access Control</div>
+<h2 class="l-heading">Built for Every Stakeholder</h2>
+<p class="l-desc" style="margin:0 auto">Each actor gets a tailored interface with precisely the permissions they
+          need.</p>
+</div>
+<div class="roles-grid">
+<div class="role-card" onclick="gotoLogin('superuser')">
+<div class="role-card-emoji">🛡️</div>
+<div class="role-card-title">Super Admin</div>
+<p class="role-card-desc">Full CRUD access across all modules. Manage users, roles, events, and system
+            settings.</p>
+<span class="badge badge-red">Full Control</span>
+</div>
+<div class="role-card" onclick="gotoLogin('organizer')">
+<div class="role-card-emoji">🎯</div>
+<div class="role-card-title">Event Organizer</div>
+<p class="role-card-desc">Plan events, manage staff assignments, coordinate with clients, and generate event
+            reports.</p>
+<span class="badge badge-purple">Operational</span>
+</div>
+<div class="role-card" onclick="gotoLogin('client')">
+<div class="role-card-emoji">💼</div>
+<div class="role-card-title">Client</div>
+<p class="role-card-desc">Submit event requests, review proposals, approve plans, and receive post-event
+            reports.</p>
+<span class="badge badge-yellow">Requestor</span>
+</div>
+<div class="role-card" onclick="gotoLogin('attendee')">
+<div class="role-card-emoji">🎟️</div>
+<div class="role-card-title">Attendee</div>
+<p class="role-card-desc">Browse events, register, make payments, receive digital tickets, and verify
+            attendance on-site.</p>
+<span class="badge badge-green">End User</span>
+</div>
+</div>
+</section>
+<section class="l-section l-section-alt" id="how">
+<div class="l-eyebrow">How It Works</div>
+<h2 class="l-heading">Simple. Fast. Reliable.</h2>
+<div class="grid-3" style="margin-top:48px;gap:28px">
+<div style="text-align:center">
+<div style="width:64px;height:64px;background:var(--accent-dim);border:1px solid rgba(124,111,247,.3);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 18px">
+            📋</div>
+<div class="h4 mb-8">1. Request or Create</div>
+<p class="muted">Clients submit event requests. Organizers create and plan events with full detail.</p>
+</div>
+<div style="text-align:center">
+<div style="width:64px;height:64px;background:var(--green-dim);border:1px solid rgba(34,211,165,.3);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 18px">
+            🎟️</div>
+<div class="h4 mb-8">2. Register &amp; Pay</div>
+<p class="muted">Attendees browse, register, and pay securely. Instant ticket generation with unique QR codes.
+          </p>
+</div>
+<div style="text-align:center">
+<div style="width:64px;height:64px;background:var(--blue-dim);border:1px solid rgba(66,153,225,.3);border-radius:20px;display:flex;align-items:center;justify-content:center;font-size:28px;margin:0 auto 18px">
+            ✅</div>
+<div class="h4 mb-8">3. Attend &amp; Verify</div>
+<p class="muted">On-site QR scanning for instant check-in. Real-time attendance tracking and reporting.</p>
+</div>
+</div>
+</section>
+<section class="l-section" style="text-align:center;padding-top:80px;padding-bottom:80px">
+<h2 class="l-heading">Ready to Transform Your Events?</h2>
+<p class="l-desc" style="margin:0 auto 32px">Join thousands of organizers and attendees already using EventFlow.
+      </p>
+<div style="display:flex;gap:14px;justify-content:center">
+<button class="btn btn-primary btn-lg" onclick="gotoLogin('organizer')">Start Organizing →</button>
+<button class="btn btn-ghost btn-lg" onclick="gotoLogin('attendee')">Browse Events</button>
+</div>
+</section>
+<footer class="l-footer">
+<div>
+<span style="font-family:var(--font-head);font-weight:700;display:block;margin-bottom:12px">⚡ EventFlow</span>
+<div class="small" style="color:var(--text2);line-height:1.6;margin-bottom:8px">
+<div>📧 support@eventflow.com</div>
+<div>📞 +1 (555) 123-4567</div>
+<div>📍 123 Event Boulevard, Chennai, CA 94105</div>
+</div>
+</div>
+<span class="small">© 2026 EventFlow Inc. — Event Registration &amp; Attendee Management Platform</span>
+<div style="display:flex;gap:16px">
+<a class="small" href="javascript:showPage('contact')" style="color:var(--text3)">Contact Us</a>
+<a class="small" href="javascript:showPage('about')" style="color:var(--text3)">About</a>
+<a class="small" href="#" style="color:var(--text3)">Privacy</a>
+<a class="small" href="#" style="color:var(--text3)">Terms</a>
+</div>
+</footer>
+</div>
+
+<div id="login">
+<div class="login-card">
+<div class="login-logo">⚡ EventFlow</div>
+<p class="login-sub" id="login-subtitle">Sign in to your dashboard</p>
+<div class="login-hint" id="login-hint">📝 Demo credentials available below</div>
+<div class="form-group">
+<label class="form-label">Email Address</label>
+<div class="input-group">
+<span class="input-icon">✉️</span>
+<input class="form-control" id="l-email" placeholder="you@example.com" type="email"/>
+</div>
+<span class="form-error" id="l-email-err">Enter a valid email address</span>
+</div>
+<div class="form-group" style="margin-bottom:20px">
+<label class="form-label">Password</label>
+<div class="input-group">
+<span class="input-icon">🔒</span>
+<input class="form-control" id="l-pass" onkeydown="if(event.key==='Enter')doLogin()" placeholder="••••••••" type="password"/>
+</div>
+<span class="form-error" id="l-pass-err">Password must be at least 4 characters</span>
+</div>
+<button class="btn btn-primary btn-lg w-full" onclick="doLogin()">Sign In →</button>
+<div class="divider">Demo Credentials (Click to Auto-Fill)</div>
+<div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;font-size:12.5px;display:flex;flex-direction:column;gap:8px;max-height:210px;overflow-y:auto">
+<div onclick="fillLogin('staff@example.com', 'Staff@123')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:6px;background:var(--surface)">
+<span><span class="badge badge-green" style="margin-right:4px">Staff</span> <strong>James Wilson:</strong>
+            staff@example.com</span>
+<span style="color:var(--accent);font-family:monospace;font-size:11px">Staff@123</span>
+</div>
+<div onclick="fillLogin('arjun.events@eventflow.com', 'Employee@123')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:6px;background:var(--surface)">
+<span><span class="badge badge-purple" style="margin-right:4px">Employee</span> <strong>User Executive:</strong> arjun.events@eventflow.com</span>
+<span style="color:var(--accent);font-family:monospace;font-size:11px">Employee@123</span>
+</div>
+<div onclick="fillLogin('employee@example.com', 'Employee@123')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:6px;background:var(--surface)">
+<span><span class="badge badge-purple" style="margin-right:4px">Employee</span> <strong>Event Executive:</strong> employee@example.com</span>
+<span style="color:var(--accent);font-family:monospace;font-size:11px">Employee@123</span>
+</div>
+<div onclick="fillLogin('marcus.ops@eventflow.com', 'Employee@123')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:6px;background:var(--surface)">
+<span><span class="badge badge-purple" style="margin-right:4px">Employee</span> <strong>Support &amp; Finance:</strong> marcus.ops@eventflow.com</span>
+<span style="color:var(--accent);font-family:monospace;font-size:11px">Employee@123</span>
+</div>
+<div onclick="fillLogin('organizer@example.com', 'Organizer@123')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:6px;background:var(--surface)">
+<span><span class="badge badge-purple" style="margin-right:4px">Organizer</span> <strong>Sarah Chen:</strong>
+            organizer@example.com</span>
+<span style="color:var(--accent);font-family:monospace;font-size:11px">Organizer@123</span>
+</div>
+<div onclick="fillLogin('client@example.com', 'Client@123')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:6px;background:var(--surface)">
+<span><span class="badge badge-yellow" style="margin-right:4px">Client</span> <strong>Michael Torres:</strong>
+            client@example.com</span>
+<span style="color:var(--accent);font-family:monospace;font-size:11px">Client@123</span>
+</div>
+<div onclick="fillLogin('attendee@example.com', 'Attendee@123')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:6px;background:var(--surface)">
+<span><span class="badge badge-blue" style="margin-right:4px">Attendee</span> <strong>Priya Patel:</strong>
+            attendee@example.com</span>
+<span style="color:var(--accent);font-family:monospace;font-size:11px">Attendee@123</span>
+</div>
+<div onclick="fillLogin('superadmin@example.com', 'Admin@123')" style="cursor:pointer;display:flex;justify-content:space-between;align-items:center;padding:4px 6px;border-radius:6px;background:var(--surface)">
+<span><span class="badge badge-red" style="margin-right:4px">Super Admin</span> <strong>Alex Johnson:</strong> superadmin@example.com</span>
+<span style="color:var(--accent);font-family:monospace;font-size:11px">Admin@123</span>
+</div>
+</div>
+<p style="text-align:center;font-size:13px;color:var(--text2)">Don't have an account? <a href="#" onclick="openRegisterModal()" style="color:var(--accent)">Create one</a></p>
+<p style="text-align:center;font-size:13px;color:var(--text2); margin-top:12px"><a href="javascript:showPage('landing')" style="color:var(--text2)">← Back to Home</a></p>
+</div>
+</div>
+
+<div id="find-events" style="background:var(--bg);min-height:100vh;padding:80px 20px 20px;display:none">
+<nav class="l-nav" style="z-index:300">
+<span class="l-nav-logo">⚡ EventFlow</span>
+<div class="l-nav-links">
+<a href="javascript:showPage('landing')" style="color:var(--accent)">← Home</a>
+<a href="javascript:showPage('find-events')">Find Events</a>
+<a href="javascript:showPage('gallery')">Gallery</a>
+<a href="javascript:showPage('about')">About Us</a>
+<a href="javascript:showPage('contact')">Contact</a>
+</div>
+<div class="l-nav-actions">
+<button class="btn btn-ghost btn-sm" onclick="gotoLogin('attendee')">Sign In</button>
+</div>
+</nav>
+<div style="max-width:1200px;margin:0 auto">
+<div style="margin-bottom:40px">
+<a href="javascript:showPage('landing')" style="color:var(--text2);font-size:13px">← Back to Home</a>
+<h1 class="h1" style="margin-top:12px">Explore Events</h1>
+<p class="muted">Discover upcoming events and register for ones that interest you.</p>
+</div>
+<!-- Event Cards Grid for Find Events -->
+<style>
+        .fe-grid {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+          gap: 22px;
+        }
+
+        .fe-card {
+          background: var(--surface);
+          border: 1px solid var(--border);
+          border-radius: 16px;
+          overflow: hidden;
+          transition: transform .2s, box-shadow .2s;
+          cursor: pointer;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .fe-card:hover {
+          transform: translateY(-4px);
+          box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+        }
+
+        .fe-card-img {
+          position: relative;
+          height: 160px;
+          overflow: hidden;
+          background: var(--surface2);
+          flex-shrink: 0;
+        }
+
+        .fe-card-img img {
+          width: 100%;
+          height: 100%;
+          object-fit: cover;
+          display: block;
+          transition: transform .3s;
+        }
+
+        .fe-card:hover .fe-card-img img {
+          transform: scale(1.06);
+        }
+
+        .fe-card-img-fallback {
+          width: 100%;
+          height: 100%;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 52px;
+        }
+
+        .fe-card-img-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, rgba(0, 0, 0, 0.55) 0%, transparent 55%);
+        }
+
+        .fe-card-price {
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(6px);
+          color: #fff;
+          font-weight: 700;
+          font-size: 12px;
+          padding: 3px 10px;
+          border-radius: 20px;
+        }
+
+        .fe-card-body {
+          padding: 16px;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+        }
+
+        .fe-card-title {
+          font-weight: 700;
+          font-size: 15px;
+          margin-bottom: 4px;
+          line-height: 1.3;
+        }
+
+        .fe-card-meta {
+          font-size: 12px;
+          color: var(--text2);
+          margin-bottom: 8px;
+          display: flex;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+
+        .fe-card-desc {
+          font-size: 12.5px;
+          color: var(--text2);
+          line-height: 1.55;
+          flex: 1;
+          margin-bottom: 12px;
+        }
+
+        .fe-card-actions {
+          display: flex;
+          gap: 8px;
+          margin-top: auto;
+        }
+      </style>
+<div class="fe-grid">
+<!-- Tech Innovation Summit -->
+<div class="fe-card">
+<div class="fe-card-img">
+<img alt="Tech Innovation Summit 2026" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" src="../../images/events/event-tech-summit.jpg"/>
+<div class="fe-card-img-fallback" style="display:none">💻</div>
+<div class="fe-card-img-overlay"></div>
+<span class="fe-card-price">₹150</span>
+</div>
+<div class="fe-card-body">
+<div class="fe-card-title">Tech Innovation Summit 2026</div>
+<div class="fe-card-meta"><span>📅 2026-04-15</span><span>📍 Bangalore</span></div>
+<p class="fe-card-desc">Annual technology conference featuring keynotes from industry leaders and live
+              demos.</p>
+<div class="fe-card-actions">
+<button class="btn btn-ghost btn-xs w-full" onclick="viewPublicEventDetails(1)">👁️ Details</button>
+<button class="btn btn-primary btn-xs w-full" onclick="gotoLogin('attendee')">Register</button>
+</div>
+</div>
+</div>
+<!-- Corporate Annual Gala -->
+<div class="fe-card">
+<div class="fe-card-img">
+<img alt="Corporate Annual Gala 2026" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" src="../../images/events/event-annual-gala.jpg"/>
+<div class="fe-card-img-fallback" style="display:none">🥂</div>
+<div class="fe-card-img-overlay"></div>
+<span class="fe-card-price">₹250</span>
+</div>
+<div class="fe-card-body">
+<div class="fe-card-title">Corporate Annual Gala 2026</div>
+<div class="fe-card-meta"><span>📅 2026-04-22</span><span>📍 Delhi</span></div>
+<p class="fe-card-desc">Exclusive annual corporate dinner and awards ceremony for top performers.</p>
+<div class="fe-card-actions">
+<button class="btn btn-ghost btn-xs w-full" onclick="viewPublicEventDetails(2)">👁️ Details</button>
+<button class="btn btn-primary btn-xs w-full" onclick="gotoLogin('attendee')">Register</button>
+</div>
+</div>
+</div>
+<!-- Spring Music Festival -->
+<div class="fe-card">
+<div class="fe-card-img">
+<img alt="Spring Music Festival" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" src="../../images/events/event-music-fest.jpg"/>
+<div class="fe-card-img-fallback" style="display:none">🎵</div>
+<div class="fe-card-img-overlay"></div>
+<span class="fe-card-price">₹75</span>
+</div>
+<div class="fe-card-body">
+<div class="fe-card-title">Spring Music Festival</div>
+<div class="fe-card-meta"><span>📅 2026-05-01</span><span>📍 Pune</span></div>
+<p class="fe-card-desc">Outdoor music festival featuring 15+ artists across multiple genres.</p>
+<div class="fe-card-actions">
+<button class="btn btn-ghost btn-xs w-full" onclick="viewPublicEventDetails(3)">👁️ Details</button>
+<button class="btn btn-primary btn-xs w-full" onclick="gotoLogin('attendee')">Register</button>
+</div>
+</div>
+</div>
+<!-- Digital Marketing Workshop -->
+<div class="fe-card">
+<div class="fe-card-img">
+<img alt="Digital Marketing Workshop" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" src="../../images/events/event-marketing-workshop.jpg"/>
+<div class="fe-card-img-fallback" style="display:none">📱</div>
+<div class="fe-card-img-overlay"></div>
+<span class="fe-card-price">₹80</span>
+</div>
+<div class="fe-card-body">
+<div class="fe-card-title">Digital Marketing Workshop</div>
+<div class="fe-card-meta"><span>📅 2026-05-10</span><span>📍 Hyderabad</span></div>
+<p class="fe-card-desc">Hands-on full-day workshop on modern digital marketing strategies and tools.</p>
+<div class="fe-card-actions">
+<button class="btn btn-ghost btn-xs w-full" onclick="viewPublicEventDetails(4)">👁️ Details</button>
+<button class="btn btn-primary btn-xs w-full" onclick="gotoLogin('attendee')">Register</button>
+</div>
+</div>
+</div>
+<!-- Startup Pitch Night -->
+<div class="fe-card">
+<div class="fe-card-img">
+<img alt="Startup Pitch Night" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" src="../../images/events/event-pitch-night.jpg"/>
+<div class="fe-card-img-fallback" style="display:none">🚀</div>
+<div class="fe-card-img-overlay"></div>
+<span class="fe-card-price">FREE</span>
+</div>
+<div class="fe-card-body">
+<div class="fe-card-title">Startup Pitch Night</div>
+<div class="fe-card-meta"><span>📅 2026-05-15</span><span>📍 Chennai</span></div>
+<p class="fe-card-desc">Monthly startup pitch competition with VC judges and networking opportunities.</p>
+<div class="fe-card-actions">
+<button class="btn btn-ghost btn-xs w-full" onclick="viewPublicEventDetails(5)">👁️ Details</button>
+<button class="btn btn-primary btn-xs w-full" onclick="gotoLogin('attendee')">Register</button>
+</div>
+</div>
+</div>
+<!-- Photography Masterclass -->
+<div class="fe-card">
+<div class="fe-card-img">
+<img alt="Photography Masterclass" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'" src="../../images/events/event-photography.jpg"/>
+<div class="fe-card-img-fallback" style="display:none">📷</div>
+<div class="fe-card-img-overlay"></div>
+<span class="fe-card-price">₹120</span>
+</div>
+<div class="fe-card-body">
+<div class="fe-card-title">Photography Masterclass</div>
+<div class="fe-card-meta"><span>📅 2026-06-01</span><span>📍 Pune</span><span class="badge badge-green" style="font-size:10px">12/30 spots</span></div>
+<p class="fe-card-desc">Hands-on photography workshop for intermediate photographers with pro mentors.</p>
+<div class="fe-card-actions">
+<button class="btn btn-ghost btn-xs w-full" onclick="viewPublicEventDetails(7)">👁️ Details</button>
+<button class="btn btn-primary btn-xs w-full" onclick="gotoLogin('attendee')">Register</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="gallery" style="background:var(--bg);min-height:100vh;padding:60px 20px;display:none">
+<nav class="l-nav" style="z-index:300">
+<span class="l-nav-logo">⚡ EventFlow</span>
+<div class="l-nav-links">
+<a href="javascript:showPage('landing')" style="color:var(--accent)">← Home</a>
+<a href="javascript:showPage('find-events')">Find Events</a>
+<a href="javascript:showPage('gallery')">Gallery</a>
+<a href="javascript:showPage('about')">About Us</a>
+<a href="javascript:showPage('contact')">Contact</a>
+</div>
+<div class="l-nav-actions">
+<button class="btn btn-ghost btn-sm" onclick="gotoLogin('attendee')">Sign In</button>
+</div>
+</nav>
+<div class="l-container" style="max-width:1200px;margin:0 auto">
+<div style="margin-bottom:40px">
+<a href="javascript:showPage('landing')" style="color:var(--text2);font-size:13px">← Back to Home</a>
+<h1 class="h1" style="margin-top:12px">Event Gallery</h1>
+<p class="muted">Showcase of our successful events and happy attendees.</p>
+</div>
+<style>
+        .gallery-grid {
+          columns: 3;
+          column-gap: 16px;
+        }
+
+        @media(max-width:900px) {
+          .gallery-grid {
+            columns: 2;
+          }
+        }
+
+        @media(max-width:560px) {
+          .gallery-grid {
+            columns: 1;
+          }
+        }
+
+        .gallery-item {
+          break-inside: avoid;
+          margin-bottom: 16px;
+          border-radius: 14px;
+          overflow: hidden;
+          position: relative;
+          cursor: pointer;
+          display: block;
+        }
+
+        .gallery-item img {
+          width: 100%;
+          display: block;
+          transition: transform .35s;
+        }
+
+        .gallery-item:hover img {
+          transform: scale(1.05);
+        }
+
+        .gallery-item-overlay {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(to top, rgba(0, 0, 0, 0.65) 0%, transparent 50%);
+          opacity: 0;
+          transition: opacity .3s;
+          display: flex;
+          align-items: flex-end;
+          padding: 14px;
+        }
+
+        .gallery-item:hover .gallery-item-overlay {
+          opacity: 1;
+        }
+
+        .gallery-item-label {
+          color: #fff;
+          font-weight: 600;
+          font-size: 13px;
+          line-height: 1.3;
+        }
+      </style>
+<div class="gallery-grid">
+<div class="gallery-item">
+<img alt="Tech Innovation Summit" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-tech-summit.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">Tech Innovation Summit 2026</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="Spring Music Festival" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-music-fest.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">Spring Music Festival</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="Corporate Annual Gala" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-annual-gala.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">Corporate Annual Gala 2026</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="Hackathon" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-hackathon.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">DevSprint Hackathon</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="Photography Masterclass" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-photography.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">Photography Masterclass</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="FinTech Summit" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-fintech.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">FinTech Innovation Summit</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="Startup Pitch Night" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-pitch-night.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">Startup Pitch Night</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="Digital Marketing Workshop" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-marketing-workshop.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">Digital Marketing Workshop</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="AI Summit" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-ai-summit.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">AI &amp; Machine Learning Summit</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="Wedding Gala" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-wedding.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">Grand Wedding Celebration</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="Healthcare Forum" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-healthcare-forum.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">Healthcare Innovation Forum</div>
+</div>
+</div>
+<div class="gallery-item">
+<img alt="Cybersecurity Conference" onerror="this.parentElement.style.background='var(--surface2)';this.style.display='none'" src="../../images/events/event-cybersecurity.jpg"/>
+<div class="gallery-item-overlay">
+<div class="gallery-item-label">Cybersecurity Conference</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+
+<div id="about" style="background:var(--bg);min-height:100vh;padding:60px 20px;display:none">
+<nav class="l-nav" style="z-index:300">
+<span class="l-nav-logo">⚡ EventFlow</span>
+<div class="l-nav-links">
+<a href="javascript:showPage('landing')" style="color:var(--accent)">← Home</a>
+<a href="javascript:showPage('find-events')">Find Events</a>
+<a href="javascript:showPage('gallery')">Gallery</a>
+<a href="javascript:showPage('about')">About Us</a>
+<a href="javascript:showPage('contact')">Contact</a>
+</div>
+<div class="l-nav-actions">
+<button class="btn btn-ghost btn-sm" onclick="gotoLogin('attendee')">Sign In</button>
+</div>
+</nav>
+<div class="l-container" style="max-width:800px;margin:0 auto">
+<div style="margin-bottom:40px">
+<a href="javascript:showPage('landing')" style="color:var(--text2);font-size:13px">← Back to Home</a>
+<h1 class="h1" style="margin-top:12px">About EventFlow</h1>
+</div>
+<div style="background:var(--surface2);border-radius:12px;padding:24px;line-height:1.8;color:var(--text2)">
+<p style="margin-bottom:16px">EventFlow is a comprehensive event management and attendee registration platform
+          designed to simplify every aspect of event planning and execution.</p>
+<p style="margin-bottom:16px"><strong style="color:var(--text)">Our Mission:</strong> To empower event
+          organizers, clients, and attendees with intelligent tools that make event management seamless, secure, and
+          delightful.</p>
+<p style="margin-bottom:16px"><strong style="color:var(--text)">What We Offer:</strong></p>
+<ul style="margin-left:20px;margin-bottom:16px">
+<li style="margin-bottom:8px">✨ Smart registration with instant QR ticket generation</li>
+<li style="margin-bottom:8px">🎯 Staff coordination and assignment management</li>
+<li style="margin-bottom:8px">✅ Live verification and on-site check-in</li>
+<li style="margin-bottom:8px">💰 Secure payment processing</li>
+<li style="margin-bottom:8px">📊 Real-time analytics and reporting</li>
+</ul>
+<p><strong style="color:var(--text)">Founded in 2026</strong>, EventFlow has grown to manage 2,400+ events with
+          98,000+ attendees and 500+ organizers worldwide.</p>
+</div>
+</div>
+</div>
+
+<div id="contact" style="background:var(--bg);min-height:100vh;padding:60px 20px;display:none">
+<nav class="l-nav" style="z-index:300">
+<span class="l-nav-logo">⚡ EventFlow</span>
+<div class="l-nav-links">
+<a href="javascript:showPage('landing')" style="color:var(--accent)">← Home</a>
+<a href="javascript:showPage('find-events')">Find Events</a>
+<a href="javascript:showPage('gallery')">Gallery</a>
+<a href="javascript:showPage('about')">About Us</a>
+<a href="javascript:showPage('contact')">Contact</a>
+</div>
+<div class="l-nav-actions">
+<button class="btn btn-ghost btn-sm" onclick="gotoLogin('attendee')">Sign In</button>
+</div>
+</nav>
+<div class="l-container" style="max-width:800px;margin:0 auto">
+<div style="margin-bottom:40px">
+<a href="javascript:showPage('landing')" style="color:var(--text2);font-size:13px">← Back to Home</a>
+<h1 class="h1" style="margin-top:12px">Contact Us</h1>
+</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:40px">
+<div style="background:var(--surface2);border-radius:12px;padding:24px">
+<div style="font-size:28px;margin-bottom:12px">📧</div>
+<div style="font-weight:700;margin-bottom:4px">Email</div>
+<p style="color:var(--text2);font-size:13px">support@eventflow.com</p>
+</div>
+<div style="background:var(--surface2);border-radius:12px;padding:24px">
+<div style="font-size:28px;margin-bottom:12px">📞</div>
+<div style="font-weight:700;margin-bottom:4px">Phone</div>
+<p style="color:var(--text2);font-size:13px">+1 (555) 123-4567</p>
+</div>
+<div style="background:var(--surface2);border-radius:12px;padding:24px">
+<div style="font-size:28px;margin-bottom:12px">📍</div>
+<div style="font-weight:700;margin-bottom:4px">Address</div>
+<p style="color:var(--text2);font-size:13px">123 Event Boulevard, Chennai, CA 94105</p>
+</div>
+<div style="background:var(--surface2);border-radius:12px;padding:24px">
+<div style="font-size:28px;margin-bottom:12px">🕐</div>
+<div style="font-weight:700;margin-bottom:4px">Hours</div>
+<p style="color:var(--text2);font-size:13px">Mon-Fri: 9AM - 6PM PT</p>
+</div>
+</div>
+<div style="background:var(--surface2);border-radius:12px;padding:24px">
+<div style="font-weight:700;margin-bottom:16px">Send us a message</div>
+<div class="form-group">
+<label class="form-label">Name</label>
+<input class="form-control" id="contact-name" placeholder="Your name"/>
+</div>
+<div class="form-group">
+<label class="form-label">Email</label>
+<input class="form-control" id="contact-email" placeholder="your@email.com" type="email"/>
+</div>
+<div class="form-group">
+<label class="form-label">Message</label>
+<textarea class="form-control" id="contact-message" placeholder="Your message…" style="min-height:100px"></textarea>
+</div>
+<button class="btn btn-primary btn-lg w-full" onclick="sendContactMessage()">Send Message</button>
+</div>
+</div>
+</div>
+
+<div id="app">
+<div class="app-shell">
+<!-- SIDEBAR -->
+<aside class="sidebar">
+<div class="sb-logo">
+<div class="sb-logo-mark">⚡ EventFlow</div>
+<div class="sb-logo-sub" id="sb-role-sub">Management Platform</div>
+</div>
+<nav class="sb-nav" id="sb-nav"></nav>
+<div class="sb-bottom">
+<div class="sb-user" onclick="goNav('settings')">
+<div class="av" id="sb-av">?</div>
+<div class="sb-user-info">
+<div class="sb-user-name" id="sb-name">User</div>
+<div class="sb-user-role" id="sb-role-lbl">Role</div>
+</div>
+<span style="color:var(--text3);font-size:12px">⚙</span>
+</div>
+</div>
+</aside>
+<!-- MAIN AREA -->
+<div class="main">
+<div class="topbar">
+<div class="topbar-title" id="topbar-title">Dashboard</div>
+<div class="topbar-right">
+<button class="notif-trigger" onclick="goNav('notifications')">🔔<span class="notif-badge" id="notif-count-dot"></span></button>
+<button class="btn btn-ghost btn-sm" onclick="doLogout()">Sign Out</button>
+</div>
+</div>
+<div class="page" id="page-content"></div>
+</div>
+</div>
+</div>
+
+<div class="overlay" id="modal-overlay" onclick="closeModalOnBg(event)">
+<div class="modal-box" id="modal-box">
+<div class="modal-head">
+<span class="modal-title" id="modal-title"></span>
+<button class="modal-close-btn" onclick="closeModal()">✕</button>
+</div>
+<div class="modal-body" id="modal-body"></div>
+<div class="modal-foot" id="modal-foot"></div>
+</div>
+</div>
+
+<div class="overlay" id="confirm-overlay" onclick="closeConfirmOnBg(event)">
+<div class="modal-box" style="max-width:360px">
+<div class="modal-head">
+<span class="modal-title" id="confirm-title">Confirm Action</span>
+<button class="modal-close-btn" onclick="closeConfirm()">✕</button>
+</div>
+<div class="modal-body">
+<p id="confirm-msg" style="color:var(--text2);font-size:13.5px;line-height:1.6"></p>
+</div>
+<div class="modal-foot">
+<button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+<button class="btn btn-danger" id="confirm-ok" onclick="runConfirm()">Confirm</button>
+</div>
+</div>
+</div>
+
+<div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()"></div>
+
+<div class="drawer" id="drawer">
+<div class="drawer-head">
+<span class="h4" id="drawer-title">Details</span>
+<button class="modal-close-btn" onclick="closeDrawer()">✕</button>
+</div>
+<div class="drawer-body" id="drawer-body"></div>
+</div>
+
+<div id="toasts"></div>
+
+  <!-- Existing EventFlow runtime. Loaded after the page markup so every legacy
+       inline handler and dynamically rendered page continues to resolve exactly
+       as it did in the original single-file application. -->
+  <script src="staff.js"></script>
+</body>
+</html>
