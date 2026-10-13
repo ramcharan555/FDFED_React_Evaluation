@@ -1,0 +1,84 @@
+/* The home page uses a compact header; other screens keep their logo sizing. */
+#landing > .l-nav {
+  height: 72px;
+  min-height: 72px;
+  flex-wrap: nowrap;
+  padding: 0 32px 0 68px;
+  gap: 28px;
+}
+
+#landing > .l-nav .l-nav-logo {
+  flex: 0 0 232px;
+  width: 232px;
+}
+
+#landing > .l-nav .brand-logo {
+  width: 100%;
+  padding: 4px 8px;
+}
+
+#landing > .l-nav .l-nav-links {
+  order: 0;
+  flex: 1;
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: 24px;
+}
+
+#landing > .l-nav .l-nav-actions {
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+#landing > .hero {
+  padding-top: 136px;
+}
+
+body:has(> #landing:not([style*="display: none"])) > .theme-toggle {
+  top: 18px;
+  left: 16px;
+  width: 36px;
+  height: 36px;
+}
+
+@media (max-width: 860px) {
+  #landing > .l-nav {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 8px 20px 12px 68px;
+    gap: 10px 20px;
+  }
+
+  #landing > .l-nav .l-nav-logo {
+    flex: 0 1 220px;
+    width: 220px;
+  }
+
+  #landing > .l-nav .l-nav-links {
+    order: 3;
+    flex: 1 0 100%;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 18px;
+  }
+
+  #landing > .hero {
+    padding-top: 160px;
+  }
+}
+
+@media (max-width: 480px) {
+  #landing > .l-nav {
+    padding-right: 16px;
+    gap: 10px 12px;
+  }
+
+  #landing > .l-nav .l-nav-logo {
+    flex-basis: 200px;
+    width: 200px;
+  }
+
+  #landing > .hero {
+    padding-top: 176px;
+  }
+}
