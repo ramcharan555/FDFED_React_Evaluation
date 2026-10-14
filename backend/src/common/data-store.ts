@@ -239,6 +239,30 @@ export interface ActivityLog {
   details?: any;
 }
 
+export interface SupportAttachment {
+  attachmentId: string;
+  userId: string;
+  originalName: string;
+  fileName: string;
+  mimeType: string;
+  size: number;
+  filePath: string;
+  createdAt: Date;
+}
+
+export interface SupportTicket {
+  ticketId: string;
+  userId: string;
+  requestType: string;
+  concern: string;
+  description: string;
+  attachments: Omit<SupportAttachment, 'userId' | 'filePath' | 'createdAt'>[];
+  status: 'open' | 'in_progress' | 'resolved';
+  createdAt: Date;
+  updatedAt: Date;
+  resolutionEmailSentAt?: Date;
+}
+
 // ==================== DATA STORE CLASS ====================
 
 export class DataStore {
@@ -276,6 +300,10 @@ export class DataStore {
 
   // Activity logs
   activityLogs: ActivityLog[] = [];
+
+  // Customer support
+  supportTickets: SupportTicket[] = [];
+  supportAttachments: SupportAttachment[] = [];
 
   private constructor() {
     this.initializeSeedData();
@@ -1116,6 +1144,74 @@ export class DataStore {
         createdAt: new Date('2024-06-22'),
       },
     ];
+
+    const resolvedOn = new Date('2026-10-01T10:00:00.000Z');
+    const resolvedTicket = (
+      ticketId: string,
+      userId: string,
+      requestType: string,
+      concern: string,
+      description: string,
+      daysAgo: number,
+    ): SupportTicket => {
+      const resolvedAt = new Date(resolvedOn);
+      resolvedAt.setUTCDate(resolvedAt.getUTCDate() - daysAgo);
+      return {
+        ticketId,
+        userId,
+        requestType,
+        concern,
+        description,
+        attachments: [],
+        status: 'resolved',
+        createdAt: new Date(resolvedAt.getTime() - 60 * 60 * 1000),
+        updatedAt: resolvedAt,
+        resolutionEmailSentAt: resolvedAt,
+      };
+    };
+
+    this.supportTickets = [
+      resolvedTicket(
+        'SUP-2026-00001',
+        'usr-attendee-001',
+        'Ticket & Registration Issues',
+        'Ticket not received after registration',
+        'I completed my event registration, but the ticket did not appear in My Tickets.',
+        12,
+      ),
+      resolvedTicket(
+        'SUP-2026-00002',
+        'usr-attendee-001',
+        'Account Related Problems',
+        'Profile details not saving',
+        'I updated my profile details, but my changes were not being saved.',
+        5,
+      ),
+      resolvedTicket(
+        'SUP-2026-00003',
+        'usr-client-001',
+        'Organizer & Client Support',
+        'Unable to download event reports',
+        'I cannot download the event reports from my client dashboard.',
+        9,
+      ),
+      resolvedTicket(
+        'SUP-2026-00004',
+        'usr-org-001',
+        'Organizer & Client Support',
+        'Event capacity not updating',
+        'The event capacity shown in the organizer dashboard does not match the current registrations.',
+        7,
+      ),
+      resolvedTicket(
+        'SUP-2026-00005',
+        'usr-staff-001',
+        'Event Staff & Check-in Support',
+        'Check-in not updating',
+        'Attendee check-ins are not updating in the attendance list after scanning.',
+        4,
+      ),
+    ];
   }
 
   // ==================== UTILITY METHODS ====================
@@ -1144,6 +1240,8 @@ export class DataStore {
     this.staffReviews = [];
     this.notifications = [];
     this.activityLogs = [];
+    this.supportTickets = [];
+    this.supportAttachments = [];
     this.initializeSeedData();
   }
 

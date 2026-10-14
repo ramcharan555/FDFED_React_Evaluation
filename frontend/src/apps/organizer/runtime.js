@@ -2168,7 +2168,6 @@ window.EventFlowModules['shared'] = true;
       organizer: [
         { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
         { ic: '📋', lbl: 'Event Requests', pg: 'event-requests' },
-        { ic: '👷', lbl: 'Staff Management', pg: 'staff' },
         { ic: '👥', lbl: 'Attendee Management', pg: 'attendees' },
         { ic: '📈', lbl: 'Event Reports', pg: 'reports' },
       ],
@@ -2187,7 +2186,6 @@ window.EventFlowModules['shared'] = true;
       staff: [
         { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
         { ic: '📅', lbl: 'Manage Events', pg: 'assignments' },
-        { ic: '📋', lbl: 'Reports', pg: 'staff-reports' },
         { ic: '📆', lbl: 'Availability', pg: 'staff-availability' },
         { ic: '✅', lbl: 'Attendee Verification', pg: 'attendeeVerification' },
       ],
@@ -2494,6 +2492,12 @@ window.EventFlowModules['shared'] = true;
       const el = g('page-content');
       const r = CU.role;
 
+      if (pg === 'customer-support') {
+        el.innerHTML = await window.EventFlowSupport.render(CU);
+        window.EventFlowSupport.bind(el, CU, () => goNav('settings'));
+        return;
+      }
+
       if (isDepartmentEmployee()) {
         const allowed = {
           REGISTRATION_VERIFICATION: ['dashboard', 'registrations', 'attendees', 'attendeeVerification', 'reports', 'profile', 'settings', 'notifications'],
@@ -2511,7 +2515,7 @@ window.EventFlowModules['shared'] = true;
         } else if (pg === 'event-reports' || pg === 'events') {
           el.innerHTML = pageEventReports();
           return;
-        } else if (pg === 'revenue-reports' || pg === 'reports' || pg === 'staff-reports' || pg === 'employee-stats') {
+        } else if (pg === 'revenue-reports' || pg === 'reports' || pg === 'employee-stats') {
           el.innerHTML = pageRevenueReports();
           return;
         } else {
@@ -2548,7 +2552,7 @@ window.EventFlowModules['shared'] = true;
           break;
         case 'staff':
         case 'find-staff':
-          el.innerHTML = pageStaffCombined();
+          el.innerHTML = pageReports();
           break;
         case 'attendees':
           el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'REGISTRATION_VERIFICATION' ? pageUserManagement() : pageAttendees();
@@ -2558,9 +2562,6 @@ window.EventFlowModules['shared'] = true;
           break;
         case 'reports':
           el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'REGISTRATION_VERIFICATION' ? pageRegVerificationReports() : (isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOpsReports() : (isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageOperationalReports() : pageReports()));
-          break;
-        case 'staff-reports':
-          el.innerHTML = pageStaffReports();
           break;
         case 'staff-availability':
           el.innerHTML = pageStaffAvailability();
@@ -2600,6 +2601,7 @@ window.EventFlowModules['shared'] = true;
           break;
         case 'settings':
           el.innerHTML = pageSettings();
+          window.EventFlowSupport.addSettingsEntry(el, () => goNav('customer-support'));
           break;
         case 'users':
           el.innerHTML = pageUsers();
@@ -8453,16 +8455,6 @@ window.EventFlowModules['shared'] = true;
       const pendingClientEvents = myEvents.filter(e => e.status === 'completed' && !clientReports.some(report => String(report.eventId) === String(e.id)));
       const pendingReports = pendingClientEvents.length;
       const submittedReports = clientReports.length;
-      const receivedStaffReports = eventReports.filter(report => {
-        const sender = DB.users.find(user => String(user.id) === String(report.submittedBy));
-        const assignedStaff = DB.staffAssignments.some(assignment => String(assignment.eventId) === String(report.eventId) && String(assignment.staffId) === String(report.submittedBy));
-        return (sender?.role === 'staff' || assignedStaff)
-          && (report.recipientId == null || String(report.recipientId) === String(CU.id));
-      });
-      const staffReportEvents = myEvents.filter(event => event.status === 'completed' && (
-        receivedStaffReports.some(report => String(report.eventId) === String(event.id))
-        || getAttendanceReport(event.id)
-      ));
 
       const clientReportContent = `
     <div class="grid-3 mb-24">
@@ -8539,62 +8531,18 @@ window.EventFlowModules['shared'] = true;
     </div>
   `;
 
-      const staffReportContent = `
-    <div class="page-hd">
-      <div class="page-hd-left"><div class="page-title">Staff Reports</div><div class="page-sub">View and download attendance reports submitted by your staff</div></div>
-    </div>
-    <div style="display:flex;flex-direction:column;gap:16px">
-      ${staffReportEvents.map(e => {
-        const receivedReports = receivedStaffReports.filter(report => String(report.eventId) === String(e.id));
-        const attendanceReport = getAttendanceReport(e.id);
-        return `
-        <div class="card" style="border-left:3px solid var(--accent)">
-          <div class="flex justify-between items-start mb-12">
-            <div>
-              <div style="font-weight:700;font-size:15px;margin-bottom:4px">${e.title}</div>
-              <div class="small" style="display:flex;gap:12px;margin-bottom:8px">
-                <span>📅 ${e.date}</span>
-                <span>📍 ${e.venue}</span>
-                
-              </div>
-              ${receivedReports.map(report => `<div class="small mb-8">
-                <div style="font-weight:600">${escapeHtml(report.fileName || 'Staff report')}</div>
-                <div><strong>Received from:</strong> ${reportContactHtml(report.submittedBy, 'Sender not recorded')}</div>
-                ${report.submittedAt ? `<div class="muted">${escapeHtml(report.submittedAt)}</div>` : ''}
-              </div>`).join('')}
-              ${attendanceReport ? `<div class="small mb-8">
-                <div style="font-weight:600">Attendance report</div>
-                <div><strong>Received from:</strong> ${reportContactHtml(attendanceReport.sentById, attendanceReport.sentBy || 'Sender not recorded')}</div>
-                ${attendanceReport.sentAt ? `<div class="muted">${escapeHtml(attendanceReport.sentAt)}</div>` : ''}
-              </div>` : ''}
-            </div>
-            <button class="btn btn-ghost btn-sm" onclick="downloadReport('${e.id}')" style="border:1px solid var(--border);border-radius:6px">⬇️ Download Report</button>
-          </div>
-        </div>
-        `;
-      }).join('')}
-      ${staffReportEvents.length === 0 ? `<div class="empty"><div class="empty-title">No staff reports</div></div>` : ''}
-    </div>
-  `;
-
       return `
   <div style="padding:24px;background:var(--bg);">
     <div class="page-hd" style="margin-bottom: 24px; display: flex; justify-content: space-between; align-items: flex-start;">
       <div class="page-hd-left">
         <div class="page-title">Event Reports</div>
-        <div class="page-sub">${CU.role === 'organizer' ? 'Review submitted reports and remove them when needed' : 'Manage client reports and review staff submissions'}</div>
+        <div class="page-sub">Review submitted reports and remove them when needed</div>
       </div>
       <div class="page-hd-right">
         <button class="btn" style="background:var(--surface2);border:1px solid var(--border);color:var(--text);font-weight:600;padding:8px 16px;border-radius:8px;gap:8px" onclick="toast('${completedEvents} Completed Events','info')"><span style="font-size:16px;color:var(--accent)">📄</span> ${completedEvents} Completed Events</button>
       </div>
     </div>
-    
-    <div style="display:flex;gap:24px;border-bottom:1px solid var(--border);margin-bottom:24px">
-      <div style="padding-bottom:12px;border-bottom:2px solid ${tab === 'client' ? 'var(--accent)' : 'transparent'};color:${tab === 'client' ? 'var(--accent)' : 'var(--text2)'};font-weight:${tab === 'client' ? '600' : '500'};cursor:pointer;font-size:14px;transition:all 0.2s" onclick="switchReportTab('client')">Client Reports</div>
-      ${(CU.role === 'organizer' || CU.role === 'staff' || CU.role === 'superuser') ? `<div style="padding-bottom:12px;border-bottom:2px solid ${tab === 'staff' ? 'var(--accent)' : 'transparent'};color:${tab === 'staff' ? 'var(--accent)' : 'var(--text2)'};font-weight:${tab === 'staff' ? '600' : '500'};cursor:pointer;font-size:14px;transition:all 0.2s" onclick="switchReportTab('staff')">Staff Reports</div>` : ''}
-    </div>
-
-    ${tab === 'client' ? clientReportContent : staffReportContent}
+    ${clientReportContent}
   </div>
   `;
     }
@@ -8700,83 +8648,6 @@ window.EventFlowModules['shared'] = true;
       openSubmitReportModal(eventId);
     }
 
-    // ════════════════════════════════════════════════
-    //  STAFF REPORTS
-    // ════════════════════════════════════════════════
-    function pageStaffReports() {
-      const myAssignments = DB.staffAssignments.filter(a => a.staffId === CU.id && a.status === 'accepted');
-      const myEvents = myAssignments.map(a => {
-        const e = DB.events.find(ev => ev.id === a.eventId);
-        return e ? { ...e, assignment: a } : null;
-      }).filter(e => e);
-
-      const allRegs = myEvents.flatMap(e => DB.registrations.filter(r => r.eventId === e.id));
-      const verified = allRegs.filter(r => r.checkedIn).length;
-      const verificationRate = allRegs.length ? Math.round((verified / allRegs.length) * 100) : 0;
-
-      return `
-  <div class="page-hd">
-    <div class="page-hd-left">
-      <div class="page-title">Reports</div>
-      <div class="page-sub">View and manage attendance reports for all events</div>
-    </div>
-  </div>
-  
-  <div class="grid-4 mb-20">
-    <div class="stat-card"><div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">📅</div><div class="stat-value" style="color:var(--accent)">${myEvents.length}</div><div class="stat-label">Total Events</div><div class="stat-sub">With verified attendees</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:var(--green-dim);color:var(--green)">👥</div><div class="stat-value" style="color:var(--green)">${allRegs.length}</div><div class="stat-label">Total Attendees</div><div class="stat-sub">Across all events</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:var(--blue-dim);color:var(--blue)">✅</div><div class="stat-value" style="color:var(--blue)">${verified}</div><div class="stat-label">Verified</div><div class="stat-sub">Total verified</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">📈</div><div class="stat-value" style="color:var(--yellow)">${verificationRate}%</div><div class="stat-label">Verification Rate</div><div class="stat-sub">Overall performance</div></div>
-  </div>
-  
-  <div class="h4 mb-16">Attendee Reports</div>
-  ${myEvents.length === 0 ? `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No Assigned Events</div><p>You don't have any event staff assignments yet.</p></div>` : myEvents.map(e => {
-        const eventRegs = DB.registrations.filter(r => r.eventId === e.id);
-        const checkedIn = eventRegs.filter(r => r.checkedIn);
-        const rate = eventRegs.length ? Math.round((checkedIn.length / eventRegs.length) * 100) : 0;
-        return `
-    <div class="card mb-16" style="overflow:hidden">
-      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--border)">
-        <div>
-          <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><span style="font-size:24px">${e.emoji || '📅'}</span><div style="font-weight:700;font-size:16px">${e.title}</div></div>
-          <div class="small" style="color:var(--text2)">📅 ${e.date} • ${e.location}</div>
-        </div>
-        <div style="text-align:right;background:var(--surface2);padding:12px 16px;border-radius:8px">
-          <div style="font-weight:700;font-size:18px;color:var(--green)">${checkedIn.length}/${eventRegs.length}</div>
-          <div class="small">Verified</div>
-        </div>
-      </div>
-      
-      <div class="h5 mb-12" style="color:var(--green)">✓ Verified Attendees (${checkedIn.length})</div>
-      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:16px;background:rgba(34,211,165,0.08);padding:12px;border-radius:8px">
-        ${checkedIn.length === 0 ? `<div class="small" style="color:var(--text2)">No attendees verified yet</div>` : checkedIn.map(r => {
-          const u = DB.users.find(u => u.id === r.attendeeId) || { name: 'Unknown', email: '' };
-          const ticketType = r.seat === 'VIP' ? 'VIP' : r.seat === 'Premium' ? 'Premium' : 'General';
-          return `
-          <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--surface3);border-radius:6px">
-            <div style="display:flex;align-items:center;gap:10px;flex:1">
-              <div class="av av-xs">${u.avatar || u.name[0]}</div>
-              <div style="flex:1">
-                <div style="font-weight:500;font-size:13px">${u.name}</div>
-                <div class="small" style="color:var(--text2)">${u.email}</div>
-              </div>
-            </div>
-            <div style="display:flex;gap:8px;align-items:center">
-              <span class="badge badge-purple">${ticketType}</span>
-              <span class="small" style="white-space:nowrap;color:var(--text2)">${r.checkInTime || 'N/A'}</span>
-            </div>
-          </div>`;
-        }).join('')}
-      </div>
-      
-      <div style="display:flex;gap:10px">
-        <button class="btn btn-primary w-full" onclick="openSubmitReportModal('${e.id}')">📝 Submit Report</button>
-        <button class="btn btn-ghost w-full" onclick="downloadReport('${e.id}')">⬇️ Download</button>
-      </div>
-    </div>`;
-      }).join('')}`;
-    }
-
     function sendReportToOrganizer(eventId) {
       const e = DB.events.find(ev => ev.id == eventId);
       const org = DB.users.find(u => u.id === e.organizer);
@@ -8798,7 +8669,7 @@ window.EventFlowModules['shared'] = true;
 
       saveDB();
       toast('Report sent to organizer!', 'success');
-      renderPage('staff-reports');
+      renderPage('reports');
     }
 
     function downloadReport(eventId) {

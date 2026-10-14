@@ -1,0 +1,1 @@
+{"version":3,"file":"staff-assignment.dto.d.ts","sourceRoot":"","sources":["../../../../src/modules/staff-assignments/dto/staff-assignment.dto.ts"],"names":[],"mappings":"AAGA,qBAAa,wBAAwB;IAInC,OAAO,EAAG,MAAM,CAAC;IAKjB,WAAW,EAAG,MAAM,CAAC;IAKrB,OAAO,EAAG,MAAM,CAAC;CAClB;AAED,qBAAa,yBAAyB;IAQpC,MAAM,EAAG,SAAS,GAAG,UAAU,GAAG,UAAU,GAAG,WAAW,GAAG,WAAW,CAAC;CAC1E"}

@@ -152,12 +152,6 @@ export default function Landing() {
           <p className="role-card-desc">Customer support, transactions &amp; financial operations.</p>
           <span className="badge badge-purple">Support &amp; Finance</span>
         </div>
-        <div className="role-card" onClick={event => legacyEvent("gotoLogin('staff')", event)}>
-          <div className="role-card-emoji">👷</div>
-          <div className="role-card-title">Staff</div>
-          <p className="role-card-desc">Assist with event operations, manage on-site check-ins, and support attendees.</p>
-          <span className="badge badge-blue">Support</span>
-        </div>
       </div>
     </section>
     <section className="l-section l-section-alt" id="how">
@@ -237,11 +231,6 @@ export default function Landing() {
       <button className="btn btn-primary btn-lg w-full" onClick={event => legacyEvent("doLogin()", event)}>Sign In →</button>
       <div className="divider">Demo Credentials (Click to Auto-Fill)</div>
       <div style={{"background": "var(--surface2)", "borderRadius": "10px", "padding": "14px", "marginBottom": "16px", "fontSize": "12.5px", "display": "flex", "flexDirection": "column", "gap": "8px", "maxHeight": "210px", "overflowY": "auto"}}>
-        <div onClick={event => legacyEvent("fillLogin('staff@example.com', 'Staff@123')", event)} style={{"cursor": "pointer", "display": "flex", "justifyContent": "space-between", "alignItems": "center", "padding": "4px 6px", "borderRadius": "6px", "background": "var(--surface)"}}>
-          <span><span className="badge badge-green" style={{"marginRight": "4px"}}>Staff</span> <strong>James Wilson:</strong>
-            staff@example.com</span>
-          <span style={{"color": "var(--accent)", "fontFamily": "monospace", "fontSize": "11px"}}>Staff@123</span>
-        </div>
         <div onClick={event => legacyEvent("fillLogin('arjun.events@eventflow.com', 'Employee@123')", event)} style={{"cursor": "pointer", "display": "flex", "justifyContent": "space-between", "alignItems": "center", "padding": "4px 6px", "borderRadius": "6px", "background": "var(--surface)"}}>
           <span><span className="badge badge-purple" style={{"marginRight": "4px"}}>Employee</span> <strong>User
               Executive:</strong> arjun.events@eventflow.com</span>

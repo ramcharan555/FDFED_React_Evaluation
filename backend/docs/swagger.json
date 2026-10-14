@@ -2873,6 +2873,164 @@
           "uploads"
         ]
       }
+    },
+    "/api/support/tickets": {
+      "get": {
+        "operationId": "SupportController_listTickets",
+        "summary": "List the authenticated user’s support tickets; administrators can view all tickets",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "customer-support"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "SupportController_createTicket",
+        "summary": "Create a support ticket using a role-authorized request type and concern",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupportTicketDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Support ticket created"
+          },
+          "403": {
+            "description": "Request type is not available to this role"
+          }
+        },
+        "tags": [
+          "customer-support"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/support/attachments": {
+      "post": {
+        "operationId": "SupportController_uploadAttachment",
+        "summary": "Upload a support attachment (JPG, PNG, WEBP, PDF, or TXT; up to 5 MB)",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                },
+                "required": [
+                  "file"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "customer-support"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/support/attachments/{attachmentId}": {
+      "get": {
+        "operationId": "SupportController_downloadAttachment",
+        "summary": "Download a support attachment owned by the requester or viewable by an administrator",
+        "parameters": [
+          {
+            "name": "attachmentId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "customer-support"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/support/tickets/{ticketId}/status": {
+      "patch": {
+        "operationId": "SupportController_updateStatus",
+        "summary": "Update a support ticket status; resolving it emails the requester",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateSupportTicketStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "customer-support"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
     }
   },
   "info": {
@@ -3654,6 +3812,62 @@
           "eventId",
           "rating",
           "comment"
+        ]
+      },
+      "CreateSupportTicketDto": {
+        "type": "object",
+        "properties": {
+          "requestType": {
+            "type": "string",
+            "enum": [
+              "Account Related Problems",
+              "Payment Issues",
+              "Ticket & Registration Issues",
+              "Event Related Issues",
+              "Account Deletion & Privacy",
+              "Notifications & Communication",
+              "Website & Technical Problems",
+              "Organizer & Client Support",
+              "Event Staff & Check-in Support",
+              "Other Issues"
+            ]
+          },
+          "concern": {
+            "type": "string",
+            "description": "Concern selected from the request type options"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 5000
+          },
+          "attachmentIds": {
+            "maxItems": 5,
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "requestType",
+          "concern",
+          "description"
+        ]
+      },
+      "UpdateSupportTicketStatusDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "open",
+              "in_progress",
+              "resolved"
+            ]
+          }
+        },
+        "required": [
+          "status"
         ]
       }
     }

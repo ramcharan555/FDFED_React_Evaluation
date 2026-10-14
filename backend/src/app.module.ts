@@ -25,6 +25,7 @@ import { ReviewsModule } from './modules/reviews/reviews.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { SupportModule } from './modules/support/support.module';
 
 @Module({
   imports: [
@@ -49,6 +50,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     NotificationsModule,
     AnalyticsModule,
     UploadsModule,
+    SupportModule,
   ],
   controllers: [AppController],
   providers: [AppService],

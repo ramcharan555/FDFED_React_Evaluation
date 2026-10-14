@@ -2475,6 +2475,12 @@ window.EventFlowModules['shared'] = true;
       const el = g('page-content');
       const r = CU.role;
 
+      if (pg === 'customer-support') {
+        el.innerHTML = await window.EventFlowSupport.render(CU);
+        window.EventFlowSupport.bind(el, CU, () => goNav('settings'));
+        return;
+      }
+
       if (isDepartmentEmployee()) {
         const allowed = {
           REGISTRATION_VERIFICATION: ['dashboard', 'registrations', 'attendees', 'attendeeVerification', 'reports', 'profile', 'settings', 'notifications'],
@@ -2579,6 +2585,7 @@ window.EventFlowModules['shared'] = true;
           break;
         case 'settings':
           el.innerHTML = pageSettings();
+          window.EventFlowSupport.addSettingsEntry(el, () => goNav('customer-support'));
           break;
         case 'users':
           el.innerHTML = pageUsers();

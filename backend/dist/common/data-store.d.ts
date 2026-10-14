@@ -1,0 +1,258 @@
+/**
+ * In-memory data store for the application
+ * Simulates a database without actual persistence
+ * Includes all entities from the ER diagram
+ */
+import { UserRole, EmployeeType } from './constants';
+export interface User {
+    userId: string;
+    name: string;
+    email: string;
+    password: string;
+    userRole: UserRole;
+    employeeType?: EmployeeType | string;
+    status: 'active' | 'inactive' | 'suspended';
+    address?: string;
+    phoneNo?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface SuperAdmin {
+    superAdminId: string;
+    userId: string;
+    email: string;
+    phoneNo?: string;
+    createdAt: Date;
+}
+export interface Client {
+    clientId: string;
+    userId: string;
+    companyName?: string;
+    createdAt: Date;
+}
+export interface EventOrganizer {
+    organizerId: string;
+    userId: string;
+    businessName?: string;
+    rating: number;
+    createdAt: Date;
+}
+export interface EventStaff {
+    staffId: string;
+    userId: string;
+    availableDates: string[];
+    rating: number;
+    status: 'available' | 'unavailable' | 'busy';
+    createdAt: Date;
+}
+export interface Attendee {
+    attendeeId: string;
+    userId: string;
+    createdAt: Date;
+}
+export interface Event {
+    eventId: string;
+    organizerId: string;
+    clientId?: string;
+    superAdminId?: string;
+    name: string;
+    category: string;
+    date: string;
+    time: string;
+    location: string;
+    capacity: number;
+    ticketPrice: number;
+    status: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
+    description?: string;
+    city?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface EventRequest {
+    requestId: string;
+    clientId: string;
+    organizerId: string;
+    eventName: string;
+    eventDate: string;
+    budget: number;
+    capacity: number;
+    requirements: string;
+    status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface EventPlan {
+    eventPlanId: string;
+    eventId?: string;
+    clientId: string;
+    organizerId: string;
+    title: string;
+    description: string;
+    budget: number;
+    capacity: number;
+    status: 'draft' | 'submitted' | 'revised' | 'approved' | 'rejected';
+    approvalStatus: 'pending' | 'approved' | 'rejected';
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface Registration {
+    registrationId: string;
+    attendeeId: string;
+    eventId: string;
+    registrationDate: string;
+    status: 'registered' | 'cancelled' | 'no-show' | 'attended';
+    additionalInfo?: string;
+    ticketType: string;
+    qrCode?: string;
+    verificationId?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface Payment {
+    paymentId: string;
+    registrationId: string;
+    amount: number;
+    status: 'pending' | 'completed' | 'failed' | 'refunded';
+    paymentDate: string;
+    paymentMethod: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface Attendance {
+    attendanceId: string;
+    attendeeId: string;
+    eventId: string;
+    staffId: string;
+    checkInTime: string;
+    status: 'checked-in' | 'checked-out' | 'no-show';
+    qrCode?: string;
+    verificationId?: string;
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface StaffAssignment {
+    assignmentId: string;
+    eventId: string;
+    organizerId: string;
+    staffId: string;
+    status: 'pending' | 'accepted' | 'declined' | 'completed' | 'cancelled';
+    assignedAt: Date;
+    updatedAt: Date;
+}
+export interface EventReport {
+    eventReportId: string;
+    organizerId: string;
+    eventId: string;
+    clientId?: string;
+    submittedByStaffId?: string;
+    reportTitle: string;
+    reportDetails: string;
+    submissionDate: string;
+    status: 'draft' | 'submitted' | 'reviewed';
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface StaffReport {
+    staffReportId: string;
+    staffId: string;
+    organizerId: string;
+    eventId: string;
+    reportText: string;
+    status: 'draft' | 'submitted' | 'reviewed';
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface EventReview {
+    reviewId: string;
+    reviewerId: string;
+    eventId: string;
+    rating: number;
+    comment: string;
+    date: string;
+    createdAt: Date;
+}
+export interface StaffReview {
+    reviewId: string;
+    reviewerId: string;
+    staffId: string;
+    eventId: string;
+    rating: number;
+    comment: string;
+    reviewDate: string;
+    createdAt: Date;
+}
+export interface Notification {
+    notificationId: string;
+    userId: string;
+    eventId?: string;
+    registrationId?: string;
+    paymentId?: string;
+    message: string;
+    type: string;
+    read: boolean;
+    dateTime: Date;
+    createdAt: Date;
+}
+export interface ActivityLog {
+    id: string;
+    action: string;
+    resource: string;
+    role: string;
+    timestamp: Date;
+    status: string;
+    details?: any;
+}
+export interface SupportAttachment {
+    attachmentId: string;
+    userId: string;
+    originalName: string;
+    fileName: string;
+    mimeType: string;
+    size: number;
+    filePath: string;
+    createdAt: Date;
+}
+export interface SupportTicket {
+    ticketId: string;
+    userId: string;
+    requestType: string;
+    concern: string;
+    description: string;
+    attachments: Omit<SupportAttachment, 'userId' | 'filePath' | 'createdAt'>[];
+    status: 'open' | 'in_progress' | 'resolved';
+    createdAt: Date;
+    updatedAt: Date;
+    resolutionEmailSentAt?: Date;
+}
+export declare class DataStore {
+    private static instance;
+    users: User[];
+    superAdmins: SuperAdmin[];
+    clients: Client[];
+    organizers: EventOrganizer[];
+    staffProfiles: EventStaff[];
+    attendees: Attendee[];
+    events: Event[];
+    eventRequests: EventRequest[];
+    eventPlans: EventPlan[];
+    registrations: Registration[];
+    payments: Payment[];
+    attendance: Attendance[];
+    staffAssignments: StaffAssignment[];
+    eventReports: EventReport[];
+    staffReports: StaffReport[];
+    eventReviews: EventReview[];
+    staffReviews: StaffReview[];
+    notifications: Notification[];
+    activityLogs: ActivityLog[];
+    supportTickets: SupportTicket[];
+    supportAttachments: SupportAttachment[];
+    private constructor();
+    static getInstance(): DataStore;
+    private initializeSeedData;
+    generateId(prefix: string): string;
+    clearAllData(): void;
+    findUserByEmail(email: string): User | undefined;
+    findUserById(userId: string): User | undefined;
+}
+//# sourceMappingURL=data-store.d.ts.map
