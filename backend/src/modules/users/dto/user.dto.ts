@@ -2,6 +2,7 @@ import {
   IsString, IsNotEmpty, IsOptional, IsEmail,
   IsEnum, MinLength, Matches,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { UserRole } from '../../../common/constants';
 
@@ -40,9 +41,10 @@ export class CreateUserDto {
     description: 'Phone number (10 digits, starts with 6-9)',
     example: '9876543210',
   })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   @IsString()
   @IsOptional()
-  @Matches(/^[6-9]\d{9}$/, { message: 'Phone must be 10 digits starting with 6, 7, 8, or 9' })
+  @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' })
   phoneNo?: string;
 }
 
@@ -63,9 +65,10 @@ export class UpdateUserDto {
   address?: string;
 
   @ApiPropertyOptional({ description: 'Phone number (10 digits, starts with 6-9)' })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   @IsString()
   @IsOptional()
-  @Matches(/^[6-9]\d{9}$/, { message: 'Phone must be 10 digits starting with 6, 7, 8, or 9' })
+  @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' })
   phoneNo?: string;
 
   @ApiPropertyOptional({

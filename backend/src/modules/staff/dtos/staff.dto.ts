@@ -5,7 +5,9 @@ import {
   IsEmail,
   IsArray,
   IsIn,
+  Matches,
 } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateStaffDto {
@@ -26,12 +28,14 @@ export class CreateStaffDto {
   email!: string;
 
   @ApiProperty({
-    description: 'Staff phone',
+    description: 'Valid 10-digit Indian mobile number',
     example: '9876543210',
     required: false,
   })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   @IsString()
   @IsOptional()
+  @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' })
   phone?: string;
 
   @ApiProperty({
@@ -88,12 +92,14 @@ export class UpdateStaffDto {
   status?: 'available' | 'unavailable' | 'busy';
 
   @ApiProperty({
-    description: 'Staff phone number',
+    description: 'Valid 10-digit Indian mobile number',
     example: '9876543210',
     required: false,
   })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   @IsString()
   @IsOptional()
+  @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' })
   phone?: string;
 }
 

@@ -123,7 +123,7 @@
       if (field.type === 'text' && /\b(phone|mobile|telephone|emergency contact)\b/.test(details)) field.type = 'tel';
       if (field.type === 'tel') {
         field.maxLength = 10;
-        field.pattern = '[0-9]{10}';
+        field.pattern = '[6-9]\\d{9}';
         field.inputMode = 'numeric';
       }
       if (field.type === 'text' && /\b(price|budget|amount|fee|cost|capacity|quantity|guests?|age|years? of experience)\b/.test(label.toLowerCase())) {
@@ -148,8 +148,8 @@
       if (field.required && !value.trim()) {
         message = 'Please fill out this field.';
       } else if (field instanceof HTMLInputElement && field.type === 'tel' && value) {
-        if (!/^\d{10}$/.test(value)) {
-          message = 'Enter a mobile number with exactly 10 digits.';
+        if (!/^[6-9]\d{9}$/.test(value.trim())) {
+          message = 'Enter a valid 10-digit Indian mobile number.';
         }
       } else if (field instanceof HTMLInputElement && field.type === 'date' && value && Number.isNaN(Date.parse(value))) {
         message = 'Enter a valid date.';
@@ -203,9 +203,6 @@
 
     if (!field.dataset.validationReady) {
       field.addEventListener('input', () => {
-        if (field instanceof HTMLInputElement && field.type === 'tel') {
-          field.value = field.value.replace(/\D/g, '').slice(0, 10);
-        }
         validate();
       });
       field.addEventListener('change', validate);
