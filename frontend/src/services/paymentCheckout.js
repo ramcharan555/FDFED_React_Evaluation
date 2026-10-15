@@ -530,38 +530,9 @@
     ` : ''}
   </div>
 
-  <!-- Policies: Cancellation & Refund & Postponement -->
-  <div style="border:1px solid var(--border, #334155);border-radius:8px;overflow:hidden">
-    <div style="background:var(--surface3, #0f172a);padding:8px 12px;font-size:11px;font-weight:700;color:var(--text2, #94a3b8);text-transform:uppercase;letter-spacing:0.5px">
-      Event Policies & Rules
-    </div>
-    <div style="padding:12px;display:flex;flex-direction:column;gap:10px;font-size:12.5px;background:var(--surface2, #1e293b)">
-      <div>
-        <strong style="color:var(--text, #fff)">&#x23F3; Cancellation Deadline:</strong>
-        <div style="color:var(--text2, #94a3b8);margin-top:2px">${deadlineText}</div>
-      </div>
-      <div>
-        <strong style="color:var(--text, #fff)">&#x21A9;&#xFE0F; Refund Policy:</strong>
-        <div style="color:var(--text2, #94a3b8);margin-top:2px">${refundPolicyText}</div>
-      </div>
-      <div>
-        <strong style="color:var(--text, #fff)">&#x1F4E2; Cancellation & Postponement Rules:</strong>
-        <div style="color:var(--text2, #94a3b8);margin-top:2px">${postponementRulesText}</div>
-      </div>
-    </div>
-  </div>
-
-  <!-- Real-world Terms & Conditions Box -->
-  <div>
-    <div class="label" style="font-size:12px;margin-bottom:4px;font-weight:700;color:var(--text, #fff)">Terms & Conditions</div>
-    <div style="max-height:130px;overflow-y:auto;background:var(--surface2, #1e293b);border:1px solid var(--border, #334155);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;color:var(--text2, #94a3b8)">
-      <p style="margin-bottom:6px"><strong>1. Admission & Identification:</strong> A valid digital QR ticket must be presented at the check-in desk upon arrival. Attendees agree to present a valid photo ID matching the registered attendee name upon request.</p>
-      <p style="margin-bottom:6px"><strong>2. Non-Transferability:</strong> Registrations, tickets, and waitlist allocations are issued strictly to the registered attendee and may not be transferred, duplicated, or resold.</p>
-      <p style="margin-bottom:6px"><strong>3. Code of Conduct:</strong> Attendees must adhere to venue guidelines, safety instructions, and organizer protocols. Disruptive, illegal, or abusive conduct will result in immediate removal without refund.</p>
-      <p style="margin-bottom:6px"><strong>4. Cancellation Compliance:</strong> Cancellation requests must be submitted through your EventFlow portal prior to the stated deadline. Late cancellations forfeit refund eligibility.</p>
-      <p style="margin-bottom:6px"><strong>5. Program Changes:</strong> Event schedules, speaker lineups, topics, or room allocations may be subject to operational adjustments by the organizer without compromising overall event validity.</p>
-      <p style="margin-bottom:0"><strong>6. Simulated Payment Notice:</strong> Payments in EventFlow are processed in a simulated demo environment. No real banking debits or actual currency exchanges occur.</p>
-    </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap">
+    <button type="button" class="btn btn-ghost" onclick="openEventPolicies('${pcoEsc(e.eventId || e.id)}')">&#x1F4CB; Event Policies &amp; Rules</button>
+    <button type="button" class="btn btn-ghost" onclick="openTermsConditions('${pcoEsc(e.eventId || e.id)}')">&#x1F4C4; Terms and Conditions</button>
   </div>
 
   <!-- Required Agreement Checkbox -->
@@ -641,6 +612,7 @@
       }, 20);
     }
   }
+  window.openEventReviewModal = openEventReviewModal;
 
   window.pcoProceedFromReview = function (eventId) {
     const chk = pcoById('pco-terms-check');

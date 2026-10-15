@@ -2505,6 +2505,16 @@ window.EventFlowModules['shared'] = true;
         return;
       }
 
+      // The Support Executive's customer ticket tab must use the shared API
+      // queue. The legacy page below only reads browser-local demo data.
+      if (pg === 'support-issue-mgmt'
+        && isSupportExecutive()
+        && (sessionStorage.getItem('sim_active_tab') || 'support') !== 'operations') {
+        el.innerHTML = await window.EventFlowSupport.render(CU);
+        window.EventFlowSupport.bind(el, CU, () => goNav('dashboard'));
+        return;
+      }
+
       if (isDepartmentEmployee()) {
         const supportExecPages = [
           'dashboard', 'user-event-mgmt', 'support-issue-mgmt', 'reports-analytics',

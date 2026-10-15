@@ -333,6 +333,190 @@
   text-align: center;
 }
 
+.support-ticket-table td strong,
+.support-ticket-table td small {
+  display: block;
+}
+
+.support-ticket-table td strong {
+  color: var(--text);
+  font-size: 13px;
+}
+
+.support-ticket-table td small {
+  margin-top: 4px;
+  color: var(--text2);
+  font-size: 11px;
+}
+
+.support-modal-overlay[hidden] {
+  display: none;
+}
+
+.support-modal-overlay {
+  position: fixed;
+  z-index: 2100;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgba(0, 0, 0, .76);
+  backdrop-filter: blur(5px);
+}
+
+.support-modal {
+  display: flex;
+  width: min(725px, 100%);
+  max-height: min(710px, calc(100vh - 48px));
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: var(--shadow-lg);
+}
+
+.support-modal-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  padding: 23px 29px;
+  border-bottom: 1px solid var(--border);
+}
+
+.support-modal-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(17px, 2.4vw, 22px);
+  overflow-wrap: anywhere;
+}
+
+.support-modal-x {
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text2);
+  font-size: 28px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.support-modal-x:hover {
+  color: var(--text);
+}
+
+.support-modal-body {
+  overflow-y: auto;
+  padding: 22px 29px 28px;
+}
+
+.support-modal-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  min-height: 52px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text2);
+  font-size: 13px;
+}
+
+.support-modal-summary strong {
+  color: var(--text);
+  text-align: right;
+}
+
+.support-modal .support-conversation {
+  margin: 4px 0 20px;
+  gap: 0;
+}
+
+.support-modal .support-message {
+  padding: 15px 0;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  background: transparent;
+}
+
+.support-modal .support-message-requester {
+  background: transparent;
+}
+
+.support-follow-up {
+  display: grid;
+  gap: 9px;
+  margin-top: 20px;
+}
+
+.support-follow-up > label {
+  color: var(--text2);
+  font-size: 13px;
+}
+
+.support-follow-up textarea {
+  min-height: 112px;
+  resize: vertical;
+  background: var(--surface2);
+}
+
+.support-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin: 5px -29px -28px;
+  padding: 17px 29px;
+  border-top: 1px solid var(--border);
+}
+
+.support-modal .support-ticket-actions {
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.support-status-editor {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(180px, 2fr);
+  align-items: center;
+  gap: 14px;
+  margin-top: 20px;
+  color: var(--text2);
+  font-size: 13px;
+}
+
+.support-status-editor select {
+  width: 100%;
+}
+
+.support-modal [data-status-feedback]:empty {
+  display: none;
+}
+
+@media (max-width: 600px) {
+  .support-modal-overlay {
+    padding: 10px;
+  }
+
+  .support-modal {
+    max-height: calc(100vh - 20px);
+  }
+
+  .support-modal-heading,
+  .support-modal-body {
+    padding-right: 17px;
+    padding-left: 17px;
+  }
+
+  .support-modal-footer {
+    margin-right: -17px;
+    margin-left: -17px;
+    padding-right: 17px;
+    padding-left: 17px;
+  }
+}
+
 .support-visually-hidden {
   position: absolute;
   overflow: hidden;
@@ -567,6 +751,42 @@
   font-size: 13px;
   line-height: 1.55;
   white-space: pre-wrap;
+}
+
+.support-agent-reply {
+  margin-top: 12px;
+  padding: 11px 13px;
+  border-left: 3px solid var(--accent);
+  border-radius: 0 8px 8px 0;
+  background: var(--surface2);
+}
+
+.support-agent-reply strong,
+.support-reply-editor > span {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--text);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.support-agent-reply p {
+  margin: 0;
+  color: var(--text2);
+  font-size: 13px;
+  line-height: 1.55;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.support-reply-editor {
+  display: block;
+  margin-top: 12px;
+}
+
+.support-reply-editor textarea {
+  min-height: 74px;
+  resize: vertical;
 }
 
 .support-attachments,
@@ -862,7 +1082,7 @@ input,select,textarea,.form-control { border-radius:10px; }
   width: 360px;
   max-width: 100%;
   padding: 5px 8px;
-  background: #f2f8f4;
+  background: transparent;
   vertical-align: middle;
   line-height: 0;
 }

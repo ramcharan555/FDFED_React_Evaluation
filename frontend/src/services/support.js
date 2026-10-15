@@ -172,39 +172,6 @@
     })[status] || status;
   }
 
-  function ticketCard(ticket, isAdmin) {
-    const attachments = (ticket.attachments || []).map(attachment => `
-      <button class="support-file-link" type="button" data-support-download="${escapeHtml(attachment.attachmentId)}">
-        ${escapeHtml(attachment.originalName)}
-      </button>`).join('');
-    const actions = isAdmin ? `
-      <div class="support-ticket-actions">
-        ${ticket.status !== 'in_progress' && ticket.status !== 'resolved'
-          ? `<button class="btn btn-ghost btn-sm" type="button" data-support-status="in_progress" data-ticket-id="${escapeHtml(ticket.ticketId)}">In progress</button>`
-          : ''}
-        ${ticket.status !== 'resolved'
-          ? `<button class="btn btn-primary btn-sm" type="button" data-support-status="resolved" data-ticket-id="${escapeHtml(ticket.ticketId)}">Resolve &amp; email requester</button>`
-          : `<button class="btn btn-ghost btn-sm" type="button" data-support-status="open" data-ticket-id="${escapeHtml(ticket.ticketId)}">Reopen</button>`}
-      </div>` : '';
-
-    return `
-      <article class="support-ticket">
-        <div class="support-ticket-heading">
-          <div>
-            <strong>${escapeHtml(ticket.ticketId)}</strong>
-            <span class="support-status support-status-${escapeHtml(ticket.status)}">${escapeHtml(statusLabel(ticket.status))}</span>
-          </div>
-          <time>${escapeHtml(new Date(ticket.createdAt).toLocaleDateString())}</time>
-        </div>
-        ${isAdmin ? `<p class="support-requester">${escapeHtml(ticket.requesterName)} · ${escapeHtml(ticket.requesterEmail)}</p>` : ''}
-        <h3>${escapeHtml(ticket.concern)}</h3>
-        <p class="support-ticket-category">${escapeHtml(ticket.requestType)}</p>
-        <p class="support-ticket-description">${escapeHtml(ticket.description)}</p>
-        ${attachments ? `<div class="support-attachments">${attachments}</div>` : ''}
-        ${actions}
-      </article>`;
-  }
-
   function ticketDate(value, includeTime = false) {
     const date = new Date(value);
     if (Number.isNaN(date.getTime())) return '—';
@@ -213,128 +180,99 @@
       : { dateStyle: 'medium' });
   }
 
-  function pastTicketRows(tickets) {
-    if (!tickets.length) {
-      return '<tr><td class="support-table-empty" colspan="5">No matching resolved tickets.</td></tr>';
-    }
-    return tickets.map(ticket => `
-      <tr class="support-past-row" tabindex="0" role="button" data-past-ticket-id="${escapeHtml(ticket.ticketId)}">
-        <td>${escapeHtml(ticket.concern)}</td>
-        <td>${escapeHtml(ticket.ticketId)}</td>
-        <td>${escapeHtml(ticketDate(ticket.createdAt))}</td>
-        <td>${escapeHtml(ticketDate(ticket.updatedAt || ticket.createdAt))}</td>
-        <td><span class="support-status support-status-resolved">Resolved</span></td>
-      </tr>`).join('');
+  function ticketTable(title, tickets, isSupportAgent) {
+    const rows = tickets.length ? tickets.map(ticket => `
+      <tr>
+        <td><strong>${escapeHtml(ticket.concern)}</strong><small>${escapeHtml(ticket.ticketId)}</small>${isSupportAgent ? `<small>${escapeHtml(ticket.requesterName)} · ${escapeHtml(ticket.requesterEmail)}</small>` : ''}</td>
+        <td>${escapeHtml(ticket.requestType)}</td>
+        <td><span class="support-status support-status-${escapeHtml(ticket.status)}">${escapeHtml(statusLabel(ticket.status))}</span></td>
+        <td>${escapeHtml(ticketDate(ticket.updatedAt || ticket.createdAt, true))}</td>
+        <td><button class="btn btn-ghost btn-sm" type="button" data-ticket-view="${escapeHtml(ticket.ticketId)}">View</button></td>
+      </tr>`).join('') : '<tr><td class="support-table-empty" colspan="5">No support requests yet.</td></tr>';
+
+    return `
+      <section class="card support-ticket-section">
+        <div class="support-section-heading"><h2>${escapeHtml(title)}</h2><span>${tickets.length}</span></div>
+        <div class="support-table-wrap"><table class="support-ticket-table">
+          <thead><tr><th>Request</th><th>Category</th><th>Status</th><th>Updated</th><th></th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table></div>
+      </section>`;
   }
 
-  function pastTicketDetail(ticket, user) {
+  function ticketDialog(ticket, user, isSupportAgent) {
     const attachments = (ticket.attachments || []).map(attachment => `
       <button class="support-file-link" type="button" data-support-download="${escapeHtml(attachment.attachmentId)}">
         ${escapeHtml(attachment.originalName)}
       </button>`).join('');
-    const requesterName = user?.name || 'You';
+    const messages = [
+      { sender: 'requester', message: ticket.description, createdAt: ticket.createdAt },
+      ...((ticket.messages || []).length
+        ? ticket.messages
+        : (ticket.response ? [{ sender: 'support', message: ticket.response, createdAt: ticket.updatedAt || ticket.createdAt }] : [])),
+    ];
+    const conversation = messages.map(message => {
+      const fromSupport = message.sender === 'support';
+      const name = fromSupport ? 'Support' : (isSupportAgent ? (ticket.requesterName || 'Requester') : (user?.name || 'You'));
+      return `
+        <article class="support-message ${fromSupport ? 'support-message-agent' : 'support-message-requester'}">
+          <div class="support-message-meta"><span class="support-message-avatar">${escapeHtml(name.slice(0, 1).toUpperCase())}</span><strong>${escapeHtml(name)}</strong><time>${escapeHtml(ticketDate(message.createdAt, true))}</time></div>
+          <p>${escapeHtml(message.message)}</p>
+          ${!fromSupport && message.message === ticket.description && attachments ? `<div class="support-attachments">${attachments}</div>` : ''}
+        </article>`;
+    }).join('');
+    const actions = isSupportAgent ? `
+      <label class="support-reply-editor"><span>Reply to requester</span><textarea class="form-control" rows="3" maxlength="2000" data-support-response="${escapeHtml(ticket.ticketId)}" placeholder="Write an update the requester can see">${escapeHtml(ticket.response || '')}</textarea></label>
+      <label class="support-status-editor" for="support-ticket-status"><span>Update status</span>
+        <select class="form-control" id="support-ticket-status" data-support-status-select>
+          <option value="open" ${ticket.status === 'open' ? 'selected' : ''}>Open</option>
+          <option value="in_progress" ${ticket.status === 'in_progress' ? 'selected' : ''}>In progress</option>
+          <option value="resolved" ${ticket.status === 'resolved' ? 'selected' : ''}>Resolved</option>
+        </select>
+      </label>
+      <p class="support-feedback" data-status-feedback role="status" aria-live="polite"></p>
+      <div class="support-ticket-actions"><button class="btn btn-primary" type="button" data-support-status-update data-ticket-id="${escapeHtml(ticket.ticketId)}">Update Status</button></div>` : `
+      <form class="support-follow-up" data-follow-up-form="${escapeHtml(ticket.ticketId)}">
+        <label for="support-follow-up-message">Follow-up message</label>
+        <textarea class="form-control" id="support-follow-up-message" name="message" rows="4" maxlength="2000" required></textarea>
+        <p class="support-feedback" data-follow-up-feedback role="status" aria-live="polite"></p>
+        <div class="support-modal-footer"><button class="btn btn-ghost" type="button" data-modal-close>Cancel</button><button class="btn btn-primary" type="submit">Send Follow-up</button></div>
+      </form>`;
 
     return `
-      <div class="support-detail">
-        <button class="support-back-to-list" type="button" id="support-past-back">‹ &nbsp;Back to My Tickets</button>
-        <h2>My Tickets</h2>
-        <article class="support-detail-summary">
-          <div class="support-detail-title">
-            <div>
-              <h3>${escapeHtml(ticket.concern)}</h3>
-              <p>${escapeHtml(ticket.requestType)}</p>
-            </div>
-            <span class="support-status support-status-resolved">Resolved</span>
-          </div>
-          <div class="support-detail-meta">
-            <div><span>Created</span><strong>${escapeHtml(ticketDate(ticket.createdAt, true))}</strong></div>
-            <div><span>Last activity</span><strong>${escapeHtml(ticketDate(ticket.updatedAt || ticket.createdAt, true))}</strong></div>
-            <div><span>Ticket no.</span><strong>${escapeHtml(ticket.ticketId)}</strong></div>
-          </div>
-        </article>
-        <div class="support-conversation">
-          <article class="support-message support-message-requester">
-            <div class="support-message-meta">
-              <span class="support-message-avatar">${escapeHtml(requesterName.slice(0, 1).toUpperCase())}</span>
-              <strong>${escapeHtml(requesterName)}</strong>
-              <time>${escapeHtml(ticketDate(ticket.createdAt, true))}</time>
-            </div>
-            <p>${escapeHtml(ticket.description)}</p>
-            ${attachments ? `<div class="support-attachments">${attachments}</div>` : ''}
-          </article>
-          <article class="support-message support-message-agent">
-            <div class="support-message-meta">
-              <span class="support-message-avatar">S</span>
-              <strong>EventFlow Support</strong>
-              <time>${escapeHtml(ticketDate(ticket.updatedAt || ticket.createdAt, true))}</time>
-            </div>
-            <p>Your request has been reviewed and resolved. If you still need assistance with this issue, please submit a new support ticket.</p>
-          </article>
-        </div>
+      <div class="support-modal-heading"><h2 id="support-modal-title">Support Request ${escapeHtml(ticket.ticketId)}</h2><button class="support-modal-x" type="button" aria-label="Close" data-modal-close>×</button></div>
+      <div class="support-modal-body">
+        <div class="support-modal-summary"><span>Subject</span><strong>${escapeHtml(ticket.concern)}</strong></div>
+        <div class="support-modal-summary"><span>Status</span><strong><span class="support-status support-status-${escapeHtml(ticket.status)}">${escapeHtml(statusLabel(ticket.status))}</span></strong></div>
+        <div class="support-conversation">${conversation}</div>
+        ${actions}
       </div>`;
   }
 
   async function render(user, backLabel = 'Back to Settings') {
     const categories = allowedCategories(user);
-    const isAdmin = ['superuser', 'super_admin', 'admin'].includes(
+    const isSupportAgent = ['superuser', 'super_admin', 'admin'].includes(
       String(user?.role || user?.userRole || '').toLowerCase().replace(/-/g, '_'),
-    );
+    ) || String(user?.employeeType || '').toUpperCase() === 'SUPPORT_EXECUTIVE';
     let tickets = [];
+    let ticketLoadError = '';
     try {
       tickets = await request('/support/tickets', user);
     } catch (error) {
+      ticketLoadError = error.message || 'Unable to load support tickets.';
       console.error('Failed to load Customer Support tickets.', error);
     }
-
-    const currentTickets = tickets.filter(ticket => ticket.status !== 'resolved');
-    const pastTickets = tickets.filter(ticket => ticket.status === 'resolved');
-    const pastTicketSection = `
-      <section class="card support-ticket-section support-past-tickets" id="support-past-section" data-past-tickets="${escapeHtml(JSON.stringify(pastTickets))}">
-        <div class="support-section-heading">
-          <h2>Past Tickets</h2>
-          <span>${pastTickets.length}</span>
-        </div>
-        ${pastTickets.length ? `
-          <div class="support-past-controls">
-            <label class="support-search">
-              <span class="support-visually-hidden">Search past tickets</span>
-              <input class="form-control" id="support-past-search" type="search" placeholder="Search requests">
-              <span aria-hidden="true">⌕</span>
-            </label>
-            <label class="support-status-filter">
-              <span>Status</span>
-              <select class="form-control" id="support-past-status">
-                <option value="all">All</option>
-                <option value="resolved">Resolved</option>
-              </select>
-            </label>
-          </div>
-          <div class="support-table-wrap">
-            <table class="support-ticket-table">
-              <thead><tr><th>Concern</th><th>Ticket no.</th><th>Created</th><th>Last activity</th><th>Status</th></tr></thead>
-              <tbody id="support-past-rows">${pastTicketRows(pastTickets)}</tbody>
-            </table>
-          </div>` : '<p class="support-empty">Resolved tickets will appear here.</p>'}
-      </section>`;
-    const ticketSection = (title, list, empty) => `
-      <section class="card support-ticket-section">
-        <div class="support-section-heading">
-          <h2>${title}</h2>
-          <span>${list.length}</span>
-        </div>
-        ${list.length ? list.map(ticket => ticketCard(ticket, isAdmin)).join('') : `<p class="support-empty">${empty}</p>`}
-      </section>`;
 
     return `
       <div class="page-hd support-page-heading">
         <div class="page-hd-left">
           <div class="page-title">Customer Support</div>
-          <div class="page-sub">Tell us what you need help with. Your ticket number and status will be available here.</div>
+          <div class="page-sub">${isSupportAgent ? 'Review requester tickets, update their status, and send replies visible in My Tickets.' : 'Tell us what you need help with. Your ticket number, status, and support replies will be available here.'}</div>
         </div>
-        <button class="btn btn-ghost" id="support-back" type="button">${escapeHtml(backLabel)}</button>
       </div>
-      <div class="support-layout">
-        <section class="card card-lg">
+      <div class="support-layout" style="${isSupportAgent ? 'grid-template-columns:minmax(0,1fr)' : ''}">
+        ${ticketLoadError ? `<p class="support-feedback support-feedback-error" role="alert">Could not load support tickets: ${escapeHtml(ticketLoadError)}</p>` : ''}
+        <section class="card card-lg" style="${isSupportAgent ? 'display:none' : ''}">
           <h2 class="support-card-title">Submit a support request</h2>
           <form id="support-request-form" novalidate>
             <div class="form-group">
@@ -364,58 +302,105 @@
             <button class="btn btn-primary" id="support-submit" type="submit">Submit Request</button>
           </form>
         </section>
-        <div class="support-history">
-          ${isAdmin
-            ? ticketSection('All Support Tickets', tickets, 'No support tickets have been submitted.')
-            : `${ticketSection('Current Tickets', currentTickets, 'You have no open or in-progress tickets.')}${pastTicketSection}`}
-        </div>
+        <div class="support-history" data-support-tickets="${escapeHtml(JSON.stringify(tickets))}">${ticketTable(isSupportAgent ? 'All Support Tickets' : 'My Support Requests', tickets, isSupportAgent)}</div>
+      </div>
+      <div class="support-modal-overlay" id="support-ticket-modal" hidden>
+        <section class="support-modal" role="dialog" aria-modal="true" aria-labelledby="support-modal-title">
+          <div id="support-modal-content"></div>
+        </section>
       </div>`;
   }
 
   function bind(container, user, onBack, backLabel = 'Back to Settings') {
-    container.querySelector('#support-back')?.addEventListener('click', onBack);
-
-    const pastSection = container.querySelector('#support-past-section');
-    if (pastSection) {
-      const ticketsForPastRows = JSON.parse(pastSection.dataset.pastTickets || '[]');
-      const initialPastSectionContent = pastSection.innerHTML;
-      const showList = () => {
-        pastSection.innerHTML = initialPastSectionContent;
-        bindPastTicketList();
-      };
-      const bindPastTicketList = () => {
-        const searchInput = pastSection.querySelector('#support-past-search');
-        const statusSelect = pastSection.querySelector('#support-past-status');
-        const tableRows = pastSection.querySelector('#support-past-rows');
-        const drawRows = () => {
-          const query = searchInput.value.trim().toLowerCase();
-          const filtered = ticketsForPastRows.filter(ticket =>
-            (statusSelect.value === 'all' || ticket.status === statusSelect.value)
-            && [ticket.ticketId, ticket.concern, ticket.requestType, ticket.description]
-              .some(value => String(value || '').toLowerCase().includes(query)),
-          );
-          tableRows.innerHTML = pastTicketRows(filtered);
-        };
-        searchInput?.addEventListener('input', drawRows);
-        statusSelect?.addEventListener('change', drawRows);
-        tableRows?.addEventListener('click', event => {
-          const row = event.target.closest('[data-past-ticket-id]');
-          if (!row) return;
-          const ticket = ticketsForPastRows.find(item => item.ticketId === row.dataset.pastTicketId);
-          if (!ticket) return;
-          pastSection.innerHTML = pastTicketDetail(ticket, user);
-          pastSection.querySelector('#support-past-back')?.addEventListener('click', showList);
-          bindAttachmentDownloads(pastSection, user);
-        });
-        tableRows?.addEventListener('keydown', event => {
-          if (event.key === 'Enter' || event.key === ' ') {
-            event.preventDefault();
-            event.target.closest('[data-past-ticket-id]')?.click();
+    const history = container.querySelector('.support-history');
+    const tickets = JSON.parse(history?.dataset.supportTickets || '[]');
+    const modal = container.querySelector('#support-ticket-modal');
+    const modalContent = container.querySelector('#support-modal-content');
+    const isSupportAgent = ['superuser', 'super_admin', 'admin'].includes(
+      String(user?.role || user?.userRole || '').toLowerCase().replace(/-/g, '_'),
+    ) || String(user?.employeeType || '').toUpperCase() === 'SUPPORT_EXECUTIVE';
+    const closeModal = () => { if (modal) modal.hidden = true; };
+    const openTicket = ticket => {
+      if (!modal || !ticket) return;
+      modalContent.innerHTML = ticketDialog(ticket, user, isSupportAgent);
+      modal.hidden = false;
+      bindAttachmentDownloads(modal, user);
+      modalContent.querySelectorAll('[data-modal-close]').forEach(button => button.addEventListener('click', closeModal));
+      const followUpForm = modalContent.querySelector('[data-follow-up-form]');
+      followUpForm?.addEventListener('submit', async event => {
+        event.preventDefault();
+        const feedback = followUpForm.querySelector('[data-follow-up-feedback]');
+        const submit = followUpForm.querySelector('button[type="submit"]');
+        const message = followUpForm.elements.message.value.trim();
+        if (!message) {
+          feedback.classList.add('is-error');
+          feedback.textContent = 'Enter a follow-up message.';
+          return;
+        }
+        submit.disabled = true;
+        try {
+          await request(`/support/tickets/${encodeURIComponent(ticket.ticketId)}/follow-ups`, user, {
+            method: 'POST', body: JSON.stringify({ message }),
+          });
+          await refreshTicketView(ticket.ticketId);
+        } catch (error) {
+          submit.disabled = false;
+          feedback.classList.add('is-error');
+          feedback.textContent = error.message;
+        }
+      });
+      modalContent.querySelectorAll('[data-support-status-update]').forEach(button => {
+        button.addEventListener('click', async () => {
+          const responseField = modalContent.querySelector(`[data-support-response="${ticket.ticketId}"]`);
+          const response = responseField?.value.trim() || '';
+          const status = modalContent.querySelector('[data-support-status-select]')?.value;
+          const feedback = modalContent.querySelector('[data-status-feedback]');
+          if (status === 'resolved' && !response) {
+            feedback.classList.add('is-error');
+            feedback.textContent = 'Add a reply before resolving this request.';
+            responseField?.focus();
+            return;
+          }
+          button.disabled = true;
+          try {
+            const updated = await request(`/support/tickets/${encodeURIComponent(ticket.ticketId)}/status`, user, {
+              method: 'PATCH', body: JSON.stringify({ status, response }),
+            });
+            const notice = status === 'resolved'
+              ? (updated.emailNotificationSent
+                ? 'Ticket resolved and the reply was saved. The requester was emailed.'
+                : 'Ticket resolved and the reply was saved. Email notification is unavailable until SMTP is configured.')
+              : `Ticket status updated to ${statusLabel(status)}.`;
+            await refreshTicketView(ticket.ticketId, notice);
+          } catch (error) {
+            button.disabled = false;
+            feedback.classList.add('is-error');
+            feedback.textContent = error.message;
           }
         });
-      };
-      bindPastTicketList();
-    }
+      });
+    };
+    container.querySelectorAll('[data-ticket-view]').forEach(button => {
+      button.addEventListener('click', () => openTicket(tickets.find(ticket => ticket.ticketId === button.dataset.ticketView)));
+    });
+    modal?.addEventListener('click', event => { if (event.target === modal) closeModal(); });
+    modal?.addEventListener('keydown', event => { if (event.key === 'Escape') closeModal(); });
+
+    const refreshTicketView = async (ticketId, notice = '') => {
+      const page = container.querySelector('#page-content') || container;
+      page.innerHTML = await render(user);
+      bind(page, user);
+      const refreshedButton = Array.from(page.querySelectorAll('[data-ticket-view]'))
+        .find(button => button.dataset.ticketView === ticketId);
+      refreshedButton?.click();
+      if (notice) {
+        const feedback = page.querySelector('[data-status-feedback]');
+        if (feedback) {
+          feedback.classList.add('is-success');
+          feedback.textContent = notice;
+        }
+      }
+    };
 
     const category = container.querySelector('#support-request-type');
     const concernGroup = container.querySelector('#support-concern-group');
@@ -510,34 +495,6 @@
           submit.textContent = 'Submit Request';
         }
       }
-    });
-
-    container.querySelectorAll('[data-support-status]').forEach(button => {
-      button.addEventListener('click', async () => {
-        const feedback = container.querySelector('#support-feedback');
-        button.disabled = true;
-        try {
-          const result = await request(
-            `/support/tickets/${encodeURIComponent(button.dataset.ticketId)}/status`,
-            user,
-            {
-              method: 'PATCH',
-              body: JSON.stringify({ status: button.dataset.supportStatus }),
-            },
-          );
-          container.innerHTML = await render(user, backLabel);
-          bind(container, user, onBack, backLabel);
-          const refreshedFeedback = container.querySelector('#support-feedback');
-          refreshedFeedback.classList.add('is-success');
-          refreshedFeedback.textContent = result.status === 'resolved'
-            ? `Ticket ${result.ticketId} resolved. A resolution email was sent to the requester.`
-            : `Ticket ${result.ticketId} status updated to ${statusLabel(result.status)}.`;
-        } catch (error) {
-          button.disabled = false;
-          feedback.classList.add('is-error');
-          feedback.textContent = error.message;
-        }
-      });
     });
 
     bindAttachmentDownloads(container, user);

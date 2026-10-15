@@ -262,13 +262,6 @@ async function apiCancelRegistration(registrationId, reason) {
   return response.data || response;
 }
 
-async function apiConfirmWaitlist(registrationId) {
-  const response = await apiRequest(`/registrations/${registrationId}/waitlist/confirm`, {
-    method: 'POST',
-  });
-  return response.data || response;
-}
-
 // ─── STAFF ASSIGNMENTS ───────────────────────────────────────────
 async function apiGetStaffAssignments(staffId) {
   return apiRequest('/staff-assignments');
@@ -389,7 +382,6 @@ window.apiGetAttendeeRegistrations = apiGetAttendeeRegistrations;
 window.apiRegisterForEvent = apiRegisterForEvent;
 window.apiMakePayment = apiMakePayment;
 window.apiCancelRegistration = apiCancelRegistration;
-window.apiConfirmWaitlist = apiConfirmWaitlist;
 window.apiGetStaffAssignments = apiGetStaffAssignments;
 window.apiGetStaffStatistics = apiGetStaffStatistics;
 window.apiCreateStaffAssignment = apiCreateStaffAssignment;
@@ -2632,7 +2624,9 @@ window.EventFlowModules['shared'] = true;
             el.innerHTML = `<div class="empty"><div class="empty-icon">🔔</div><div class="empty-title">Loading notifications…</div></div>`;
             try {
               const serverNotifications = await apiGetNotifications();
-              attendeeNotificationCatalog = (Array.isArray(serverNotifications) ? serverNotifications : []).map(n => ({
+              attendeeNotificationCatalog = (Array.isArray(serverNotifications) ? serverNotifications : [])
+                 .filter(n => n.type !== 'waitlist_offer' && !/waitlist|waiting list/i.test(n.message || ''))
+                 .map(n => ({
                 id: n.notificationId, title: notificationTitle(n.type), msg: n.message, time: new Date(n.dateTime).toLocaleString(), read: n.read, type: notificationTone(n.type), icon: '🔔',
               }));
               el.innerHTML = pageNotifications();
@@ -4950,9 +4944,10 @@ window.EventFlowModules['shared'] = true;
       }
 
       // Use authenticated attendee's actual records
-      const myRegs = (attendeeRegistrationCatalog && attendeeRegistrationCatalog.length > 0)
+      const allMyRegs = (attendeeRegistrationCatalog && attendeeRegistrationCatalog.length > 0)
         ? attendeeRegistrationCatalog
         : (DB.registrations || []).filter(r => String(r.attendeeId) === String(CU.id));
+      const myRegs = allMyRegs.filter(r => r.status !== 'waitlisted');
 
       const allEvents = (attendeeEventCatalog && attendeeEventCatalog.length > 0)
         ? attendeeEventCatalog
@@ -4972,9 +4967,6 @@ window.EventFlowModules['shared'] = true;
       const awaitingActionRegs = myRegs.filter(r => {
         if (r.status === 'pending_payment') {
           return !r.reservationExpiresAt || new Date(r.reservationExpiresAt) > now;
-        }
-        if (r.status === 'waitlisted') {
-          return r.offerExpiresAt && new Date(r.offerExpiresAt) > now;
         }
         return false;
       });
@@ -4999,7 +4991,7 @@ window.EventFlowModules['shared'] = true;
 
       // ─── 2. RECOMMENDED FOR YOU (Directly below summary cards) ────────
       const activeOrPendingEventIds = new Set(
-        myRegs.filter(r => r.status !== 'cancelled').map(r => String(r.eventId))
+        allMyRegs.filter(r => r.status !== 'cancelled').map(r => String(r.eventId))
       );
 
       const recommended = allEvents
@@ -5036,116 +5028,6 @@ window.EventFlowModules['shared'] = true;
 
       // ─── 4. NEEDS ATTENTION (Only unresolved items) ─────────────────
       const needsAttentionRegs = awaitingActionRegs;
-
-      // ─── 5. RECENT ACTIVITY (Chronological, non-duplicated) ───────────
-      const activityList = [];
-      myRegs.forEach(r => {
-        const e = findEvent(r.eventId);
-        const baseTime = new Date(r.date || 0).getTime() || (now.getTime() - 86400000);
-
-        if (r.checkedIn || r.status === 'attended') {
-          const checkInTime = r.checkedInAt ? new Date(r.checkedInAt).getTime() : baseTime + 10000;
-          activityList.push({
-            key: `checkin-${r.id || r.registrationId}`,
-            icon: '✅',
-            title: 'Checked In',
-            desc: `${e.title}${r.ticketId && r.ticketId !== '—' ? ' · ' + r.ticketId : ''}`,
-            date: r.checkedInAt || r.date || 'Recently',
-            badge: 'Attended',
-            badgeColor: 'green',
-            amountStr: '',
-            timestamp: checkInTime,
-          });
-        }
-
-        if (r.refundStatus === 'completed' || r.refundObj?.status === 'completed' || r.payment === 'refunded') {
-          const refundTime = r.refundObj?.completedAt ? new Date(r.refundObj.completedAt).getTime() : baseTime + 8000;
-          const refAmt = Number(r.refundObj?.amount ?? r.amount ?? 0);
-          activityList.push({
-            key: `refund-${r.id || r.registrationId}`,
-            icon: '↩️',
-            title: 'Refund Processed',
-            desc: `${e.title}${r.ticketId && r.ticketId !== '—' ? ' · ' + r.ticketId : ''}`,
-            date: r.refundObj?.completedAt || r.cancelledAt || r.date || 'Recently',
-            badge: 'Refunded',
-            badgeColor: 'blue',
-            amountStr: refAmt > 0 ? `+₹${refAmt.toLocaleString('en-IN')}` : '',
-            timestamp: refundTime,
-          });
-        } else if (r.refundStatus === 'pending' || r.refundObj?.status === 'pending') {
-          const refundTime = r.refundObj?.requestedAt ? new Date(r.refundObj.requestedAt).getTime() : baseTime + 7500;
-          const refAmt = Number(r.refundObj?.amount ?? r.refundAmount ?? r.amount ?? 0);
-          activityList.push({
-            key: `refund-pending-${r.id || r.registrationId}`,
-            icon: '⏳',
-            title: 'Simulated Refund Initiated',
-            desc: `${e.title}${r.ticketId && r.ticketId !== '—' ? ' · ' + r.ticketId : ''}`,
-            date: r.refundObj?.requestedAt ? new Date(r.refundObj.requestedAt).toLocaleDateString() : 'Recently',
-            badge: 'Refund Pending',
-            badgeColor: 'yellow',
-            amountStr: refAmt > 0 ? `₹${refAmt.toLocaleString('en-IN')}` : '',
-            timestamp: refundTime,
-          });
-        }
-
-        if (r.status === 'cancelled') {
-          const cancelTime = r.cancelledAt ? new Date(r.cancelledAt).getTime() : baseTime + 6000;
-          activityList.push({
-            key: `cancel-${r.id || r.registrationId}`,
-            icon: '✕',
-            title: 'Registration Cancelled',
-            desc: `${e.title}${r.ticketId && r.ticketId !== '—' ? ' · ' + r.ticketId : ''}`,
-            date: r.cancelledAt || r.date || 'Recently',
-            badge: 'Cancelled',
-            badgeColor: 'red',
-            amountStr: '',
-            timestamp: cancelTime,
-          });
-        }
-
-        if (r.payment === 'completed' || r.payment === 'paid' || r.paymentObj?.status === 'completed') {
-          const payTime = r.paymentObj?.createdAt ? new Date(r.paymentObj.createdAt).getTime() : baseTime + 4000;
-          const payAmt = Number(r.paymentObj?.amount ?? r.amount ?? 0);
-          if (payAmt > 0) {
-            activityList.push({
-              key: `pay-${r.id || r.registrationId}`,
-              icon: '💳',
-              title: 'Payment Completed',
-              desc: `${e.title} · ${r.paymentObj?.paymentMethod || 'Online Payment'}`,
-              date: r.paymentObj?.createdAt || r.date || 'Recently',
-              badge: 'Paid',
-              badgeColor: 'green',
-              amountStr: `₹${payAmt.toLocaleString('en-IN')}`,
-              timestamp: payTime,
-            });
-          }
-        }
-
-        const isWaitlisted = r.status === 'waitlisted';
-        const isPending = r.status === 'pending_payment';
-        activityList.push({
-          key: `reg-${r.id || r.registrationId}`,
-          icon: isWaitlisted ? '⏳' : (isPending ? '📝' : (e.emoji || '🎟️')),
-          title: isWaitlisted ? 'Waitlist Joined' : (isPending ? 'Registration Pending' : 'Event Registered'),
-          desc: `${e.title}${r.ticketId && r.ticketId !== '—' ? ' · ' + r.ticketId : ''}`,
-          date: r.date || 'Recently',
-          badge: isWaitlisted ? 'Waitlisted' : (isPending ? 'Pending' : 'Confirmed'),
-          badgeColor: isWaitlisted || isPending ? 'yellow' : 'green',
-          amountStr: r.amount === 0 ? 'Free' : `₹${Number(r.amount).toLocaleString('en-IN')}`,
-          timestamp: baseTime,
-        });
-      });
-
-      activityList.sort((a, b) => b.timestamp - a.timestamp);
-      const seenKeys = new Set();
-      const uniqueActivities = [];
-      for (const act of activityList) {
-        if (!seenKeys.has(act.key)) {
-          seenKeys.add(act.key);
-          uniqueActivities.push(act);
-        }
-      }
-      const recentActivities = uniqueActivities.slice(0, 5);
 
       // ─── BUILD HTML ──────────────────────────────────────────────────
       return `
@@ -5204,9 +5086,8 @@ window.EventFlowModules['shared'] = true;
           </div>
         </div>
         <div style="display:flex;gap:8px;flex-shrink:0;align-items:center">
-          <button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')">👁️ View Details</button>
+          <button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}', '${r.id || r.registrationId}')">👁️ View Details</button>
           <button class="btn btn-primary btn-xs" onclick="openViewTicketModal('${r.id || r.registrationId}')">🎫 View Ticket</button>
-          ${allowCancel ? `<button class="btn btn-danger btn-xs" onclick="cancelTicket('${r.id || r.registrationId}')">✕ Cancel Registration</button>` : ''}
         </div>
       </div>`;
     }).join('')}
@@ -5224,15 +5105,10 @@ window.EventFlowModules['shared'] = true;
   <div class="card p-0">
     ${needsAttentionRegs.map(r => {
       const e = findEvent(r.eventId);
-      const isPendingPay = r.status === 'pending_payment';
-      const expiry = r.reservationExpiresAt || r.offerExpiresAt;
+      const expiry = r.reservationExpiresAt;
       const expiryStr = expiry ? ` · Expires: ${new Date(expiry).toLocaleDateString()} ${new Date(expiry).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : '';
-      const desc = isPendingPay
-        ? `Payment required to confirm your reservation.${expiryStr}`
-        : `Waitlist offer available! Accept before it expires.${expiryStr}`;
-      const actionBtn = isPendingPay
-        ? `<button class="btn btn-primary btn-xs" onclick="completeDemoPayment('${r.registrationId || r.id}')">💳 Pay Now</button>`
-        : `<button class="btn btn-primary btn-xs" onclick="acceptWaitlistOffer('${r.registrationId || r.id}')">✓ Accept Offer</button>`;
+      const desc = `Payment required to confirm your reservation.${expiryStr}`;
+      const actionBtn = `<button class="btn btn-primary btn-xs" onclick="completeDemoPayment('${r.registrationId || r.id}')">💳 Pay Now</button>`;
       return `<div class="flex items-center justify-between" style="padding:12px 16px;border-bottom:1px solid var(--border)">
         <div>
           <div style="font-weight:600">${esc(e.title)}</div>
@@ -5246,27 +5122,6 @@ window.EventFlowModules['shared'] = true;
     }).join('')}
   </div>` : ''}
 
-  <!-- Recent Activity -->
-  ${recentActivities.length > 0 ? `
-  <div class="h4 mb-12 mt-24">🕐 Recent Activity</div>
-  <div class="card p-0">
-    ${recentActivities.map((act, idx) => {
-      const isLast = idx === recentActivities.length - 1;
-      return `<div class="flex items-center justify-between" style="padding:12px 16px${isLast ? '' : ';border-bottom:1px solid var(--border)'}">
-        <div class="flex items-center gap-10">
-          <span style="font-size:22px">${act.icon}</span>
-          <div>
-            <div style="font-size:13.5px;font-weight:500">${esc(act.title)}</div>
-            <div class="small">${esc(act.desc)} · ${esc(act.date)}</div>
-          </div>
-        </div>
-        <div class="text-right">
-          ${act.amountStr ? `<div style="font-weight:600;color:var(--green)">${act.amountStr}</div>` : ''}
-          <span class="badge badge-${act.badgeColor}">${act.badge}</span>
-        </div>
-      </div>`;
-    }).join('')}
-  </div>` : ''}
 `;
     }
     window.dashAttendee = dashAttendee;
@@ -5934,7 +5789,7 @@ window.EventFlowModules['shared'] = true;
     function evCard(e, role, reg = null) {
       const pct = Math.min(100, Math.round((e.registered / e.capacity) * 100));
       const regForThis = reg || (role === 'attendee'
-        ? attendeeRegistrationCatalog.find(r => r.status !== 'cancelled' && String(r.eventId) === String(e.id))
+        ? attendeeRegistrationCatalog.find(r => !['cancelled', 'waitlisted'].includes(r.status) && String(r.eventId) === String(e.id))
         : DB.registrations.find(r => r.status !== 'cancelled' && String(r.attendeeId) === String(CU.id) && String(r.eventId) === String(e.id)));
       const bannerContent = e.image ? `
         <img src="${e.image}" alt="${e.title || 'Event'}" class="ev-banner-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -5960,7 +5815,7 @@ window.EventFlowModules['shared'] = true;
         <div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div>
       </div>
       <div class="ev-footer">
-        ${role === 'attendee' ? `<div class="flex gap-6" style="width:100%;justify-content:space-between"><button class="btn btn-sm ${regForThis ? 'btn-ghost' : 'btn-primary'}" onclick="regForEvent('${e.id}')" ${((e.status === 'full' && !e.waitlistEnabled) && !regForThis) || e.status === 'completed' || e.status === 'cancelled' ? 'disabled' : ''} style="${((e.status === 'full' && !e.waitlistEnabled) && !regForThis) || e.status === 'completed' || e.status === 'cancelled' ? 'opacity:.5' : ''}">${regForThis ? regForThis.status === 'waitlisted' ? 'Waitlisted' : regForThis.status === 'pending_payment' ? 'Payment Pending' : regForThis.status === 'attended' ? 'Attended' : '✓ Registered' : e.status === 'full' ? (e.waitlistEnabled ? 'Join Waitlist' : 'Event Full') : 'Register'}</button><button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')" title="View event details">View Details</button></div>` :
+        ${role === 'attendee' ? `<div class="flex gap-6" style="width:100%;justify-content:space-between"><button class="btn btn-sm ${regForThis ? 'btn-ghost' : 'btn-primary'}" onclick="regForEvent('${e.id}')" ${e.status === 'full' || e.status === 'completed' || e.status === 'cancelled' ? 'disabled' : ''} style="${e.status === 'full' || e.status === 'completed' || e.status === 'cancelled' ? 'opacity:.5' : ''}">${regForThis ? regForThis.status === 'pending_payment' ? 'Payment Pending' : regForThis.status === 'attended' ? 'Attended' : '✓ Registered' : e.status === 'full' ? 'Event Full' : 'Register'}</button><button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')" title="View event details">View Details</button></div>` :
           role === 'organizer' ? `<div class="actions"><button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')" title="View event details">👁️ View</button><button class="btn btn-ghost btn-xs" onclick="openEditEventModal('${e.id}')">✏️ Edit</button><button class="btn btn-xs btn-danger" onclick="deleteEvent('${e.id}')">🗑️</button></div>` :
             role === 'superuser' ? `<div class="actions"><button class="btn btn-ghost btn-xs w-full" onclick="openViewEventDrawer('${e.id}')" title="View event details">👁️ View</button></div>` :
               role === 'staff' || role === 'client' ? `<div class="flex gap-6"><button class="btn btn-ghost btn-xs w-full" onclick="openViewEventDrawer('${e.id}')" title="View event details">👁️ View Details</button></div>` :
@@ -6085,7 +5940,7 @@ window.EventFlowModules['shared'] = true;
           });
       });
     }
-    function openViewEventDrawer(id) {
+function openViewEventDrawer(id, registrationId = null) {
       const e = DB.events.find(ev => String(ev.id) === String(id)); if (!e) return;
       const regs = DB.registrations.filter(r => String(r.eventId) === String(id));
       const assigns = DB.staffAssignments.filter(a => String(a.eventId) === String(id));
@@ -6445,6 +6300,47 @@ window.EventFlowModules['shared'] = true;
     }
     window.applyUpiSuffix = applyUpiSuffix;
 
+    function openEventPolicies(eventId) {
+      const e = DB.events.find(ev => String(ev.id) === String(eventId)) || (attendeeEventCatalog || []).find(ev => String(ev.id) === String(eventId) || String(ev.eventId) === String(eventId));
+      if (!e) { toast('Event not found.', 'error'); return; }
+      const policiesHtml = `<div style="max-width:900px;margin:0 auto;display:flex;flex-direction:column;gap:18px;padding-bottom:12px">
+        <section style="background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:18px"><div class="small muted">${escapeHtml(e.category || 'Event')}</div><h2 style="margin:6px 0 8px">${escapeHtml(e.title || 'Event')}</h2><div class="small muted">📅 ${escapeHtml(e.date || 'Date TBA')} · ${escapeHtml(e.time || 'Time TBA')} · 📍 ${escapeHtml(e.venue || 'Venue TBA')}</div></section>
+        <section style="border:1px solid var(--border);border-radius:12px;padding:18px"><h3>⏳ Cancellation Deadline</h3><p class="muted" style="line-height:1.7">${e.cancellationDeadline ? `${escapeHtml(e.cancellationDeadline)} (cutoff at 23:59:59 IST)` : 'No cancellation deadline is configured. Cancellation is available before the event starts.'}</p></section>
+        <section style="border:1px solid var(--border);border-radius:12px;padding:18px"><h3>↩️ Refund Policy</h3><p class="muted" style="line-height:1.7">${e.price === 0 ? 'This is a free registration. Cancelling releases your reserved seat; no monetary refund is due.' : `A full simulated refund is eligible for cancellations on or before ${escapeHtml(e.cancellationDeadline || 'the event date')}. Cancellations after this deadline are non-refundable under the organizer policy.`}</p><p class="small muted">EventFlow payments are simulated demo transactions. No real currency is debited or returned.</p></section>
+        <section style="border:1px solid var(--border);border-radius:12px;padding:18px"><h3>📢 Cancellation and Postponement</h3><p class="muted" style="line-height:1.7">If the organizer cancels, postpones, or reschedules this event, registered attendees will be notified by email and the platform dashboard. Any eligible simulated refunds will be initiated automatically.</p></section>
+        <section style="border:1px solid var(--border);border-radius:12px;padding:18px"><h3>📌 Event Rules</h3><ul class="muted" style="line-height:1.8;padding-left:22px"><li>Present your valid digital ticket QR code at check-in.</li><li>Follow venue guidelines, safety instructions, and organizer directions.</li><li>Event schedules, speakers, or room assignments may change for operational reasons.</li>${e.description ? `<li>${escapeHtml(e.description)}</li>` : ''}</ul></section>
+      </div>`;
+      openModal('Event Policies & Rules', policiesHtml, [], true);
+      const cancelButton = g('modal-foot')?.querySelector('.btn-ghost');
+      if (cancelButton) cancelButton.onclick = () => {
+        closeModal();
+        if (typeof window.openEventReviewModal === 'function') window.openEventReviewModal(eventId);
+        else if (typeof window.regForEvent === 'function') window.regForEvent(eventId);
+      };
+      const box = g('modal-box'), body = g('modal-body');
+      box.style.maxHeight = '88vh'; box.style.height = 'auto'; box.style.overflow = 'auto';
+      body.style.maxHeight = '70vh'; body.style.overflowY = 'auto'; body.style.overscrollBehavior = 'contain';
+    }
+    window.openEventPolicies = openEventPolicies;
+
+    function openTermsConditions(eventId = null) {
+      openModal('Terms and Conditions', `<div style="display:flex;flex-direction:column;gap:14px;font-size:13px;line-height:1.7;color:var(--text2)">
+        <p><strong style="color:var(--text)">1. Admission and Identification</strong><br>Present a valid digital QR ticket at check-in. A matching photo ID may be requested.</p>
+        <p><strong style="color:var(--text)">2. Non-Transferability</strong><br>Tickets are issued to the registered attendee and may not be transferred, duplicated, or resold.</p>
+        <p><strong style="color:var(--text)">3. Code of Conduct</strong><br>Follow venue guidelines, safety instructions, and organizer protocols. Disruptive, illegal, or abusive conduct may result in removal without refund.</p>
+        <p><strong style="color:var(--text)">4. Cancellation Compliance</strong><br>Submit cancellation requests through EventFlow before the event's stated deadline. Late cancellations may not qualify for a refund.</p>
+        <p><strong style="color:var(--text)">5. Program Changes</strong><br>The organizer may adjust schedules, speakers, topics, or room assignments for operational reasons.</p>
+        <p><strong style="color:var(--text)">6. Simulated Payment Notice</strong><br>Payments and refunds in EventFlow are simulated demo transactions. No real banking debits or currency exchanges occur.</p>
+      </div>`, [], true);
+      const cancelButton = g('modal-foot')?.querySelector('.btn-ghost');
+      if (cancelButton) cancelButton.onclick = () => {
+        closeModal();
+        if (eventId && typeof window.openEventReviewModal === 'function') window.openEventReviewModal(eventId);
+        else if (eventId && typeof window.regForEvent === 'function') window.regForEvent(eventId);
+      };
+    }
+    window.openTermsConditions = openTermsConditions;
+
     function regForEvent(eventId) {
       const e = DB.events.find(ev => String(ev.id) === String(eventId))
         || (attendeeEventCatalog || []).find(ev => String(ev.id) === String(eventId) || String(ev.eventId) === String(eventId));
@@ -6459,8 +6355,8 @@ window.EventFlowModules['shared'] = true;
         toast('This event has already concluded.', 'error');
         return;
       }
-      if (e.status === 'full' && !e.waitlistEnabled) {
-        toast('Sorry, this event is full and the waitlist is closed.', 'error');
+      if (e.status === 'full') {
+        toast('Sorry, this event is full.', 'error');
         return;
       }
 
@@ -6468,6 +6364,7 @@ window.EventFlowModules['shared'] = true;
       const existing = (attendeeRegistrationCatalog || []).find(r => r.status !== 'cancelled' && String(r.eventId) === String(eventId))
         || (DB.registrations || []).find(r => r.status !== 'cancelled' && String(r.attendeeId) === String(CU.id) && String(r.eventId) === String(eventId));
       if (existing) {
+        if (existing.status === 'waitlisted') { toast('Registration is unavailable for this event.', 'info'); return; }
         toast('You already have an active registration for this event.', 'info');
         openViewTicketModal(existing.id || existing.registrationId);
         return;
@@ -6510,7 +6407,7 @@ window.EventFlowModules['shared'] = true;
               <div>
                 <div class="label" style="font-size:11px;margin-bottom:2px">Availability & Capacity</div>
                 <div style="font-weight:600;color:${isFull ? 'var(--yellow)' : 'var(--green)'}">
-                  ${isFull ? 'Waitlist Only (Capacity Full)' : `${remainingSeats} seats available`}
+                  ${isFull ? 'Event Full' : `${remainingSeats} seats available`}
                 </div>
                 <div class="small" style="color:var(--text3)">Total capacity: ${e.capacity || 100} attendees</div>
               </div>
@@ -6523,46 +6420,9 @@ window.EventFlowModules['shared'] = true;
             ` : ''}
           </div>
 
-          <!-- Cancellation & Refund Policies -->
-          <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
-            <div style="background:var(--surface3);padding:8px 12px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">
-              Event Policies & Cancellation Rules
-            </div>
-            <div style="padding:12px;display:flex;flex-direction:column;gap:10px;font-size:12.5px">
-              <div>
-                <strong style="color:var(--text)">⏳ Cancellation Deadline:</strong>
-                <div style="color:var(--text2);margin-top:2px">
-                  ${e.cancellationDeadline ? `${e.cancellationDeadline} (Cutoff at 23:59:59 IST)` : 'No cancellation deadline configured (Eligible prior to event start)'}
-                </div>
-              </div>
-              <div>
-                <strong style="color:var(--text)">↩️ Refund Policy:</strong>
-                <div style="color:var(--text2);margin-top:2px">
-                  ${e.price === 0
-                    ? 'Free Registration: No ticket payment is taken. Cancelling releases your reserved seat with no monetary refund due.'
-                    : `Eligible for a full simulated refund if cancelled on or before ${e.cancellationDeadline || 'the event date'}. Cancellations after this deadline are non-refundable per organizer policy.`}
-                </div>
-              </div>
-              <div>
-                <strong style="color:var(--text)">📢 Cancellation & Postponement Rules:</strong>
-                <div style="color:var(--text2);margin-top:2px">
-                  If this event is cancelled, postponed, or rescheduled by the organizer, registered attendees will be notified promptly via email and the platform dashboard. Any eligible simulated refunds will be initiated automatically.
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Real-world Terms & Conditions Box -->
-          <div>
-            <div class="label" style="font-size:12px;margin-bottom:4px;font-weight:700">Terms & Conditions</div>
-            <div style="max-height:130px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;color:var(--text2)">
-              <p style="margin-bottom:6px"><strong>1. Admission & Identification:</strong> A valid digital QR ticket must be presented at the check-in desk upon arrival. Attendees agree to present a valid photo ID matching the registered attendee name upon request.</p>
-              <p style="margin-bottom:6px"><strong>2. Non-Transferability:</strong> Registrations, tickets, and waitlist allocations are issued strictly to the registered attendee and may not be transferred, duplicated, or resold.</p>
-              <p style="margin-bottom:6px"><strong>3. Code of Conduct:</strong> Attendees must adhere to venue guidelines, safety instructions, and organizer protocols. Disruptive, illegal, or abusive conduct will result in immediate removal without refund.</p>
-              <p style="margin-bottom:6px"><strong>4. Cancellation Compliance:</strong> Cancellation requests must be submitted through your EventFlow portal prior to the stated deadline. Late cancellations forfeit refund eligibility.</p>
-              <p style="margin-bottom:6px"><strong>5. Program Changes:</strong> Event schedules, speaker lineups, topics, or room allocations may be subject to operational adjustments by the organizer without compromising overall event validity.</p>
-              <p style="margin-bottom:0"><strong>6. Simulated Payment Notice:</strong> Payments in EventFlow are processed in a simulated demo environment. No real banking debits or actual currency exchanges occur.</p>
-            </div>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <button type="button" class="btn btn-ghost" onclick="openEventPolicies('${eventId}')">📋 Event Policies & Rules</button>
+            <button type="button" class="btn btn-ghost" onclick="openTermsConditions()">📄 Terms and Conditions</button>
           </div>
 
           <!-- Required Agreement Checkbox -->
@@ -6575,12 +6435,8 @@ window.EventFlowModules['shared'] = true;
         </div>
       `;
 
-      const proceedBtnLabel = isFull
-        ? 'Join Waitlist'
-        : (e.price === 0 ? 'Confirm Free Registration' : 'Proceed to Payment');
-      const proceedBtnClass = isFull
-        ? 'btn-warning'
-        : (e.price === 0 ? 'btn-success' : 'btn-primary');
+      const proceedBtnLabel = e.price === 0 ? 'Confirm Free Registration' : 'Proceed to Payment';
+      const proceedBtnClass = e.price === 0 ? 'btn-success' : 'btn-primary';
 
       openModal(
         `Review & Register — ${e.title}`,
@@ -6630,8 +6486,8 @@ window.EventFlowModules['shared'] = true;
         closeModal();
         return;
       }
-      if (e.status === 'full' && !e.waitlistEnabled) {
-        toast('This event is full and the waitlist is closed.', 'error');
+      if (e.status === 'full') {
+        toast('This event is full.', 'error');
         closeModal();
         return;
       }
@@ -6648,7 +6504,7 @@ window.EventFlowModules['shared'] = true;
       const proceedBtn = g('reg-proceed-btn') || g('modal-foot')?.querySelector('.btn-primary, .btn-success, .btn-warning');
       if (proceedBtn) {
         proceedBtn.disabled = true;
-        proceedBtn.textContent = e.price > 0 && e.status !== 'full' ? 'Reserving your place…' : 'Processing Registration…';
+        proceedBtn.textContent = e.price > 0 ? 'Reserving your place…' : 'Processing Registration…';
       }
 
       const attendeeId = CU.userId || CU.id;
@@ -6668,12 +6524,11 @@ window.EventFlowModules['shared'] = true;
           attendeeId: String(attendeeId),
           eventId: String(id),
           ticketType: e.price === 0 ? 'free' : 'standard',
-          joinWaitlist: e.status === 'full',
         });
       })
       .then(function (regData) {
         // Case A: Free Event — Skip payment after acceptance and validation
-        if (e.price === 0 && e.status !== 'full') {
+        if (e.price === 0) {
           const n = DB._nextId.regs++;
           const ticketId = regData.verificationId || regData.ticketId || `TKT-2026-${String(n).padStart(3, '0')}`;
           const seat = e.category === 'Conference' ? `A-${Math.floor(Math.random() * 200 + 1).toString().padStart(3, '0')}` : 'GA';
@@ -6700,30 +6555,6 @@ window.EventFlowModules['shared'] = true;
           return;
         }
 
-        // Case B: Waitlisted Event — No payment required for waitlist
-        if (regData.status === 'waitlisted' || e.status === 'full') {
-          const n = DB._nextId.regs++;
-          DB.registrations.push({
-            id: n,
-            registrationId: regData.registrationId,
-            attendeeId: CU.id,
-            eventId: e.id,
-            date: today(),
-            ticketId: '',
-            status: 'waitlisted',
-            payment: 'not_due',
-            amount: 0,
-            checkedIn: false,
-            seat: '',
-            verificationId: ''
-          });
-          saveDB();
-          closeModal();
-          toast(`Joined waitlist${regData.waitlistPosition ? ` at position ${regData.waitlistPosition}` : ''}.`, 'success');
-          goNav('my-tickets');
-          return;
-        }
-
         // Case C: Paid Event — Open checkout page with correct event ID and amount
         closeModal();
         openPaymentCheckoutModal(e, regData);
@@ -6731,7 +6562,7 @@ window.EventFlowModules['shared'] = true;
       .catch(function (err) {
         if (proceedBtn) {
           proceedBtn.disabled = false;
-          proceedBtn.textContent = e.price > 0 && e.status !== 'full' ? `Proceed to Payment (₹${e.price})` : 'Confirm Registration';
+          proceedBtn.textContent = e.price > 0 ? `Proceed to Payment (₹${e.price})` : 'Confirm Registration';
         }
         toast(err.message || 'Registration could not be completed.', err.status === 409 ? 'warning' : 'error');
       });
@@ -6979,7 +6810,6 @@ window.EventFlowModules['shared'] = true;
         || (attendeeEventCatalog || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId))
         || { title: 'Event', date: '—', venue: '—', price: 0, cancellationDeadline: null };
 
-      const isWaitlist = r.status === 'waitlisted';
       const isPaid = (r.payment === 'completed' || r.payment === 'paid' || r.paymentObj?.status === 'completed') && (r.amount > 0);
       const deadline = e.cancellationDeadline;
 
@@ -6996,11 +6826,7 @@ window.EventFlowModules['shared'] = true;
       let estimatedRefundAmount = 0;
       let refundNotice = '';
 
-      if (isWaitlist) {
-        refundEligibilityBadge = '<span class="badge badge-gray">No Payment Collected</span>';
-        refundEligibilityText = 'Waitlist entry — no payment was taken. Leaving the waitlist releases your queue position.';
-        estimatedRefundAmount = 0;
-      } else if (!isPaid && r.amount === 0) {
+      if (!isPaid && r.amount === 0) {
         refundEligibilityBadge = '<span class="badge badge-gray">Free Event Registration</span>';
         refundEligibilityText = 'This was a free event registration. No monetary charge was incurred.';
         estimatedRefundAmount = 0;
@@ -7066,19 +6892,33 @@ window.EventFlowModules['shared'] = true;
           <!-- Notice banner -->
           ${refundNotice}
 
+          <div class="form-group" style="margin:0">
+            <label class="form-label" for="cancel-reason">Reason for cancelling <span style="color:var(--red)">*</span></label>
+            <select class="form-control" id="cancel-reason" required onchange="g('cancel-other-wrap').style.display=this.value==='Other'?'block':'none'">
+              <option value="">Select a reason</option>
+              <option value="Unable to attend">Unable to attend</option>
+              <option value="Booked by mistake">Booked by mistake</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+          <div class="form-group" id="cancel-other-wrap" style="display:none;margin:0">
+            <label class="form-label" for="cancel-other">Tell us a little more</label>
+            <textarea class="form-control" id="cancel-other" rows="3" maxlength="500" placeholder="Share any details (optional)"></textarea>
+          </div>
+
           <!-- Invalidation Warning -->
           <div style="font-size:12px;color:var(--text3);line-height:1.4">
-            ⚠️ <strong>Ticket Invalidation:</strong> On confirmation, your registration will be cancelled, your ticket QR code will be permanently disabled, and capacity will be released to waitlisted attendees. This action cannot be undone.
+            ⚠️ <strong>Ticket Invalidation:</strong> On confirmation, your registration will be cancelled, your ticket QR code will be permanently disabled, and capacity will be released. This action cannot be undone.
           </div>
         </div>
       `;
 
       openModal(
-        isWaitlist ? 'Leave Waitlist' : 'Cancel Ticket Confirmation',
+        'Cancel Ticket Confirmation',
         modalHtml,
         [
           {
-            lbl: isWaitlist ? 'Leave Waitlist' : 'Confirm Cancellation',
+            lbl: 'Confirm Cancellation',
             cls: 'btn-danger',
             fn: `confirmExecuteCancellation('${r.registrationId || r.id}')`
           }
@@ -7110,10 +6950,20 @@ window.EventFlowModules['shared'] = true;
       const e = (DB.events || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId))
         || (attendeeEventCatalog || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId));
 
+      const reasonValue = g('cancel-reason')?.value || '';
+      if (!reasonValue) {
+        toast('Please select a cancellation reason.', 'warning');
+        return;
+      }
+      const otherDetails = g('cancel-other')?.value?.trim();
+      const cancellationReason = reasonValue === 'Other' && otherDetails
+        ? `Other: ${otherDetails}`
+        : reasonValue;
+
       const footBtn = g('modal-foot')?.querySelector('.btn-danger');
       if (footBtn) { footBtn.disabled = true; footBtn.textContent = 'Processing Cancellation…'; }
 
-      apiCancelRegistration(backendRegId, 'Cancelled by attendee')
+      apiCancelRegistration(backendRegId, cancellationReason)
         .then(function (res) {
           closeModal();
           const cancelledData = res.data || res;
@@ -7211,7 +7061,6 @@ window.EventFlowModules['shared'] = true;
         checkedIn: registration.checkInStatus === 'checked-in' || registration.status === 'attended',
         seat: registration.ticketType || 'General Admission',
         verificationId: registration.verificationId || '',
-        offerExpiresAt: registration.offerExpiresAt || null,
         cancelledAt: registration.cancelledAt,
       };
       const index = DB.registrations.findIndex(r => r.registrationId === registration.registrationId);
@@ -7225,33 +7074,64 @@ window.EventFlowModules['shared'] = true;
       renderPage('my-tickets');
     }
     window.filterMyTickets = filterMyTickets;
+    function sortMyTickets(sortVal) {
+      sessionStorage.setItem('ticket_sort', sortVal === 'earliest' ? 'earliest' : 'latest');
+      renderPage('my-tickets');
+    }
+    window.sortMyTickets = sortMyTickets;
+
+    function showTicketTab(tab) {
+      sessionStorage.setItem('ticket_tab', tab === 'other' ? 'other' : 'upcoming');
+      sessionStorage.setItem('ticket_filter', 'all');
+      renderPage('my-tickets');
+    }
+    window.showTicketTab = showTicketTab;
 
     function pageMyTickets() {
-      const regs = attendeeRegistrationCatalog;
-      if (!regs.length) {
-        return `<div class="page-hd"><div class="page-hd-left"><div class="page-title">My Registrations</div></div></div><div class="empty"><div class="empty-icon">🎟️</div><div class="empty-title">No registrations yet</div><p class="empty-desc">Browse events and register to see them here.</p><button class="btn btn-primary mt-16" onclick="goNav('browse-events')">Browse Events</button></div>`;
+      const regs = attendeeRegistrationCatalog.filter(r => r.status !== 'waitlisted');
+      const activeTab = sessionStorage.getItem('ticket_tab') === 'other' ? 'other' : 'upcoming';
+      const savedFilter = sessionStorage.getItem('ticket_filter') || 'all';
+      const activeFilter = savedFilter === 'waitlisted' || (activeTab === 'upcoming' && !['all', 'registered', 'pending_payment'].includes(savedFilter)) ? 'all' : savedFilter;
+      const activeSort = sessionStorage.getItem('ticket_sort') === 'earliest' ? 'earliest' : 'latest';
+
+      function ticketEvent(registration) {
+        return DB.events.find(ev => String(ev.id) === String(registration.eventId) || String(ev.eventId) === String(registration.eventId))
+          || attendeeEventCatalog.find(ev => String(ev.id) === String(registration.eventId) || String(ev.eventId) === String(registration.eventId))
+          || { title: 'Unknown', emoji: '🎟️', color: '#7c6ff7', venue: '', date: '', time: '' };
       }
 
-      const activeFilter = sessionStorage.getItem('ticket_filter') || 'all';
-      const allCount = regs.length;
-      const registeredCount = regs.filter(r => ['confirmed', 'registered', 'attended'].includes(r.status)).length;
-      const waitlistedCount = regs.filter(r => r.status === 'waitlisted').length;
-      const refundCount = regs.filter(r =>
+      const now = new Date();
+      function isUpcomingTicket(registration) {
+        if (!['confirmed', 'registered', 'booked', 'pending_payment'].includes(registration.status) || registration.checkedIn) return false;
+        const event = ticketEvent(registration);
+        if (['cancelled', 'completed'].includes(event.status)) return false;
+        const eventEnd = Date.parse(`${event.date}T23:59:59`);
+        return !Number.isNaN(eventEnd) && eventEnd >= now.getTime();
+      }
+
+      const upcomingRegs = regs.filter(isUpcomingTicket);
+      const otherRegs = regs.filter(r => !isUpcomingTicket(r));
+      const tabRegs = activeTab === 'upcoming' ? upcomingRegs : otherRegs;
+      const allCount = tabRegs.length;
+      const registeredCount = tabRegs.filter(r => ['confirmed', 'registered', 'booked'].includes(r.status)).length;
+      const pendingCount = tabRegs.filter(r => r.status === 'pending_payment').length;
+      const refundCount = tabRegs.filter(r =>
         r.refundStatus === 'pending' ||
         r.refundStatus === 'completed' ||
         r.payment === 'refunded' ||
         (r.refundObj && r.refundObj.amount > 0) ||
         (r.status === 'cancelled' && (r.amount > 0 || r.refundStatus))
       ).length;
-      const cancelledCount = regs.filter(r => r.status === 'cancelled').length;
+      const cancelledCount = tabRegs.filter(r => r.status === 'cancelled').length;
+      const checkedInCount = tabRegs.filter(r => r.checkedIn || r.status === 'attended').length;
 
-      let filtered = regs;
+      let filtered = tabRegs;
       if (activeFilter === 'registered') {
-        filtered = regs.filter(r => ['confirmed', 'registered', 'attended'].includes(r.status));
-      } else if (activeFilter === 'waitlisted') {
-        filtered = regs.filter(r => r.status === 'waitlisted');
+        filtered = tabRegs.filter(r => ['confirmed', 'registered', 'booked'].includes(r.status));
+      } else if (activeFilter === 'pending_payment') {
+        filtered = tabRegs.filter(r => r.status === 'pending_payment');
       } else if (activeFilter === 'refund') {
-        filtered = regs.filter(r =>
+        filtered = tabRegs.filter(r =>
           r.refundStatus === 'pending' ||
           r.refundStatus === 'completed' ||
           r.payment === 'refunded' ||
@@ -7259,57 +7139,73 @@ window.EventFlowModules['shared'] = true;
           (r.status === 'cancelled' && (r.amount > 0 || r.refundStatus))
         );
       } else if (activeFilter === 'cancelled') {
-        filtered = regs.filter(r => r.status === 'cancelled');
+        filtered = tabRegs.filter(r => r.status === 'cancelled');
+      } else if (activeFilter === 'checked-in') {
+        filtered = tabRegs.filter(r => r.checkedIn || r.status === 'attended');
       }
+
+      filtered = [...filtered].sort((a, b) => {
+        const aDate = Date.parse(ticketEvent(a).date);
+        const bDate = Date.parse(ticketEvent(b).date);
+        if (Number.isNaN(aDate)) return Number.isNaN(bDate) ? 0 : 1;
+        if (Number.isNaN(bDate)) return -1;
+        return activeSort === 'earliest' ? aDate - bDate : bDate - aDate;
+      });
 
       let emptyLabel = 'tickets';
       if (activeFilter === 'registered') emptyLabel = 'registered or confirmed event tickets';
-      else if (activeFilter === 'waitlisted') emptyLabel = 'waitlisted event tickets';
+      else if (activeFilter === 'pending_payment') emptyLabel = 'tickets awaiting payment';
       else if (activeFilter === 'refund') emptyLabel = 'refund-required or refunded event tickets';
       else if (activeFilter === 'cancelled') emptyLabel = 'cancelled event tickets';
+      else if (activeFilter === 'checked-in') emptyLabel = 'checked-in event tickets';
 
       return `
   <div class="page-hd" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
     <div class="page-hd-left">
-      <div class="page-title">My Registrations</div>
-      <div class="page-sub">${filtered.length} of ${allCount} registration(s) shown</div>
+      <div class="page-title">My Tickets</div>
+      <div class="page-sub">${filtered.length} of ${allCount} ${activeTab === 'upcoming' ? 'upcoming' : 'other'} ticket(s) shown</div>
     </div>
-    <div class="page-hd-right" style="display:flex;align-items:center;gap:10px">
+    <div class="page-hd-right" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <label for="ticket-sort" class="small" style="font-weight:600;color:var(--text2);white-space:nowrap">Event Date:</label>
+      <select class="form-control filter-select" id="ticket-sort" onchange="sortMyTickets(this.value)" style="min-width:160px">
+        <option value="latest" ${activeSort === 'latest' ? 'selected' : ''}>Latest first</option>
+        <option value="earliest" ${activeSort === 'earliest' ? 'selected' : ''}>Earliest first</option>
+      </select>
       <label for="ticket-filter" class="small" style="font-weight:600;color:var(--text2);white-space:nowrap">Filter Tickets:</label>
       <select class="form-control filter-select" id="ticket-filter" onchange="filterMyTickets(this.value)" style="min-width:240px">
         <option value="all" ${activeFilter === 'all' ? 'selected' : ''}>All Tickets (${allCount})</option>
         <option value="registered" ${activeFilter === 'registered' ? 'selected' : ''}>Registered / Confirmed (${registeredCount})</option>
-        <option value="waitlisted" ${activeFilter === 'waitlisted' ? 'selected' : ''}>Waitlisted Events (${waitlistedCount})</option>
-        <option value="refund" ${activeFilter === 'refund' ? 'selected' : ''}>Refund Required / Status (${refundCount})</option>
-        <option value="cancelled" ${activeFilter === 'cancelled' ? 'selected' : ''}>Cancelled Tickets (${cancelledCount})</option>
+        ${activeTab === 'upcoming'
+          ? `<option value="pending_payment" ${activeFilter === 'pending_payment' ? 'selected' : ''}>Payment Pending (${pendingCount})</option>`
+          : `<option value="checked-in" ${activeFilter === 'checked-in' ? 'selected' : ''}>Checked In / Attended (${checkedInCount})</option>
+             <option value="cancelled" ${activeFilter === 'cancelled' ? 'selected' : ''}>Cancelled Tickets (${cancelledCount})</option>
+             <option value="refund" ${activeFilter === 'refund' ? 'selected' : ''}>Refund Status (${refundCount})</option>`}
       </select>
     </div>
   </div>
+  <div role="tablist" aria-label="Ticket groups" style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+    <button type="button" role="tab" aria-selected="${activeTab === 'upcoming'}" class="btn ${activeTab === 'upcoming' ? 'btn-primary' : 'btn-ghost'}" onclick="showTicketTab('upcoming')">Upcoming Tickets (${upcomingRegs.length})</button>
+    <button type="button" role="tab" aria-selected="${activeTab === 'other'}" class="btn ${activeTab === 'other' ? 'btn-primary' : 'btn-ghost'}" onclick="showTicketTab('other')">Other Tickets (${otherRegs.length})</button>
+  </div>
   <div id="my-tickets-container" style="display:flex;flex-direction:column;gap:16px">
-    ${filtered.length > 0 ? filtered.map(r => {
-        const e = DB.events.find(ev => ev.id === r.eventId || ev.eventId === r.eventId)
-          || (attendeeEventCatalog || []).find(ev => ev.id === r.eventId || ev.eventId === r.eventId)
-          || { title: 'Unknown', emoji: '🎟️', color: '#7c6ff7', venue: '', date: '', time: '' };
-        return ticketCard(r, e);
-      }).join('') : `
+    ${filtered.length > 0 ? filtered.map(r => ticketCard(r, ticketEvent(r), true)).join('') : `
       <div class="empty" style="padding:40px 20px">
         <div class="empty-icon">🎟️</div>
-        <div class="empty-title">No ${emptyLabel} found</div>
-        <p class="empty-desc">Try choosing a different option from the dropdown filter above.</p>
+        <div class="empty-title">No ${activeFilter === 'all' ? activeTab === 'upcoming' ? 'upcoming tickets' : 'other tickets' : emptyLabel} found</div>
+        <p class="empty-desc">${activeFilter === 'all' ? activeTab === 'upcoming' ? 'Browse events to book your next ticket.' : 'Attended, cancelled, and past tickets will appear here.' : 'Try choosing a different filter.'}</p>
+        ${activeTab === 'upcoming' && activeFilter === 'all' ? `<button class="btn btn-primary mt-16" onclick="goNav('browse-events')">Browse Events</button>` : ''}
       </div>
     `}
   </div>`;
     }
 
-    function ticketCard(r, e) {
+    function ticketCard(r, e, compact = false) {
       const isCancelled = r.status === 'cancelled';
       const hasValidTicket = !isCancelled && r.status === 'confirmed' && !!r.verificationId;
       const qr = hasValidTicket
         ? renderTicketQRCode(r.verificationId)
         : isCancelled
           ? `<div style="text-align:center;padding:12px 8px;border:1px dashed var(--red);border-radius:8px;background:var(--red-dim, rgba(239,68,68,0.08))"><div style="font-size:24px">🚫</div><div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.5px">Cancelled</div><div class="small" style="font-size:10px;color:var(--text3)">QR Disabled</div></div>`
-          : r.status === 'waitlisted'
-            ? `<div style="text-align:center;padding:12px 8px;border:1px dashed var(--yellow);border-radius:8px;background:var(--yellow-dim, rgba(234,179,8,0.08))"><div style="font-size:24px">⏳</div><div style="font-size:11px;font-weight:700;color:var(--yellow)">Waitlisted</div></div>`
             : `<span class="small">No valid ticket</span>`;
 
       const paymentLabel = r.refundStatus === 'completed' || r.payment === 'refunded'
@@ -7335,6 +7231,19 @@ window.EventFlowModules['shared'] = true;
         refundBadge = `<span class="badge badge-gray">No Refund (Policy Expired)</span>`;
       }
 
+      if (compact) {
+        return `<div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border-left:4px solid ${isCancelled ? 'var(--red)' : 'var(--accent)'};flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
+            <span style="font-size:28px;flex-shrink:0">${e.emoji || '🎟️'}</span>
+            <div style="min-width:0;flex:1">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><strong style="font-size:14px">${e.title}</strong><span class="badge badge-${r.status === 'cancelled' ? 'red' : r.status === 'confirmed' || r.status === 'attended' ? 'green' : 'yellow'}">${r.status}</span>${refundBadge}</div>
+              <div class="small muted">📅 ${e.date || 'Date TBD'} · 📍 ${e.venue || 'Venue TBD'} · Ticket ${r.ticketId || '—'}</div>
+            </div>
+          </div>
+          <button class="btn btn-ghost btn-sm" onclick="openViewTicketModal('${r.registrationId || r.id}')">View Details</button>
+        </div>`;
+      }
+
       return `<div class="ticket" style="${isCancelled ? 'opacity:0.85;border-color:var(--border);' : ''}">
     <div class="ticket-top">
       <div class="flex justify-between items-start">
@@ -7343,6 +7252,7 @@ window.EventFlowModules['shared'] = true;
             <span style="font-size:28px">${e.emoji || '🎟️'}</span>
             <span class="badge badge-${evStatBadge(e.status)}">${e.status}</span>
             <span class="badge badge-${r.status === 'confirmed' || r.status === 'attended' ? 'green' : r.status === 'cancelled' ? 'red' : 'yellow'}">${r.status}</span>
+            ${(r.checkedIn || r.status === 'attended') ? '<span class="badge badge-green">✅ Checked In</span>' : ''}
             ${refundBadge}
           </div>
           <div style="font-family:var(--font-head);font-size:17px;font-weight:700;line-height:1.3;margin-bottom:8px">${e.title}</div>
@@ -7364,12 +7274,11 @@ window.EventFlowModules['shared'] = true;
         <div><div class="label mb-4">Amount</div><div style="font-weight:700;font-size:15px;color:var(--green)">${r.amount === 0 ? 'Free' : '₹' + r.amount}</div></div>
       </div>
       <div class="flex justify-between items-center mt-12 flex-wrap gap-8">
-        <span class="badge badge-${r.checkedIn ? 'green' : isCancelled ? 'red' : 'purple'}">${r.checkedIn ? '✅ Checked In' : isCancelled ? '🚫 Ticket Invalidated' : '⏳ Not Yet Checked In'}</span>
+        <span class="badge badge-${r.checkedIn || r.status === 'attended' ? 'green' : isCancelled ? 'red' : 'purple'}">${r.checkedIn || r.status === 'attended' ? '✅ Checked In' : isCancelled ? '🚫 Ticket Invalidated' : '⏳ Not Yet Checked In'}</span>
         <span class="badge badge-${r.payment === 'completed' || r.payment === 'free' ? 'green' : r.refundStatus === 'pending' ? 'yellow' : 'gray'}">${paymentLabel}</span>
       </div>
       ${r.status === 'pending_payment' ? `<button class="btn btn-primary btn-sm mt-12" onclick="completeDemoPayment('${r.registrationId}')">Complete Demo Payment</button>` : ''}
-      ${r.status === 'waitlisted' && r.offerExpiresAt ? `<button class="btn btn-primary btn-sm mt-12" onclick="acceptWaitlistOffer('${r.registrationId}')">Accept Waitlist Offer</button>` : ''}
-      ${!r.checkedIn && !['attended', 'no-show', 'cancelled'].includes(r.status) && ['confirmed', 'waitlisted', 'pending_payment'].includes(r.status) ? `<button class="btn btn-danger btn-sm mt-12" onclick="cancelTicket('${r.registrationId || r.id}')">${r.status === 'waitlisted' ? 'Leave Waitlist' : 'Cancel Registration'}</button>` : ''}
+      ${!r.checkedIn && !['attended', 'no-show', 'cancelled'].includes(r.status) && ['confirmed', 'pending_payment'].includes(r.status) ? `<button class="btn btn-danger btn-sm mt-12" onclick="cancelTicket('${r.registrationId || r.id}')">Cancel Registration</button>` : ''}
       ${isCancelled ? `<div class="small mt-12" style="color:var(--text3);font-style:italic">❌ Registration cancelled${r.cancelledAt ? ' on ' + new Date(r.cancelledAt).toLocaleDateString() : ''}. Ticket QR and seat capacity are invalidated.</div>` : ''}
     </div>
   </div>`;
@@ -7383,18 +7292,6 @@ window.EventFlowModules['shared'] = true;
     }
     window.completeDemoPayment = completeDemoPayment;
 
-    function acceptWaitlistOffer(registrationId) {
-      const reg = (attendeeRegistrationCatalog || []).find(r => r.registrationId === registrationId || String(r.id) === String(registrationId));
-      const regId = reg ? reg.registrationId : registrationId;
-      apiConfirmWaitlist(regId)
-        .then(function (registration) {
-          toast(registration.status === 'pending_payment' ? 'Place reserved. Complete payment to receive your ticket.' : 'Waitlist offer accepted.', 'success');
-          renderPage(_currentPage);
-        })
-        .catch(function (error) { toast(error.message || 'The waitlist offer could not be accepted.', 'error'); });
-    }
-    window.acceptWaitlistOffer = acceptWaitlistOffer;
-
     function makeQR() {
       const cells = Array.from({ length: 25 }, () => Math.random() > 0.5);
       return cells.map(on => `<div class="qr-cell${on ? ' on' : ''}"></div>`).join('');
@@ -7402,11 +7299,11 @@ window.EventFlowModules['shared'] = true;
     function openViewTicketModal(regId) {
       const r = (attendeeRegistrationCatalog || []).find(reg => String(reg.id) === String(regId) || String(reg.registrationId) === String(regId))
         || (DB.registrations || []).find(reg => String(reg.id) === String(regId) || String(reg.registrationId) === String(regId));
-      if (!r) return;
+      if (!r || r.status === 'waitlisted') return;
       const e = (attendeeEventCatalog || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId))
         || (DB.events || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId))
         || { title: 'Event', emoji: '🎟️', venue: '', date: '', time: '' };
-      openModal('Your Ticket', ticketCard(r, e), [], false);
+      openModal('Ticket Details', ticketCard(r, e), [], false);
     }
     window.openViewTicketModal = openViewTicketModal;
 
@@ -9966,11 +9863,11 @@ window.EventFlowModules['shared'] = true;
     // ════════════════════════════════════════════════
     let attendeeNotificationCatalog = [];
     function notificationTitle(type) {
-      return ({ registration_confirmed: 'Registration Confirmed', pending_payment: 'Payment Required', waitlist_offer: 'Waitlist Offer', refund_completed: 'Refund Completed', event_changed: 'Event Updated', event_cancelled: 'Event Cancelled' })[type] || 'EventFlow Update';
+      return ({ registration_confirmed: 'Registration Confirmed', pending_payment: 'Payment Required', refund_completed: 'Refund Completed', event_changed: 'Event Updated', event_cancelled: 'Event Cancelled' })[type] || 'EventFlow Update';
     }
     function notificationTone(type) {
       if (['registration_confirmed', 'payment_confirmed', 'refund_completed'].includes(type)) return 'success';
-      if (['pending_payment', 'waitlist_offer', 'event_changed'].includes(type)) return 'warning';
+      if (['pending_payment', 'event_changed'].includes(type)) return 'warning';
       if (type === 'event_cancelled') return 'error';
       return 'info';
     }
@@ -11040,6 +10937,17 @@ window.EventFlowModules['shared'] = true;
     function closeModal() {
       const ov = g('modal-overlay');
       ov.classList.remove('open');
+      ov.style.padding = '';
+      const box = g('modal-box');
+      box.style.maxWidth = '';
+      box.style.maxHeight = '';
+      box.style.height = '';
+      box.style.borderRadius = '';
+      box.style.overflow = '';
+      const body = g('modal-body');
+      body.style.maxHeight = '';
+      body.style.overflowY = '';
+      body.style.overscrollBehavior = '';
     }
     function closeModalOnBg(e) { if (e.target === g('modal-overlay')) closeModal(); }
 
