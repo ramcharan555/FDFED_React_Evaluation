@@ -51,10 +51,13 @@ export declare const ROLE_PERMISSIONS: {
     event_staff: {
         'staff-assignments': string[];
         events: string[];
+        registrations: string[];
         attendance: string[];
         reports: string[];
         reviews: string[];
         notifications: string[];
+        users: string[];
+        'event-requests': string[];
     };
     attendee: {
         events: string[];
@@ -67,8 +70,10 @@ export declare const ROLE_PERMISSIONS: {
     };
 };
 export declare enum EmployeeType {
+    SUPPORT_EXECUTIVE = "SUPPORT_EXECUTIVE",
     REGISTRATION_VERIFICATION = "REGISTRATION_VERIFICATION",
     EVENT_OPERATIONS = "EVENT_OPERATIONS",
-    SUPPORT_FINANCE = "SUPPORT_FINANCE"
+    SUPPORT_FINANCE = "SUPPORT_FINANCE",
+    FINANCE_EXECUTIVE = "FINANCE_EXECUTIVE"
 }
 //# sourceMappingURL=constants.d.ts.map

@@ -1,4 +1,4 @@
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
 import { SupportTicket, User } from '../../common/data-store';
 
@@ -14,7 +14,7 @@ function escapeHtml(value: string): string {
 
 @Injectable()
 export class SupportMailService {
-  async sendResolvedEmail(ticket: SupportTicket, requester: User): Promise<void> {
+  async sendResolvedEmail(ticket: SupportTicket, requester: User): Promise<boolean> {
     const host = process.env.SMTP_HOST;
     const port = Number(process.env.SMTP_PORT || 587);
     const from = process.env.SMTP_FROM;
@@ -22,9 +22,7 @@ export class SupportMailService {
     const password = process.env.SMTP_PASSWORD;
 
     if (!host || !from || !Number.isInteger(port) || port < 1 || port > 65535) {
-      throw new ServiceUnavailableException(
-        'Support email is not configured. Set SMTP_HOST, SMTP_PORT, and SMTP_FROM before resolving tickets.',
-      );
+      return false;
     }
 
     const transport = nodemailer.createTransport({
@@ -44,6 +42,7 @@ export class SupportMailService {
           '',
           `Your EventFlow support request ${ticket.ticketId} has been resolved.`,
           `Concern: ${ticket.concern}`,
+          ticket.response ? `Support reply: ${ticket.response}` : '',
           '',
           'If you still need assistance, please submit a new support request.',
           '',
@@ -52,9 +51,14 @@ export class SupportMailService {
         html: `<p>Hello ${escapeHtml(requester.name)},</p>
           <p>Your EventFlow support request <strong>${escapeHtml(ticket.ticketId)}</strong> has been resolved.</p>
           <p><strong>Concern:</strong> ${escapeHtml(ticket.concern)}</p>
+          ${ticket.response ? `<p><strong>Support reply:</strong> ${escapeHtml(ticket.response)}</p>` : ''}
           <p>If you still need assistance, please submit a new support request.</p>
           <p>EventFlow Customer Support</p>`,
       });
+      return true;
+    } catch (error) {
+      console.warn('Support ticket resolved, but the notification email could not be sent.', error);
+      return false;
     } finally {
       transport.close();
     }

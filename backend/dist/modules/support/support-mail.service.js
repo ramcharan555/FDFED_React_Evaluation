@@ -59,7 +59,7 @@ let SupportMailService = class SupportMailService {
         const user = process.env.SMTP_USER;
         const password = process.env.SMTP_PASSWORD;
         if (!host || !from || !Number.isInteger(port) || port < 1 || port > 65535) {
-            throw new common_1.ServiceUnavailableException('Support email is not configured. Set SMTP_HOST, SMTP_PORT, and SMTP_FROM before resolving tickets.');
+            return false;
         }
         const transport = nodemailer.createTransport({
             host,
@@ -77,6 +77,7 @@ let SupportMailService = class SupportMailService {
                     '',
                     `Your EventFlow support request ${ticket.ticketId} has been resolved.`,
                     `Concern: ${ticket.concern}`,
+                    ticket.response ? `Support reply: ${ticket.response}` : '',
                     '',
                     'If you still need assistance, please submit a new support request.',
                     '',
@@ -85,9 +86,15 @@ let SupportMailService = class SupportMailService {
                 html: `<p>Hello ${escapeHtml(requester.name)},</p>
           <p>Your EventFlow support request <strong>${escapeHtml(ticket.ticketId)}</strong> has been resolved.</p>
           <p><strong>Concern:</strong> ${escapeHtml(ticket.concern)}</p>
+          ${ticket.response ? `<p><strong>Support reply:</strong> ${escapeHtml(ticket.response)}</p>` : ''}
           <p>If you still need assistance, please submit a new support request.</p>
           <p>EventFlow Customer Support</p>`,
             });
+            return true;
+        }
+        catch (error) {
+            console.warn('Support ticket resolved, but the notification email could not be sent.', error);
+            return false;
         }
         finally {
             transport.close();

@@ -25,14 +25,17 @@ let PaymentsController = class PaymentsController {
     constructor(service) {
         this.service = service;
     }
-    create(dto, role) {
-        return this.service.create(dto, role);
+    create(dto, role, userId) {
+        return this.service.create(dto, role, userId);
+    }
+    processRefund(id, role) {
+        return this.service.processRefund(id, role);
     }
     findAll(role, userId) {
         return this.service.findAll(role, userId);
     }
-    findOne(id) {
-        return this.service.findOne(id);
+    findOne(id, role, userId) {
+        return this.service.findOne(id, role, userId);
     }
 };
 exports.PaymentsController = PaymentsController;
@@ -45,10 +48,21 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 409, description: 'Payment already completed for this registration' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [payment_dto_1.CreatePaymentDto, String]),
+    __metadata("design:paramtypes", [payment_dto_1.CreatePaymentDto, String, String]),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)('refunds/:id/process'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Complete a simulated refund (SUPER_ADMIN only)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "processRefund", null);
 __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'List payments (role-filtered)' }),
@@ -63,8 +77,10 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'Get payment by ID' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Payment not found' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "findOne", null);
 exports.PaymentsController = PaymentsController = __decorate([

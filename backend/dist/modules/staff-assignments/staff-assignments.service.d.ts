@@ -3,7 +3,7 @@ import { CreateStaffAssignmentDto, UpdateAssignmentStatusDto } from './dto/staff
 export declare class StaffAssignmentsService {
     private db;
     constructor();
-    create(dto: CreateStaffAssignmentDto, role: UserRole): any;
+    create(dto: CreateStaffAssignmentDto, role: UserRole, userId?: string): any;
     findAll(role: UserRole, userId?: string): any[];
     updateStatus(id: string, dto: UpdateAssignmentStatusDto, role: UserRole, userId?: string): any;
 }

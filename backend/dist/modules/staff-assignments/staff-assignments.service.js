@@ -15,7 +15,7 @@ const data_store_1 = require("../../common/data-store");
 const constants_1 = require("../../common/constants");
 let StaffAssignmentsService = class StaffAssignmentsService {
     constructor() { this.db = data_store_1.DataStore.getInstance(); }
-    create(dto, role) {
+    create(dto, role, userId) {
         if (role !== constants_1.UserRole.EVENT_ORGANIZER && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Only EVENT_ORGANIZER can assign staff');
         }
@@ -23,6 +23,12 @@ let StaffAssignmentsService = class StaffAssignmentsService {
         const event = this.db.events.find(e => e.eventId === dto.eventId);
         if (!event)
             throw new common_1.NotFoundException(`Event ${dto.eventId} not found`);
+        if (role === constants_1.UserRole.EVENT_ORGANIZER) {
+            const organizer = this.db.organizers.find(o => o.userId === userId);
+            if (!organizer || organizer.organizerId !== event.organizerId || dto.organizerId !== organizer.organizerId) {
+                throw new common_1.ForbiddenException('You can only assign staff to your own events');
+            }
+        }
         // Verify staff exists
         const staff = this.db.staffProfiles.find(s => s.staffId === dto.staffId);
         if (!staff)
@@ -101,6 +107,12 @@ let StaffAssignmentsService = class StaffAssignmentsService {
         }
         else if (role !== constants_1.UserRole.EVENT_ORGANIZER && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Access denied');
+        }
+        if (role === constants_1.UserRole.EVENT_ORGANIZER) {
+            const organizer = this.db.organizers.find(o => o.userId === userId);
+            if (!organizer || assignment.organizerId !== organizer.organizerId) {
+                throw new common_1.ForbiddenException('You can only update assignments for your own events');
+            }
         }
         assignment.status = dto.status;
         assignment.updatedAt = new Date();

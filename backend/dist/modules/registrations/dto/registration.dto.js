@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateRegistrationDto = void 0;
+exports.UpdateRegistrationDetailsDto = exports.CancelRegistrationDto = exports.CreateRegistrationDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class CreateRegistrationDto {
@@ -39,4 +39,28 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateRegistrationDto.prototype, "additionalInfo", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Join the waitlist when the event is full' }),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], CreateRegistrationDto.prototype, "joinWaitlist", void 0);
+class CancelRegistrationDto {
+}
+exports.CancelRegistrationDto = CancelRegistrationDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Cancellation reason' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CancelRegistrationDto.prototype, "reason", void 0);
+class UpdateRegistrationDetailsDto {
+}
+exports.UpdateRegistrationDetailsDto = UpdateRegistrationDetailsDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Corrected attendee-provided registration information' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateRegistrationDetailsDto.prototype, "additionalInfo", void 0);
 //# sourceMappingURL=registration.dto.js.map

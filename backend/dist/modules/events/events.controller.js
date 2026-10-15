@@ -31,14 +31,14 @@ let EventsController = class EventsController {
     findAll(role, search, status) {
         return this.eventsService.findAll(role, search, status);
     }
-    findAllAdmin(search, status) {
-        return this.eventsService.findAllAdmin(search, status);
+    findAllAdmin(role, search, status) {
+        return this.eventsService.findAllAdmin(role, search, status);
     }
     getStatistics() {
         return this.eventsService.getStatistics();
     }
-    findOne(id) {
-        return this.eventsService.findOne(id);
+    findOne(id, role, userId) {
+        return this.eventsService.findOne(id, role, userId);
     }
     update(id, updateEventDto, role, userId) {
         return this.eventsService.update(id, updateEventDto, role, userId);
@@ -80,10 +80,11 @@ __decorate([
     (0, swagger_1.ApiQuery)({ name: 'search', required: false }),
     (0, swagger_1.ApiQuery)({ name: 'status', required: false }),
     (0, swagger_1.ApiResponse)({ status: 200, description: 'All events for admin view' }),
-    __param(0, (0, common_1.Query)('search')),
-    __param(1, (0, common_1.Query)('status')),
+    __param(0, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(1, (0, common_1.Query)('search')),
+    __param(2, (0, common_1.Query)('status')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], EventsController.prototype, "findAllAdmin", null);
 __decorate([
@@ -100,8 +101,10 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Event details' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Event not found' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], EventsController.prototype, "findOne", null);
 __decorate([

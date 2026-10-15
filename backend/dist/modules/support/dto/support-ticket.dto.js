@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateSupportTicketStatusDto = exports.CreateSupportTicketDto = void 0;
+exports.CreateSupportFollowUpDto = exports.UpdateSupportTicketStatusDto = exports.CreateSupportTicketDto = void 0;
 const swagger_1 = require("@nestjs/swagger");
 const class_validator_1 = require("class-validator");
 const support_constants_1 = require("../support.constants");
@@ -53,4 +53,21 @@ __decorate([
     (0, class_validator_1.IsIn)(['open', 'in_progress', 'resolved']),
     __metadata("design:type", String)
 ], UpdateSupportTicketStatusDto.prototype, "status", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ maxLength: 2000, description: 'Reply visible to the requester in their support ticket' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(2000),
+    __metadata("design:type", String)
+], UpdateSupportTicketStatusDto.prototype, "response", void 0);
+class CreateSupportFollowUpDto {
+}
+exports.CreateSupportFollowUpDto = CreateSupportFollowUpDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ maxLength: 2000 }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.MaxLength)(2000),
+    __metadata("design:type", String)
+], CreateSupportFollowUpDto.prototype, "message", void 0);
 //# sourceMappingURL=support-ticket.dto.js.map

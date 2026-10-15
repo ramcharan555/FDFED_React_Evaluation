@@ -4,7 +4,7 @@ import { UserRole } from '../../common/constants';
 export declare class StaffAssignmentsController {
     private readonly service;
     constructor(service: StaffAssignmentsService);
-    create(dto: CreateStaffAssignmentDto, role: UserRole): any;
+    create(dto: CreateStaffAssignmentDto, role: UserRole, userId: string): any;
     findAll(role: UserRole, userId: string): any[];
     updateStatus(id: string, dto: UpdateAssignmentStatusDto, role: UserRole, userId: string): any;
 }

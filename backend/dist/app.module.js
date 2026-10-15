@@ -8,11 +8,13 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.AppModule = void 0;
 const common_1 = require("@nestjs/common");
+const core_1 = require("@nestjs/core");
 const throttler_1 = require("@nestjs/throttler");
 const app_controller_1 = require("./app.controller");
 const app_service_1 = require("./app.service");
 const request_logging_middleware_1 = require("./common/middleware/request-logging.middleware");
 const events_audit_middleware_1 = require("./common/middleware/events-audit.middleware");
+const data_store_persistence_interceptor_1 = require("./common/interceptors/data-store-persistence.interceptor");
 // Existing modules
 const events_module_1 = require("./modules/events/events.module");
 const attendees_module_1 = require("./modules/attendees/attendees.module");
@@ -70,7 +72,13 @@ exports.AppModule = AppModule = __decorate([
             support_module_1.SupportModule,
         ],
         controllers: [app_controller_1.AppController],
-        providers: [app_service_1.AppService],
+        providers: [
+            app_service_1.AppService,
+            {
+                provide: core_1.APP_INTERCEPTOR,
+                useClass: data_store_persistence_interceptor_1.DataStorePersistenceInterceptor,
+            },
+        ],
     })
 ], AppModule);
 //# sourceMappingURL=app.module.js.map

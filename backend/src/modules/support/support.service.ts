@@ -13,7 +13,7 @@ import {
   SupportAttachment,
   SupportTicket,
 } from '../../common/data-store';
-import { CreateSupportTicketDto, UpdateSupportTicketStatusDto } from './dto/support-ticket.dto';
+import { CreateSupportFollowUpDto, CreateSupportTicketDto, UpdateSupportTicketStatusDto } from './dto/support-ticket.dto';
 import { canSubmitSupportCategory, SUPPORT_CONCERNS } from './support.constants';
 import { SupportMailService } from './support-mail.service';
 
@@ -28,14 +28,21 @@ export class SupportService {
 
   constructor(private readonly mailService: SupportMailService) {}
 
+  private isSupportAgent(userId: string, role: UserRole): boolean {
+    const user = this.db.findUserById(userId);
+    return role === UserRole.SUPER_ADMIN
+      || (role === UserRole.EVENT_STAFF && String(user?.employeeType || '').toUpperCase() === 'SUPPORT_EXECUTIVE');
+  }
+
   listTickets(userId: string, role: UserRole): SupportTicketListItem[] {
+    const canViewAll = this.isSupportAgent(userId, role);
     const tickets = this.db.supportTickets
-      .filter(ticket => role === UserRole.SUPER_ADMIN || ticket.userId === userId)
+      .filter(ticket => canViewAll || ticket.userId === userId)
       .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
 
     return tickets.map(ticket => ({
       ...ticket,
-      ...(role === UserRole.SUPER_ADMIN
+      ...(canViewAll
         ? {
             requesterName: this.db.findUserById(ticket.userId)?.name || 'Unknown user',
             requesterEmail: this.db.findUserById(ticket.userId)?.email || '',
@@ -92,6 +99,25 @@ export class SupportService {
     };
 
     this.db.supportTickets.push(ticket);
+    this.db.persist();
+    return ticket;
+  }
+
+  addRequesterFollowUp(
+    ticketId: string,
+    userId: string,
+    dto: CreateSupportFollowUpDto,
+  ): SupportTicket {
+    const ticket = this.db.supportTickets.find(item => item.ticketId === ticketId && item.userId === userId);
+    if (!ticket) throw new NotFoundException('Support ticket not found');
+
+    const message = dto.message.trim();
+    if (!message) throw new BadRequestException('Follow-up message is required');
+    ticket.messages ||= [];
+    ticket.messages.push({ sender: 'requester', message, createdAt: new Date() });
+    ticket.status = 'open';
+    ticket.updatedAt = new Date();
+    this.db.persist();
     return ticket;
   }
 
@@ -119,8 +145,9 @@ export class SupportService {
     userId: string,
     role: UserRole,
   ): Promise<{ stream: ReturnType<typeof createReadStream>; mimeType: string; fileName: string }> {
+    const canViewAll = this.isSupportAgent(userId, role);
     const ticket = this.db.supportTickets.find(item =>
-      (role === UserRole.SUPER_ADMIN || item.userId === userId)
+      (canViewAll || item.userId === userId)
       && item.attachments.some(attachment => attachment.attachmentId === attachmentId),
     );
     if (!ticket) throw new NotFoundException('Attachment not found');
@@ -142,24 +169,46 @@ export class SupportService {
 
   async updateStatus(
     ticketId: string,
+    userId: string,
     role: UserRole,
     dto: UpdateSupportTicketStatusDto,
-  ): Promise<SupportTicket> {
-    if (role !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('Only administrators can update support ticket status');
+  ): Promise<SupportTicket & { emailNotificationSent: boolean }> {
+    if (!this.isSupportAgent(userId, role)) {
+      throw new ForbiddenException('Only the Support Executive or an administrator can update support tickets');
     }
     const ticket = this.db.supportTickets.find(item => item.ticketId === ticketId);
     if (!ticket) throw new NotFoundException('Support ticket not found');
 
+    const response = dto.response?.trim();
+    let emailNotificationSent = false;
+    if (dto.response !== undefined && response) ticket.response = response;
+    const lastMessage = ticket.messages?.[ticket.messages.length - 1];
+    if (dto.response !== undefined && response && lastMessage?.sender !== 'support') {
+      ticket.messages ||= [];
+      ticket.messages.push({ sender: 'support', message: response, createdAt: new Date() });
+    } else if (dto.response !== undefined && response && lastMessage?.message !== response) {
+      ticket.messages ||= [];
+      ticket.messages.push({ sender: 'support', message: response, createdAt: new Date() });
+    }
+
     if (dto.status === 'resolved' && ticket.status !== 'resolved') {
       const requester = this.db.findUserById(ticket.userId);
-      if (!requester?.email) throw new BadRequestException('Requester email address is unavailable');
-      await this.mailService.sendResolvedEmail(ticket, requester);
-      ticket.resolutionEmailSentAt = new Date();
+      if (!ticket.response) throw new BadRequestException('Add a reply before resolving this ticket');
+      ticket.status = dto.status;
+      ticket.updatedAt = new Date();
+      try {
+        emailNotificationSent = requester?.email
+          ? await this.mailService.sendResolvedEmail(ticket, requester)
+          : false;
+      } catch (_error) {
+        emailNotificationSent = false;
+      }
+      if (emailNotificationSent) ticket.resolutionEmailSentAt = new Date();
     }
 
     ticket.status = dto.status;
     ticket.updatedAt = new Date();
-    return ticket;
+    this.db.persist();
+    return { ...ticket, emailNotificationSent };
   }
 }

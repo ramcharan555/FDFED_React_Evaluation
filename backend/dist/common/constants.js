@@ -81,11 +81,14 @@ exports.ROLE_PERMISSIONS = {
     },
     [UserRole.EVENT_STAFF]: {
         'staff-assignments': ['read', 'update'],
-        events: ['read'],
+        events: ['create', 'read', 'update'],
+        registrations: ['create', 'read', 'update'],
         attendance: ['create', 'update', 'verify'],
-        reports: ['create', 'read'],
+        reports: ['create', 'read', 'update'],
         reviews: ['create', 'read'],
         notifications: ['read'],
+        users: ['read', 'update'],
+        'event-requests': ['create', 'read', 'update'],
     },
     [UserRole.ATTENDEE]: {
         events: ['read'],
@@ -99,8 +102,10 @@ exports.ROLE_PERMISSIONS = {
 };
 var EmployeeType;
 (function (EmployeeType) {
+    EmployeeType["SUPPORT_EXECUTIVE"] = "SUPPORT_EXECUTIVE";
     EmployeeType["REGISTRATION_VERIFICATION"] = "REGISTRATION_VERIFICATION";
     EmployeeType["EVENT_OPERATIONS"] = "EVENT_OPERATIONS";
     EmployeeType["SUPPORT_FINANCE"] = "SUPPORT_FINANCE";
+    EmployeeType["FINANCE_EXECUTIVE"] = "FINANCE_EXECUTIVE";
 })(EmployeeType || (exports.EmployeeType = EmployeeType = {}));
 //# sourceMappingURL=constants.js.map

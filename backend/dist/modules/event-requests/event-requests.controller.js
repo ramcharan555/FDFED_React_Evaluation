@@ -25,8 +25,11 @@ let EventRequestsController = class EventRequestsController {
     constructor(service) {
         this.service = service;
     }
-    create(dto, role) {
-        return this.service.create(dto, role);
+    checkAvailability(organizerId, date) {
+        return this.service.checkDateAvailability(organizerId, date);
+    }
+    create(dto, role, userId) {
+        return this.service.create(dto, role, userId);
     }
     findAll(role, userId) {
         return this.service.findAll(role, userId);
@@ -34,21 +37,66 @@ let EventRequestsController = class EventRequestsController {
     findOne(id, role, userId) {
         return this.service.findOne(id, role, userId);
     }
+    startReview(id, role, userId) {
+        return this.service.startReview(id, role, userId);
+    }
+    requestMissingInfo(id, dto, role, userId) {
+        return this.service.requestMissingInfo(id, dto, role, userId);
+    }
+    provideMissingInfo(id, dto, role, userId) {
+        return this.service.provideMissingInfo(id, dto, role, userId);
+    }
+    sendProposal(id, dto, role, userId) {
+        return this.service.sendProposal(id, dto, role, userId);
+    }
+    reviseProposal(id, dto, role, userId) {
+        return this.service.reviseProposal(id, dto, role, userId);
+    }
+    rejectRequest(id, dto, role, userId) {
+        return this.service.rejectRequest(id, dto, role, userId);
+    }
+    clientResponse(id, dto, role, userId) {
+        return this.service.clientResponse(id, dto, role, userId);
+    }
+    updateAgreementStatus(id, dto, role, userId) {
+        return this.service.updateAgreementStatus(id, dto, role, userId);
+    }
+    updatePaymentStatus(id, dto, role, userId) {
+        return this.service.updatePaymentStatus(id, dto, role, userId);
+    }
+    confirmBooking(id, dto, role, userId) {
+        return this.service.confirmBooking(id, dto, role, userId);
+    }
     updateStatus(id, dto, role, userId) {
         return this.service.updateStatus(id, dto, role, userId);
     }
 };
 exports.EventRequestsController = EventRequestsController;
 __decorate([
+    (0, common_1.Get)('check-availability'),
+    (0, swagger_1.ApiOperation)({ summary: 'Check date availability for an organizer' }),
+    (0, swagger_1.ApiQuery)({ name: 'organizerId', required: true, example: 'org-001' }),
+    (0, swagger_1.ApiQuery)({ name: 'date', required: true, example: '2026-09-05' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Date availability check results' }),
+    __param(0, (0, common_1.Query)('organizerId')),
+    __param(1, (0, common_1.Query)('date')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "checkAvailability", null);
+__decorate([
     (0, common_1.Post)(),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
     (0, swagger_1.ApiOperation)({ summary: 'Create event request (CLIENT only)' }),
     (0, swagger_1.ApiResponse)({ status: 201, description: 'Event request created' }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Past date or invalid data' }),
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Only CLIENT can create event requests' }),
+    (0, swagger_1.ApiResponse)({ status: 409, description: 'Duplicate active request exists' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [event_request_dto_1.CreateEventRequestDto, String]),
+    __metadata("design:paramtypes", [event_request_dto_1.CreateEventRequestDto, String, String]),
     __metadata("design:returntype", void 0)
 ], EventRequestsController.prototype, "create", null);
 __decorate([
@@ -74,11 +122,129 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], EventRequestsController.prototype, "findOne", null);
 __decorate([
+    (0, common_1.Post)(':id/review'),
+    (0, swagger_1.ApiOperation)({ summary: 'Organizer starts review (ORGANIZER only)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Status moved to under_review' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "startReview", null);
+__decorate([
+    (0, common_1.Post)(':id/request-info'),
+    (0, swagger_1.ApiOperation)({ summary: 'Request missing information from client (ORGANIZER only)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Query recorded and client notified' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, event_request_dto_1.RequestMissingInfoDto, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "requestMissingInfo", null);
+__decorate([
+    (0, common_1.Post)(':id/provide-info'),
+    (0, swagger_1.ApiOperation)({ summary: 'Client provides missing information (CLIENT only)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Information provided and organizer notified' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, event_request_dto_1.ProvideMissingInfoDto, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "provideMissingInfo", null);
+__decorate([
+    (0, common_1.Post)(':id/proposal'),
+    (0, swagger_1.ApiOperation)({ summary: 'Send proposal to client (ORGANIZER only)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Proposal recorded and status moved to proposal_sent' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, event_request_dto_1.SendProposalDto, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "sendProposal", null);
+__decorate([
+    (0, common_1.Post)(':id/revise-proposal'),
+    (0, swagger_1.ApiOperation)({ summary: 'Revise proposal to client (ORGANIZER only)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Revised proposal version recorded' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, event_request_dto_1.ReviseProposalDto, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "reviseProposal", null);
+__decorate([
+    (0, common_1.Post)(':id/reject'),
+    (0, swagger_1.ApiOperation)({ summary: 'Reject request with mandatory reason (ORGANIZER only)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Request rejected and reason recorded' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, event_request_dto_1.RejectRequestDto, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "rejectRequest", null);
+__decorate([
+    (0, common_1.Post)(':id/client-response'),
+    (0, swagger_1.ApiOperation)({ summary: 'Client responds to proposal: accept, request_revision, reject, withdraw (CLIENT only)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Client decision recorded' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, event_request_dto_1.ClientResponseDto, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "clientResponse", null);
+__decorate([
+    (0, common_1.Post)(':id/agreement'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update agreement status' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Agreement status updated' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, event_request_dto_1.UpdateAgreementStatusDto, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "updateAgreementStatus", null);
+__decorate([
+    (0, common_1.Post)(':id/payment'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update deposit / payment status' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Payment status updated' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, event_request_dto_1.UpdatePaymentStatusDto, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "updatePaymentStatus", null);
+__decorate([
+    (0, common_1.Post)(':id/confirm'),
+    (0, swagger_1.ApiOperation)({ summary: 'Confirm booking after agreement and deposit satisfied (ORGANIZER only)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Booking confirmed and event created' }),
+    (0, swagger_1.ApiResponse)({ status: 400, description: 'Missing agreement or deposit satisfaction' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, event_request_dto_1.ConfirmBookingDto, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "confirmBooking", null);
+__decorate([
     (0, common_1.Patch)(':id/status'),
-    (0, swagger_1.ApiOperation)({ summary: 'Update event request status (ORGANIZER approves/rejects, CLIENT cancels)' }),
-    (0, swagger_1.ApiResponse)({ status: 200, description: 'Status updated. Notifies client.' }),
-    (0, swagger_1.ApiResponse)({ status: 403, description: 'Forbidden' }),
-    (0, swagger_1.ApiResponse)({ status: 404, description: 'Event request not found' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Update event request status (backward-compatible)' }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Status updated' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),

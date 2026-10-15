@@ -1363,6 +1363,58 @@
         ]
       }
     },
+    "/api/event-requests/check-availability": {
+      "get": {
+        "operationId": "EventRequestsController_checkAvailability",
+        "summary": "Check date availability for an organizer",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizerId",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": "org-001",
+              "type": "string"
+            }
+          },
+          {
+            "name": "date",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "example": "2026-09-05",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Date availability check results"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
     "/api/event-requests": {
       "post": {
         "operationId": "EventRequestsController_create",
@@ -1401,8 +1453,14 @@
           "201": {
             "description": "Event request created"
           },
+          "400": {
+            "description": "Past date or invalid data"
+          },
           "403": {
             "description": "Only CLIENT can create event requests"
+          },
+          "409": {
+            "description": "Duplicate active request exists"
           }
         },
         "tags": [
@@ -1487,10 +1545,523 @@
         ]
       }
     },
+    "/api/event-requests/{id}/review": {
+      "post": {
+        "operationId": "EventRequestsController_startReview",
+        "summary": "Organizer starts review (ORGANIZER only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Status moved to under_review"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/request-info": {
+      "post": {
+        "operationId": "EventRequestsController_requestMissingInfo",
+        "summary": "Request missing information from client (ORGANIZER only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestMissingInfoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Query recorded and client notified"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/provide-info": {
+      "post": {
+        "operationId": "EventRequestsController_provideMissingInfo",
+        "summary": "Client provides missing information (CLIENT only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ProvideMissingInfoDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Information provided and organizer notified"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/proposal": {
+      "post": {
+        "operationId": "EventRequestsController_sendProposal",
+        "summary": "Send proposal to client (ORGANIZER only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SendProposalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Proposal recorded and status moved to proposal_sent"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/revise-proposal": {
+      "post": {
+        "operationId": "EventRequestsController_reviseProposal",
+        "summary": "Revise proposal to client (ORGANIZER only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviseProposalDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Revised proposal version recorded"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/reject": {
+      "post": {
+        "operationId": "EventRequestsController_rejectRequest",
+        "summary": "Reject request with mandatory reason (ORGANIZER only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request rejected and reason recorded"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/client-response": {
+      "post": {
+        "operationId": "EventRequestsController_clientResponse",
+        "summary": "Client responds to proposal: accept, request_revision, reject, withdraw (CLIENT only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ClientResponseDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Client decision recorded"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/agreement": {
+      "post": {
+        "operationId": "EventRequestsController_updateAgreementStatus",
+        "summary": "Update agreement status",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateAgreementStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Agreement status updated"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/payment": {
+      "post": {
+        "operationId": "EventRequestsController_updatePaymentStatus",
+        "summary": "Update deposit / payment status",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdatePaymentStatusDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Payment status updated"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/confirm": {
+      "post": {
+        "operationId": "EventRequestsController_confirmBooking",
+        "summary": "Confirm booking after agreement and deposit satisfied (ORGANIZER only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ConfirmBookingDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Booking confirmed and event created"
+          },
+          "400": {
+            "description": "Missing agreement or deposit satisfaction"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
     "/api/event-requests/{id}/status": {
       "patch": {
         "operationId": "EventRequestsController_updateStatus",
-        "summary": "Update event request status (ORGANIZER approves/rejects, CLIENT cancels)",
+        "summary": "Update event request status (backward-compatible)",
         "parameters": [
           {
             "name": "x-user-id",
@@ -1531,13 +2102,7 @@
         },
         "responses": {
           "200": {
-            "description": "Status updated. Notifies client."
-          },
-          "403": {
-            "description": "Forbidden"
-          },
-          "404": {
-            "description": "Event request not found"
+            "description": "Status updated"
           }
         },
         "tags": [
@@ -3168,6 +3733,45 @@
         ]
       }
     },
+    "/api/support/tickets/{ticketId}/follow-ups": {
+      "post": {
+        "operationId": "SupportController_addRequesterFollowUp",
+        "summary": "Add a requester follow-up to their own support ticket",
+        "parameters": [
+          {
+            "name": "ticketId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupportFollowUpDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "customer-support"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
     "/api/support/attachments": {
       "post": {
         "operationId": "SupportController_uploadAttachment",
@@ -3411,7 +4015,7 @@
           },
           "phone": {
             "type": "string",
-            "description": "Attendee phone",
+            "description": "Valid 10-digit Indian mobile number",
             "example": "9876543210"
           },
           "password": {
@@ -3438,7 +4042,7 @@
           },
           "phone": {
             "type": "string",
-            "description": "Attendee phone"
+            "description": "Valid 10-digit Indian mobile number"
           },
           "status": {
             "type": "string",
@@ -3466,7 +4070,7 @@
           },
           "phone": {
             "type": "string",
-            "description": "Staff phone",
+            "description": "Valid 10-digit Indian mobile number",
             "example": "9876543210"
           },
           "availableDates": {
@@ -3520,7 +4124,7 @@
           },
           "phone": {
             "type": "string",
-            "description": "Staff phone number",
+            "description": "Valid 10-digit Indian mobile number",
             "example": "9876543210"
           }
         }
@@ -3643,7 +4247,7 @@
           "eventDate": {
             "type": "string",
             "description": "Desired event date (YYYY-MM-DD)",
-            "example": "2024-09-01"
+            "example": "2026-09-01"
           },
           "budget": {
             "type": "number",
@@ -3670,6 +4274,208 @@
           "capacity"
         ]
       },
+      "RequestMissingInfoDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "description": "Query / question requesting missing information from the client",
+            "example": "Could you specify the preferred AV equipment and catering dietary preferences?"
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
+      "ProvideMissingInfoDto": {
+        "type": "object",
+        "properties": {
+          "response": {
+            "type": "string",
+            "description": "Client response to the missing info request",
+            "example": "We require 3 wireless microphones, 4K projector, and 20% vegetarian meals."
+          }
+        },
+        "required": [
+          "response"
+        ]
+      },
+      "SendProposalDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Total proposed amount in INR",
+            "example": 60000
+          },
+          "depositRequired": {
+            "type": "number",
+            "description": "Required deposit amount in INR",
+            "example": 15000
+          },
+          "proposedDate": {
+            "type": "string",
+            "description": "Proposed event date if different (YYYY-MM-DD)",
+            "example": "2026-09-05"
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "Proposal validity expiration date (YYYY-MM-DD)",
+            "example": "2026-08-01"
+          },
+          "terms": {
+            "type": "string",
+            "description": "Terms and conditions / deliverables",
+            "example": "Includes full day hall rental, standard audio setup, and buffet catering."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes for the client",
+            "example": "Deposit required within 7 days of agreement to lock the venue."
+          }
+        },
+        "required": [
+          "amount",
+          "depositRequired",
+          "validUntil"
+        ]
+      },
+      "ReviseProposalDto": {
+        "type": "object",
+        "properties": {
+          "amount": {
+            "type": "number",
+            "description": "Total proposed amount in INR",
+            "example": 60000
+          },
+          "depositRequired": {
+            "type": "number",
+            "description": "Required deposit amount in INR",
+            "example": 15000
+          },
+          "proposedDate": {
+            "type": "string",
+            "description": "Proposed event date if different (YYYY-MM-DD)",
+            "example": "2026-09-05"
+          },
+          "validUntil": {
+            "type": "string",
+            "description": "Proposal validity expiration date (YYYY-MM-DD)",
+            "example": "2026-08-01"
+          },
+          "terms": {
+            "type": "string",
+            "description": "Terms and conditions / deliverables",
+            "example": "Includes full day hall rental, standard audio setup, and buffet catering."
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional notes for the client",
+            "example": "Deposit required within 7 days of agreement to lock the venue."
+          },
+          "revisionReason": {
+            "type": "string",
+            "description": "Reason for proposal revision",
+            "example": "Adjusted catering options and reduced deposit per client request."
+          }
+        },
+        "required": [
+          "amount",
+          "depositRequired",
+          "validUntil"
+        ]
+      },
+      "RejectRequestDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Mandatory reason for rejection",
+            "example": "Venue is booked for maintenance on requested dates."
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "ClientResponseDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "description": "Client decision on the proposal or request",
+            "enum": [
+              "accept",
+              "request_revision",
+              "reject",
+              "withdraw"
+            ],
+            "example": "accept"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Feedback or notes from the client",
+            "example": "We accept the proposal terms and are ready to sign agreement."
+          }
+        },
+        "required": [
+          "decision"
+        ]
+      },
+      "UpdateAgreementStatusDto": {
+        "type": "object",
+        "properties": {
+          "agreementStatus": {
+            "type": "string",
+            "description": "Agreement status",
+            "enum": [
+              "not_sent",
+              "pending_signature",
+              "agreed",
+              "declined"
+            ],
+            "example": "agreed"
+          }
+        },
+        "required": [
+          "agreementStatus"
+        ]
+      },
+      "UpdatePaymentStatusDto": {
+        "type": "object",
+        "properties": {
+          "paymentStatus": {
+            "type": "string",
+            "description": "Deposit / Payment status",
+            "enum": [
+              "unpaid",
+              "deposit_pending",
+              "deposit_paid",
+              "fully_paid",
+              "refunded"
+            ],
+            "example": "deposit_paid"
+          }
+        },
+        "required": [
+          "paymentStatus"
+        ]
+      },
+      "ConfirmBookingDto": {
+        "type": "object",
+        "properties": {
+          "agreementConfirmed": {
+            "type": "boolean",
+            "description": "Force confirm agreement if verified out-of-band",
+            "example": true
+          },
+          "depositConfirmed": {
+            "type": "boolean",
+            "description": "Force confirm deposit if verified out-of-band",
+            "example": true
+          }
+        }
+      },
       "UpdateEventRequestStatusDto": {
         "type": "object",
         "properties": {
@@ -3677,12 +4483,20 @@
             "type": "string",
             "description": "New status for the request",
             "enum": [
+              "submitted",
               "pending",
+              "under_review",
+              "info_requested",
+              "proposal_sent",
+              "awaiting_client",
+              "confirmed",
               "approved",
               "rejected",
-              "cancelled"
+              "cancelled",
+              "withdrawn",
+              "expired"
             ],
-            "example": "approved"
+            "example": "under_review"
           }
         },
         "required": [
@@ -4118,6 +4932,18 @@
           "description"
         ]
       },
+      "CreateSupportFollowUpDto": {
+        "type": "object",
+        "properties": {
+          "message": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        },
+        "required": [
+          "message"
+        ]
+      },
       "UpdateSupportTicketStatusDto": {
         "type": "object",
         "properties": {
@@ -4128,6 +4954,11 @@
               "in_progress",
               "resolved"
             ]
+          },
+          "response": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Reply visible to the requester in their support ticket"
           }
         },
         "required": [

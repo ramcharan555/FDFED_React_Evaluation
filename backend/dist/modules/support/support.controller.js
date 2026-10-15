@@ -86,6 +86,9 @@ let SupportController = class SupportController {
     createTicket(userId, role, dto) {
         return this.service.createTicket(userId, role, dto);
     }
+    addRequesterFollowUp(ticketId, userId, dto) {
+        return this.service.addRequesterFollowUp(ticketId, userId, dto);
+    }
     uploadAttachment(userId, file) {
         if (!file)
             throw new common_1.BadRequestException('File is required');
@@ -100,8 +103,8 @@ let SupportController = class SupportController {
         });
         return new common_1.StreamableFile(result.stream);
     }
-    updateStatus(ticketId, role, dto) {
-        return this.service.updateStatus(ticketId, role, dto);
+    updateStatus(ticketId, userId, role, dto) {
+        return this.service.updateStatus(ticketId, userId, role, dto);
     }
 };
 exports.SupportController = SupportController;
@@ -127,6 +130,17 @@ __decorate([
     __metadata("design:paramtypes", [String, String, support_ticket_dto_1.CreateSupportTicketDto]),
     __metadata("design:returntype", void 0)
 ], SupportController.prototype, "createTicket", null);
+__decorate([
+    (0, common_1.Post)('tickets/:ticketId/follow-ups'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    (0, swagger_1.ApiOperation)({ summary: 'Add a requester follow-up to their own support ticket' }),
+    __param(0, (0, common_1.Param)('ticketId')),
+    __param(1, (0, user_id_decorator_1.UserId)()),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, support_ticket_dto_1.CreateSupportFollowUpDto]),
+    __metadata("design:returntype", void 0)
+], SupportController.prototype, "addRequesterFollowUp", null);
 __decorate([
     (0, common_1.Post)('attachments'),
     (0, swagger_1.ApiOperation)({ summary: 'Upload a support attachment (JPG, PNG, WEBP, PDF, or TXT; up to 5 MB)' }),
@@ -176,10 +190,11 @@ __decorate([
     (0, common_1.Patch)('tickets/:ticketId/status'),
     (0, swagger_1.ApiOperation)({ summary: 'Update a support ticket status; resolving it emails the requester' }),
     __param(0, (0, common_1.Param)('ticketId')),
-    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
-    __param(2, (0, common_1.Body)()),
+    __param(1, (0, user_id_decorator_1.UserId)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, support_ticket_dto_1.UpdateSupportTicketStatusDto]),
+    __metadata("design:paramtypes", [String, String, String, support_ticket_dto_1.UpdateSupportTicketStatusDto]),
     __metadata("design:returntype", void 0)
 ], SupportController.prototype, "updateStatus", null);
 exports.SupportController = SupportController = __decorate([

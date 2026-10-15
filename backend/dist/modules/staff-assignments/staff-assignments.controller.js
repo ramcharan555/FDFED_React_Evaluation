@@ -25,8 +25,8 @@ let StaffAssignmentsController = class StaffAssignmentsController {
     constructor(service) {
         this.service = service;
     }
-    create(dto, role) {
-        return this.service.create(dto, role);
+    create(dto, role, userId) {
+        return this.service.create(dto, role, userId);
     }
     findAll(role, userId) {
         return this.service.findAll(role, userId);
@@ -45,8 +45,9 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 409, description: 'Staff already assigned to this event' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [staff_assignment_dto_1.CreateStaffAssignmentDto, String]),
+    __metadata("design:paramtypes", [staff_assignment_dto_1.CreateStaffAssignmentDto, String, String]),
     __metadata("design:returntype", void 0)
 ], StaffAssignmentsController.prototype, "create", null);
 __decorate([

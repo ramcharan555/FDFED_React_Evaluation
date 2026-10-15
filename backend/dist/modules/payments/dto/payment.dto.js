@@ -29,12 +29,13 @@ __decorate([
 ], CreatePaymentDto.prototype, "amount", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'Payment method',
-        enum: ['Credit Card', 'Debit Card', 'UPI', 'Net Banking', 'Cash'],
-        example: 'Credit Card',
+        description: 'Simulated payment provider. No card or bank details are accepted.',
+        enum: ['DEMO_PROVIDER'],
+        example: 'DEMO_PROVIDER',
     }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsIn)(['DEMO_PROVIDER']),
     __metadata("design:type", String)
 ], CreatePaymentDto.prototype, "paymentMethod", void 0);
 __decorate([

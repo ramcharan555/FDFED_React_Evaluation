@@ -11,6 +11,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.StaffResponseDto = exports.UpdateStaffDto = exports.CreateStaffDto = void 0;
 const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
 class CreateStaffDto {
 }
@@ -35,12 +36,14 @@ __decorate([
 ], CreateStaffDto.prototype, "email", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'Staff phone',
+        description: 'Valid 10-digit Indian mobile number',
         example: '9876543210',
         required: false,
     }),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim() : value),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Matches)(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' }),
     __metadata("design:type", String)
 ], CreateStaffDto.prototype, "phone", void 0);
 __decorate([
@@ -105,12 +108,14 @@ __decorate([
 ], UpdateStaffDto.prototype, "status", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
-        description: 'Staff phone number',
+        description: 'Valid 10-digit Indian mobile number',
         example: '9876543210',
         required: false,
     }),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim() : value),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.Matches)(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' }),
     __metadata("design:type", String)
 ], UpdateStaffDto.prototype, "phone", void 0);
 class StaffResponseDto {

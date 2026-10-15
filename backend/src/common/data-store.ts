@@ -371,6 +371,12 @@ export interface SupportTicket {
   requestType: string;
   concern: string;
   description: string;
+  response?: string;
+  messages?: Array<{
+    sender: 'requester' | 'support';
+    message: string;
+    createdAt: Date;
+  }>;
   attachments: Omit<SupportAttachment, 'userId' | 'filePath' | 'createdAt'>[];
   status: 'open' | 'in_progress' | 'resolved';
   createdAt: Date;

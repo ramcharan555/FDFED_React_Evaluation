@@ -32,7 +32,7 @@ import { RoleGuard } from '../../common/guards/role.guard';
 import { UserId } from '../../common/decorators/user-id.decorator';
 import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
 import { UserRole } from '../../common/constants';
-import { CreateSupportTicketDto, UpdateSupportTicketStatusDto } from './dto/support-ticket.dto';
+import { CreateSupportFollowUpDto, CreateSupportTicketDto, UpdateSupportTicketStatusDto } from './dto/support-ticket.dto';
 import { SupportService } from './support.service';
 
 const SUPPORT_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'support');
@@ -79,6 +79,17 @@ export class SupportController {
     @Body() dto: CreateSupportTicketDto,
   ) {
     return this.service.createTicket(userId, role, dto);
+  }
+
+  @Post('tickets/:ticketId/follow-ups')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Add a requester follow-up to their own support ticket' })
+  addRequesterFollowUp(
+    @Param('ticketId') ticketId: string,
+    @UserId() userId: string,
+    @Body() dto: CreateSupportFollowUpDto,
+  ) {
+    return this.service.addRequesterFollowUp(ticketId, userId, dto);
   }
 
   @Post('attachments')
@@ -142,9 +153,10 @@ export class SupportController {
   @ApiOperation({ summary: 'Update a support ticket status; resolving it emails the requester' })
   updateStatus(
     @Param('ticketId') ticketId: string,
+    @UserId() userId: string,
     @UserRoleDecorator() role: UserRole,
     @Body() dto: UpdateSupportTicketStatusDto,
   ) {
-    return this.service.updateStatus(ticketId, role, dto);
+    return this.service.updateStatus(ticketId, userId, role, dto);
   }
 }

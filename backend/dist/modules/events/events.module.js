@@ -9,13 +9,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.EventsModule = void 0;
 const common_1 = require("@nestjs/common");
 const events_controller_1 = require("./events.controller");
+const public_events_controller_1 = require("./public-events.controller");
 const events_service_1 = require("./events.service");
 let EventsModule = class EventsModule {
 };
 exports.EventsModule = EventsModule;
 exports.EventsModule = EventsModule = __decorate([
     (0, common_1.Module)({
-        controllers: [events_controller_1.EventsController],
+        controllers: [events_controller_1.EventsController, public_events_controller_1.PublicEventsController],
         providers: [events_service_1.EventsService],
         exports: [events_service_1.EventsService],
     })

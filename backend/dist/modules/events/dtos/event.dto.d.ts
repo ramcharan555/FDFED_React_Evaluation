@@ -8,6 +8,10 @@ export declare class CreateEventDto {
     ticketPrice: number;
     organizerId?: string;
     clientId?: string;
+    registrationDeadline?: string;
+    cancellationDeadline?: string;
+    eligibility?: string;
+    waitlistEnabled?: boolean;
 }
 export declare class UpdateEventDto {
     name?: string;
@@ -18,6 +22,10 @@ export declare class UpdateEventDto {
     capacity?: number;
     ticketPrice?: number;
     status?: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
+    registrationDeadline?: string;
+    cancellationDeadline?: string;
+    eligibility?: string;
+    waitlistEnabled?: boolean;
 }
 export declare class EventResponseDto {
     eventId: string;

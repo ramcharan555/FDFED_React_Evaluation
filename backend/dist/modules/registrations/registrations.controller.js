@@ -25,14 +25,23 @@ let RegistrationsController = class RegistrationsController {
     constructor(service) {
         this.service = service;
     }
-    create(dto, role) {
-        return this.service.create(dto, role);
+    create(dto, role, userId) {
+        return this.service.create(dto, role, userId);
     }
     findAll(role, userId) {
         return this.service.findAll(role, userId);
     }
-    findOne(id) {
-        return this.service.findOne(id);
+    findOne(id, role, userId) {
+        return this.service.findOne(id, role, userId);
+    }
+    updateDetails(id, dto, role, userId) {
+        return this.service.updateDetails(id, dto, role, userId);
+    }
+    confirmWaitlist(id, role, userId) {
+        return this.service.confirmWaitlist(id, role, userId);
+    }
+    cancel(id, dto, role, userId) {
+        return this.service.cancel(id, dto.reason, role, userId);
     }
 };
 exports.RegistrationsController = RegistrationsController;
@@ -45,8 +54,9 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 409, description: 'Already registered for this event' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [registration_dto_1.CreateRegistrationDto, String]),
+    __metadata("design:paramtypes", [registration_dto_1.CreateRegistrationDto, String, String]),
     __metadata("design:returntype", void 0)
 ], RegistrationsController.prototype, "create", null);
 __decorate([
@@ -64,10 +74,41 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Registration details with qrCode and verificationId' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Registration not found' }),
     __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], RegistrationsController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Patch)(':id/details'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, registration_dto_1.UpdateRegistrationDetailsDto, String, String]),
+    __metadata("design:returntype", void 0)
+], RegistrationsController.prototype, "updateDetails", null);
+__decorate([
+    (0, common_1.Post)(':id/waitlist/confirm'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], RegistrationsController.prototype, "confirmWaitlist", null);
+__decorate([
+    (0, common_1.Patch)(':id/cancel'),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, registration_dto_1.CancelRegistrationDto, String, String]),
+    __metadata("design:returntype", void 0)
+], RegistrationsController.prototype, "cancel", null);
 exports.RegistrationsController = RegistrationsController = __decorate([
     (0, swagger_1.ApiTags)('registrations'),
     (0, common_1.Controller)('api/registrations'),

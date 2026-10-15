@@ -20,15 +20,19 @@ const attendance_dto_1 = require("./dto/attendance.dto");
 const role_guard_1 = require("../../common/guards/role.guard");
 const user_role_decorator_1 = require("../../common/decorators/user-role.decorator");
 const constants_1 = require("../../common/constants");
+const user_id_decorator_1 = require("../../common/decorators/user-id.decorator");
 let AttendanceController = class AttendanceController {
     constructor(service) {
         this.service = service;
     }
-    verify(dto, role) {
-        return this.service.verify(dto, role);
+    verify(dto, role, userId) {
+        return this.service.verify(dto, role, userId);
     }
-    findAll(role, eventId) {
-        return this.service.findAll(role, eventId);
+    reconcile(eventId, role, userId) {
+        return this.service.reconcileNoShows(eventId, role, userId);
+    }
+    findAll(role, eventId, userId) {
+        return this.service.findAll(role, eventId, userId);
     }
 };
 exports.AttendanceController = AttendanceController;
@@ -42,18 +46,30 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 409, description: 'Attendee already checked in' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [attendance_dto_1.VerifyAttendanceDto, String]),
+    __metadata("design:paramtypes", [attendance_dto_1.VerifyAttendanceDto, String, String]),
     __metadata("design:returntype", void 0)
 ], AttendanceController.prototype, "verify", null);
+__decorate([
+    (0, common_1.Post)('reconcile/:eventId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Mark confirmed non-attendees as no-shows after an event concludes' }),
+    __param(0, (0, common_1.Param)('eventId')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], AttendanceController.prototype, "reconcile", null);
 __decorate([
     (0, common_1.Get)(),
     (0, swagger_1.ApiOperation)({ summary: 'List attendance records' }),
     (0, swagger_1.ApiQuery)({ name: 'eventId', required: false, description: 'Filter by event ID' }),
     __param(0, (0, user_role_decorator_1.UserRoleDecorator)()),
     __param(1, (0, common_1.Query)('eventId')),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], AttendanceController.prototype, "findAll", null);
 exports.AttendanceController = AttendanceController = __decorate([

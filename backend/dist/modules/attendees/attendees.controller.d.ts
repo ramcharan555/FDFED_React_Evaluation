@@ -7,8 +7,8 @@ export declare class AttendeesController {
     create(createAttendeeDto: CreateAttendeeDto, role: UserRole): any;
     findAll(role: UserRole, search?: string): any[];
     getStatistics(): any;
-    findByEvent(eventId: string, role: UserRole): any[];
-    findOne(id: string, role: UserRole): any;
+    findByEvent(eventId: string, role: UserRole, userId: string): any[];
+    findOne(id: string, role: UserRole, userId: string): any;
     update(id: string, updateAttendeeDto: UpdateAttendeeDto, role: UserRole, userId: string): any;
     delete(id: string, role: UserRole): {
         message: string;

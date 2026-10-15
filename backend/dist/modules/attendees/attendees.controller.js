@@ -34,11 +34,11 @@ let AttendeesController = class AttendeesController {
     getStatistics() {
         return this.attendeesService.getStatistics();
     }
-    findByEvent(eventId, role) {
-        return this.attendeesService.findByEvent(eventId, role);
+    findByEvent(eventId, role, userId) {
+        return this.attendeesService.findByEvent(eventId, role, userId);
     }
-    findOne(id, role) {
-        return this.attendeesService.findOne(id, role);
+    findOne(id, role, userId) {
+        return this.attendeesService.findOne(id, role, userId);
     }
     update(id, updateAttendeeDto, role, userId) {
         return this.attendeesService.update(id, updateAttendeeDto, role, userId);
@@ -85,8 +85,9 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 200, description: 'List of attendees for the event' }),
     __param(0, (0, common_1.Param)('eventId')),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], AttendeesController.prototype, "findByEvent", null);
 __decorate([
@@ -96,8 +97,9 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Attendee not found' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], AttendeesController.prototype, "findOne", null);
 __decorate([

@@ -163,33 +163,31 @@ let AnalyticsService = class AnalyticsService {
         const myAssignments = this.db.staffAssignments.filter(a => a.staffId === staffUser.staffId);
         const myEventIds = myAssignments.map(a => a.eventId);
         const myReports = this.db.staffReports.filter(r => r.staffId === staffUser.staffId);
-        const departmentStats = employeeType === constants_1.EmployeeType.REGISTRATION_VERIFICATION
+        const isSupportExec = employeeType === constants_1.EmployeeType.SUPPORT_EXECUTIVE ||
+            employeeType === constants_1.EmployeeType.REGISTRATION_VERIFICATION ||
+            employeeType === constants_1.EmployeeType.EVENT_OPERATIONS;
+        const departmentStats = isSupportExec
             ? {
+                totalUsers: this.db.users.length,
+                totalEvents: this.db.events.length,
                 totalRegistrations: this.db.registrations.length,
-                pendingVerifications: this.db.registrations.filter(r => r.status === 'registered').length,
-                verifiedRegistrations: this.db.registrations.filter(r => r.status === 'attended').length,
-                todayRegistrations: this.db.registrations.filter(r => r.registrationDate === new Date().toISOString().split('T')[0]).length,
+                registrationsAwaitingReview: this.db.registrations.filter(r => r.status === 'registered' || r.status === 'pending' || r.status === 'pending_review').length,
+                openSupportTickets: this.db.eventRequests.filter(r => r.status === 'pending').length,
+                operationalIssues: this.db.eventRequests.filter(r => r.status === 'in_review').length,
+                activeEvents: this.db.events.filter(e => e.status === 'published' || e.status === 'ongoing').length,
+                upcomingEvents: this.db.events.filter(e => new Date(e.date) >= new Date()).length,
             }
-            : employeeType === constants_1.EmployeeType.EVENT_OPERATIONS
+            : (employeeType === constants_1.EmployeeType.SUPPORT_FINANCE || employeeType === constants_1.EmployeeType.FINANCE_EXECUTIVE)
                 ? {
-                    totalEvents: this.db.events.length,
-                    activeEvents: this.db.events.filter(e => e.status === 'published' || e.status === 'ongoing').length,
-                    pendingEvents: this.db.events.filter(e => e.status === 'draft').length,
-                    upcomingEvents: this.db.events.filter(e => new Date(e.date) >= new Date()).length,
+                    pendingSupportRequests: this.db.eventRequests.filter(r => r.status === 'pending').length,
+                    openIssues: this.db.eventRequests.filter(r => r.status === 'in_review').length,
+                    successfulTransactions: this.db.payments.filter(p => p.status === 'completed').length,
+                    pendingPayments: this.db.payments.filter(p => p.status === 'pending').length,
                 }
-                : employeeType === constants_1.EmployeeType.SUPPORT_FINANCE
-                    ? {
-                        pendingSupportRequests: this.db.eventRequests.filter(r => r.status === 'pending').length,
-                        openIssues: this.db.eventRequests.filter(r => r.status === 'in_review').length,
-                        successfulTransactions: this.db.payments.filter(p => p.status === 'completed').length,
-                        pendingPayments: this.db.payments.filter(p => p.status === 'pending').length,
-                    }
-                    : {};
+                : {};
         return {
             success: true,
             data: {
-                employeeType,
-                ...departmentStats,
                 totalAssignments: myAssignments.length,
                 pendingAssignments: myAssignments.filter(a => a.status === 'pending').length,
                 acceptedAssignments: myAssignments.filter(a => a.status === 'accepted').length,
@@ -201,6 +199,7 @@ let AnalyticsService = class AnalyticsService {
                 submittedReports: myReports.filter(r => r.status === 'submitted').length,
                 upcomingEvents: myEventIds.length, // Count of events assigned
                 availableDates: staffUser.availableDates || [],
+                ...departmentStats,
             },
         };
     }

@@ -65,8 +65,41 @@ export interface Event {
     status: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
     description?: string;
     city?: string;
+    registrationDeadline?: string;
+    cancellationDeadline?: string;
+    eligibility?: string;
+    waitlistEnabled?: boolean;
     createdAt: Date;
     updatedAt: Date;
+}
+export interface ProposalVersion {
+    version: number;
+    amount: number;
+    depositRequired: number;
+    proposedDate: string;
+    validUntil: string;
+    terms?: string;
+    notes?: string;
+    status: 'pending_client' | 'accepted' | 'revision_requested' | 'rejected' | 'expired';
+    sentAt: Date;
+    clientResponseAt?: Date;
+    clientNotes?: string;
+}
+export interface RequestClarification {
+    id: string;
+    senderId: string;
+    senderRole: string;
+    senderName?: string;
+    message: string;
+    timestamp: Date;
+}
+export interface RequestAuditEntry {
+    id: string;
+    action: string;
+    performedBy: string;
+    role: string;
+    timestamp: Date;
+    details?: any;
 }
 export interface EventRequest {
     requestId: string;
@@ -77,7 +110,17 @@ export interface EventRequest {
     budget: number;
     capacity: number;
     requirements: string;
-    status: 'pending' | 'approved' | 'rejected' | 'cancelled';
+    status: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'confirmed' | 'approved' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';
+    agreementStatus: 'not_sent' | 'pending_signature' | 'agreed' | 'declined';
+    paymentStatus: 'unpaid' | 'deposit_pending' | 'deposit_paid' | 'fully_paid' | 'refunded';
+    rejectionReason?: string;
+    withdrawalReason?: string;
+    currentProposalVersion?: number;
+    proposals?: ProposalVersion[];
+    clarifications?: RequestClarification[];
+    auditHistory?: RequestAuditEntry[];
+    eventId?: string;
+    version?: number;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -100,11 +143,15 @@ export interface Registration {
     attendeeId: string;
     eventId: string;
     registrationDate: string;
-    status: 'registered' | 'cancelled' | 'no-show' | 'attended';
+    status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'no-show' | 'attended';
     additionalInfo?: string;
     ticketType: string;
     qrCode?: string;
     verificationId?: string;
+    cancellationReason?: string;
+    cancelledAt?: Date;
+    offerExpiresAt?: Date;
+    reservationExpiresAt?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -117,6 +164,25 @@ export interface Payment {
     paymentMethod: string;
     createdAt: Date;
     updatedAt: Date;
+}
+export interface Refund {
+    refundId: string;
+    paymentId: string;
+    registrationId: string;
+    amount: number;
+    status: 'pending' | 'completed' | 'failed' | 'not_applicable';
+    reason: string;
+    requestedAt: Date;
+    processedAt?: Date;
+}
+export interface EventChange {
+    changeId: string;
+    eventId: string;
+    type: 'cancelled' | 'postponed' | 'date_changed' | 'time_changed' | 'venue_changed';
+    summary: string;
+    previousValue?: string;
+    newValue?: string;
+    createdAt: Date;
 }
 export interface Attendance {
     attendanceId: string;
@@ -218,6 +284,12 @@ export interface SupportTicket {
     requestType: string;
     concern: string;
     description: string;
+    response?: string;
+    messages?: Array<{
+        sender: 'requester' | 'support';
+        message: string;
+        createdAt: Date;
+    }>;
     attachments: Omit<SupportAttachment, 'userId' | 'filePath' | 'createdAt'>[];
     status: 'open' | 'in_progress' | 'resolved';
     createdAt: Date;
@@ -237,6 +309,8 @@ export declare class DataStore {
     eventPlans: EventPlan[];
     registrations: Registration[];
     payments: Payment[];
+    refunds: Refund[];
+    eventChanges: EventChange[];
     attendance: Attendance[];
     staffAssignments: StaffAssignment[];
     eventReports: EventReport[];
@@ -249,6 +323,9 @@ export declare class DataStore {
     supportAttachments: SupportAttachment[];
     private constructor();
     static getInstance(): DataStore;
+    private get persistencePath();
+    private restoreFromDisk;
+    persist(): void;
     private initializeSeedData;
     generateId(prefix: string): string;
     clearAllData(): void;

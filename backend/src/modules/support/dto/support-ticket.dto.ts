@@ -41,4 +41,18 @@ export class UpdateSupportTicketStatusDto {
   @IsString()
   @IsIn(['open', 'in_progress', 'resolved'])
   status!: 'open' | 'in_progress' | 'resolved';
+
+  @ApiPropertyOptional({ maxLength: 2000, description: 'Reply visible to the requester in their support ticket' })
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  response?: string;
+}
+
+export class CreateSupportFollowUpDto {
+  @ApiProperty({ maxLength: 2000 })
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(2000)
+  message!: string;
 }

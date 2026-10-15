@@ -83,17 +83,40 @@ let AttendeesService = class AttendeesService {
         return attendees;
     }
     // Get attendee by ID
-    findOne(attendeeId, role) {
+    findOne(attendeeId, role, userId) {
         const attendee = this.dataStore.attendees.find((a) => a.attendeeId === attendeeId);
         if (!attendee) {
             throw new common_1.NotFoundException(`Attendee with ID ${attendeeId} not found`);
         }
+        if (role === constants_1.UserRole.ATTENDEE && attendee.userId !== userId)
+            throw new common_1.ForbiddenException('You can only view your own attendee profile');
+        if (![constants_1.UserRole.ATTENDEE, constants_1.UserRole.EVENT_ORGANIZER, constants_1.UserRole.EVENT_STAFF, constants_1.UserRole.SUPER_ADMIN].includes(role))
+            throw new common_1.ForbiddenException('Access denied');
         return this.mapAttendeeToFrontend(attendee);
     }
     // Get attendees by event ID
-    findByEvent(eventId, role) {
+    findByEvent(eventId, role, userId) {
         if (role !== constants_1.UserRole.SUPER_ADMIN && role !== constants_1.UserRole.EVENT_ORGANIZER && role !== constants_1.UserRole.EVENT_STAFF && role !== constants_1.UserRole.CLIENT) {
             throw new common_1.ForbiddenException('Insufficient permissions');
+        }
+        const event = this.dataStore.events.find(e => e.eventId === eventId);
+        if (!event)
+            throw new common_1.NotFoundException('Event not found');
+        if (role === constants_1.UserRole.EVENT_ORGANIZER) {
+            const organizer = this.dataStore.organizers.find(o => o.userId === userId);
+            if (!organizer || event.organizerId !== organizer.organizerId)
+                throw new common_1.ForbiddenException('You can only view attendees for your own events');
+        }
+        else if (role === constants_1.UserRole.EVENT_STAFF) {
+            const staff = this.dataStore.staffProfiles.find(s => s.userId === userId);
+            const assigned = this.dataStore.staffAssignments.some(a => a.staffId === staff?.staffId && a.eventId === eventId && a.status === 'accepted');
+            if (!assigned)
+                throw new common_1.ForbiddenException('You can only view attendees for accepted event assignments');
+        }
+        else if (role === constants_1.UserRole.CLIENT) {
+            const client = this.dataStore.clients.find(c => c.userId === userId);
+            if (!client || event.clientId !== client.clientId)
+                throw new common_1.ForbiddenException('You can only view attendees for your own events');
         }
         const registrations = this.dataStore.registrations.filter(r => r.eventId === eventId);
         const attendeeIds = registrations.map(r => r.attendeeId);

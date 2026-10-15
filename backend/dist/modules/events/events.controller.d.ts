@@ -6,9 +6,9 @@ export declare class EventsController {
     constructor(eventsService: EventsService);
     create(createEventDto: CreateEventDto, role: UserRole, userId: string): any;
     findAll(role: UserRole, search?: string, status?: string): any[];
-    findAllAdmin(search?: string, status?: string): any[];
+    findAllAdmin(role: UserRole, search?: string, status?: string): any[];
     getStatistics(): any;
-    findOne(id: string): any;
+    findOne(id: string, role: UserRole, userId: string): any;
     update(id: string, updateEventDto: UpdateEventDto, role: UserRole, userId: string): any;
     delete(id: string, role: UserRole, userId: string): {
         message: string;
