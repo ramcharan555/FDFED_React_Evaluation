@@ -15,13 +15,18 @@ const data_store_1 = require("../../common/data-store");
 const constants_1 = require("../../common/constants");
 let EventPlansService = class EventPlansService {
     constructor() { this.db = data_store_1.DataStore.getInstance(); }
-    create(dto, role) {
+    create(dto, role, userId) {
         if (role !== constants_1.UserRole.EVENT_ORGANIZER && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Only EVENT_ORGANIZER can create event plans');
         }
         const clientExists = this.db.clients.find(c => c.clientId === dto.clientId);
         if (!clientExists)
             throw new common_1.NotFoundException('Client not found');
+        const organizer = this.db.organizers.find(o => o.organizerId === dto.organizerId);
+        if (!organizer || (role === constants_1.UserRole.EVENT_ORGANIZER && organizer.userId !== userId))
+            throw new common_1.ForbiddenException('You can only create plans as your own organizer account');
+        if (dto.eventId && !this.db.events.some(e => e.eventId === dto.eventId && e.organizerId === organizer.organizerId))
+            throw new common_1.ForbiddenException('The event must belong to this organizer');
         const planId = this.db.generateId('plan');
         const plan = {
             eventPlanId: planId,
@@ -60,24 +65,23 @@ let EventPlansService = class EventPlansService {
         let plans = [...this.db.eventPlans];
         if (role === constants_1.UserRole.CLIENT) {
             const client = this.db.clients.find(c => c.userId === userId);
-            if (client)
-                plans = plans.filter(p => p.clientId === client.clientId);
+            plans = client ? plans.filter(p => p.clientId === client.clientId) : [];
         }
         else if (role === constants_1.UserRole.EVENT_ORGANIZER) {
             const organizer = this.db.organizers.find(o => o.userId === userId);
-            if (organizer)
-                plans = plans.filter(p => p.organizerId === organizer.organizerId);
+            plans = organizer ? plans.filter(p => p.organizerId === organizer.organizerId) : [];
         }
         else if (role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Access denied');
         }
         return plans;
     }
-    findOne(planId) {
-        // Note: Role-based access control should be added here
+    findOne(planId, role, userId) {
         const plan = this.db.eventPlans.find(p => p.eventPlanId === planId);
         if (!plan)
             throw new common_1.NotFoundException(`Event plan ${planId} not found`);
+        if (!this.findAll(role, userId).some(p => p.eventPlanId === planId))
+            throw new common_1.ForbiddenException('You cannot view this event plan');
         return plan;
     }
     updateApproval(planId, dto, role, userId) {
@@ -87,6 +91,8 @@ let EventPlansService = class EventPlansService {
         const plan = this.db.eventPlans.find(p => p.eventPlanId === planId);
         if (!plan)
             throw new common_1.NotFoundException(`Event plan ${planId} not found`);
+        if (plan.approvalStatus !== 'pending')
+            throw new common_1.ForbiddenException('This plan has already been reviewed');
         if (role === constants_1.UserRole.CLIENT) {
             const client = this.db.clients.find(c => c.userId === userId);
             if (!client || client.clientId !== plan.clientId) {

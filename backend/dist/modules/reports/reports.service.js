@@ -16,10 +16,18 @@ const constants_1 = require("../../common/constants");
 let ReportsService = class ReportsService {
     constructor() { this.db = data_store_1.DataStore.getInstance(); }
     // EVENT REPORTS
-    createEventReport(dto, role) {
+    createEventReport(dto, role, userId) {
         if (role !== constants_1.UserRole.EVENT_ORGANIZER && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Only EVENT_ORGANIZER can create event reports');
         }
+        const event = this.db.events.find(e => e.eventId === dto.eventId);
+        const organizer = this.db.organizers.find(o => o.organizerId === dto.organizerId);
+        if (!event || !organizer || event.organizerId !== organizer.organizerId)
+            throw new common_1.NotFoundException('Event and its organizer are required');
+        if (role === constants_1.UserRole.EVENT_ORGANIZER && organizer.userId !== userId)
+            throw new common_1.ForbiddenException('You can only report for your own events');
+        if (dto.clientId && dto.clientId !== event.clientId)
+            throw new common_1.ForbiddenException('Report client must match the event client');
         const id = this.db.generateId('rpt-evt');
         const report = {
             eventReportId: id,
@@ -77,12 +85,18 @@ let ReportsService = class ReportsService {
         return reports;
     }
     // STAFF REPORTS
-    createStaffReport(dto, role) {
+    createStaffReport(dto, role, userId) {
         if (role !== constants_1.UserRole.EVENT_STAFF && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Only EVENT_STAFF can create staff reports');
         }
+        const staff = this.db.staffProfiles.find(s => s.staffId === dto.staffId);
+        if (role === constants_1.UserRole.EVENT_STAFF && staff?.userId !== userId)
+            throw new common_1.ForbiddenException('You can only submit your own staff report');
+        const event = this.db.events.find(e => e.eventId === dto.eventId);
+        if (!event || event.organizerId !== dto.organizerId)
+            throw new common_1.NotFoundException('Event organizer does not match');
         // Staff should only report for assigned events
-        const assignment = this.db.staffAssignments.find(a => a.staffId === dto.staffId && a.eventId === dto.eventId && a.status === 'accepted');
+        const assignment = this.db.staffAssignments.find(a => a.staffId === dto.staffId && a.eventId === dto.eventId && ['accepted', 'completed'].includes(a.status));
         if (!assignment && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('You can only report for events you are assigned to');
         }

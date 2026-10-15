@@ -4,9 +4,9 @@ import { UserRole } from '../../common/constants';
 export declare class ReportsController {
     private readonly service;
     constructor(service: ReportsService);
-    createEventReport(dto: CreateEventReportDto, role: UserRole): any;
+    createEventReport(dto: CreateEventReportDto, role: UserRole, userId: string): any;
     findAllEventReports(role: UserRole, userId: string): any[];
-    createStaffReport(dto: CreateStaffReportDto, role: UserRole): any;
+    createStaffReport(dto: CreateStaffReportDto, role: UserRole, userId: string): any;
     findAllStaffReports(role: UserRole, userId: string): any[];
 }
 //# sourceMappingURL=reports.controller.d.ts.map

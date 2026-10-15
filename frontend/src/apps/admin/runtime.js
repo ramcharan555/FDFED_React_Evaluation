@@ -2486,6 +2486,9 @@ window.EventFlowModules['shared'] = true;
           return;
         } else if (pg === 'revenue-reports' || pg === 'reports' || pg === 'staff-reports' || pg === 'employee-stats') {
           el.innerHTML = pageRevenueReports();
+          const inbox = document.createElement('div');
+          el.prepend(inbox);
+          await window.EventFlowReportInbox.mount(inbox, { admin: true });
           return;
         } else {
           el.innerHTML = pageUserReports();

@@ -15,10 +15,20 @@ const data_store_1 = require("../../common/data-store");
 const constants_1 = require("../../common/constants");
 let ReviewsService = class ReviewsService {
     constructor() { this.db = data_store_1.DataStore.getInstance(); }
-    createEventReview(dto, role) {
+    createEventReview(dto, role, userId) {
         if (role !== constants_1.UserRole.ATTENDEE && role !== constants_1.UserRole.CLIENT && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Only ATTENDEE or CLIENT can review events');
         }
+        const event = this.db.events.find(e => e.eventId === dto.eventId);
+        if (!event)
+            throw new common_1.NotFoundException('Event not found');
+        const attendee = this.db.attendees.find(a => a.userId === userId), client = this.db.clients.find(c => c.userId === userId);
+        if (role === constants_1.UserRole.ATTENDEE && (dto.reviewerId !== attendee?.attendeeId || !this.db.registrations.some(r => r.attendeeId === attendee?.attendeeId && r.eventId === dto.eventId && ['registered', 'attended', 'no-show'].includes(r.status))))
+            throw new common_1.ForbiddenException('Only your own registered event can be reviewed');
+        if (role === constants_1.UserRole.CLIENT && (dto.reviewerId !== client?.clientId || event.clientId !== client?.clientId))
+            throw new common_1.ForbiddenException('Only your own event can be reviewed');
+        if (this.db.eventReviews.some(r => r.reviewerId === dto.reviewerId && r.eventId === dto.eventId))
+            throw new common_1.ConflictException('You already reviewed this event');
         const id = this.db.generateId('rev-evt');
         const review = {
             reviewId: id,
@@ -37,10 +47,15 @@ let ReviewsService = class ReviewsService {
             return this.db.eventReviews.filter(r => r.eventId === eventId);
         return this.db.eventReviews;
     }
-    createStaffReview(dto, role) {
+    createStaffReview(dto, role, userId) {
         if (role !== constants_1.UserRole.EVENT_ORGANIZER && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Only EVENT_ORGANIZER can review staff');
         }
+        const organizer = this.db.organizers.find(o => o.userId === userId);
+        if (role === constants_1.UserRole.EVENT_ORGANIZER && (dto.reviewerId !== organizer?.organizerId || !this.db.staffAssignments.some(a => a.staffId === dto.staffId && a.eventId === dto.eventId && a.organizerId === organizer?.organizerId && ['accepted', 'completed'].includes(a.status))))
+            throw new common_1.ForbiddenException('You can only review staff assigned to your own event');
+        if (this.db.staffReviews.some(r => r.reviewerId === dto.reviewerId && r.staffId === dto.staffId && r.eventId === dto.eventId))
+            throw new common_1.ConflictException('You already reviewed this assignment');
         const id = this.db.generateId('rev-staff');
         const review = {
             reviewId: id,

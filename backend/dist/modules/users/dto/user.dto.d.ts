@@ -1,5 +1,6 @@
-import { UserRole } from '../../../common/constants';
+import { EmployeeType, UserRole } from '../../../common/constants';
 export declare class CreateUserDto {
+    employeeType?: EmployeeType;
     name: string;
     email: string;
     password: string;

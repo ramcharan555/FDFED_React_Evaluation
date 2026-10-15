@@ -27,7 +27,8 @@ let AttendanceService = class AttendanceService {
             if (!staff || staff.staffId !== dto.staffId)
                 throw new common_1.ForbiddenException('You cannot check in as another staff member');
             const assigned = this.db.staffAssignments.some(a => a.staffId === staff.staffId && a.eventId === dto.eventId && a.status === 'accepted');
-            if (!assigned)
+            const departmentVerifier = this.db.users.find(u => u.userId === userId)?.employeeType === constants_1.EmployeeType.REGISTRATION_VERIFICATION;
+            if (!assigned && !departmentVerifier)
                 throw new common_1.ForbiddenException('You can only check in attendees for an accepted event assignment');
         }
         // Find registration by QR or verification ID

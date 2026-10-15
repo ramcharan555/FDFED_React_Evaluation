@@ -20,8 +20,8 @@ export class ReportsController {
   @ApiOperation({ summary: 'Create event report (EVENT_ORGANIZER sends final report to client)' })
   @ApiResponse({ status: 201, description: 'Event report created. Notifies client.' })
   @ApiResponse({ status: 403, description: 'Only EVENT_ORGANIZER can create event reports' })
-  createEventReport(@Body() dto: CreateEventReportDto, @UserRoleDecorator() role: UserRole) {
-    return this.service.createEventReport(dto, role);
+  createEventReport(@Body() dto: CreateEventReportDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.createEventReport(dto, role, userId);
   }
 
   @Get('events')
@@ -35,8 +35,8 @@ export class ReportsController {
   @ApiOperation({ summary: 'Create staff report (EVENT_STAFF only, must be assigned to event)' })
   @ApiResponse({ status: 201, description: 'Staff report created. Organizer notified.' })
   @ApiResponse({ status: 403, description: 'Staff can only report for assigned events' })
-  createStaffReport(@Body() dto: CreateStaffReportDto, @UserRoleDecorator() role: UserRole) {
-    return this.service.createStaffReport(dto, role);
+  createStaffReport(@Body() dto: CreateStaffReportDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.createStaffReport(dto, role, userId);
   }
 
   @Get('staff')

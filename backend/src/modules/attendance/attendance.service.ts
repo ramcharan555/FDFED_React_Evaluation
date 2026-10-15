@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, ForbiddenException, ConflictException, BadRequestException } from '@nestjs/common';
 import { DataStore } from '../../common/data-store';
-import { UserRole } from '../../common/constants';
+import { EmployeeType, UserRole } from '../../common/constants';
 import { VerifyAttendanceDto } from './dto/attendance.dto';
 
 @Injectable()
@@ -19,7 +19,8 @@ export class AttendanceService {
       const staff = this.db.staffProfiles.find(s => s.userId === userId);
       if (!staff || staff.staffId !== dto.staffId) throw new ForbiddenException('You cannot check in as another staff member');
       const assigned = this.db.staffAssignments.some(a => a.staffId === staff.staffId && a.eventId === dto.eventId && a.status === 'accepted');
-      if (!assigned) throw new ForbiddenException('You can only check in attendees for an accepted event assignment');
+      const departmentVerifier = this.db.users.find(u => u.userId === userId)?.employeeType === EmployeeType.REGISTRATION_VERIFICATION;
+      if (!assigned && !departmentVerifier) throw new ForbiddenException('You can only check in attendees for an accepted event assignment');
     }
 
     // Find registration by QR or verification ID

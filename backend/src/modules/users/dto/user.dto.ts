@@ -4,9 +4,10 @@ import {
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { UserRole } from '../../../common/constants';
+import { EmployeeType, UserRole } from '../../../common/constants';
 
 export class CreateUserDto {
+  @IsOptional() @IsEnum(EmployeeType) employeeType?: EmployeeType;
   @ApiProperty({ description: 'Full name', example: 'John Doe' })
   @IsString()
   @IsNotEmpty()

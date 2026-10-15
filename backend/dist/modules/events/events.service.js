@@ -29,11 +29,17 @@ let EventsService = class EventsService {
         if (!name || !createEventDto.date || !createEventDto.time) {
             throw new common_1.BadRequestException('Event name, date, and time are required');
         }
-        const organizer = this.dataStore.organizers.find(o => o.userId === organizerId);
+        const organizer = role === constants_1.UserRole.EVENT_ORGANIZER ? this.dataStore.organizers.find(o => o.userId === organizerId) : this.dataStore.organizers.find(o => o.organizerId === createEventDto.organizerId);
+        if (!organizer)
+            throw new common_1.BadRequestException('Select an existing organizer');
+        if (createEventDto.clientId && !this.dataStore.clients.some(c => c.clientId === createEventDto.clientId))
+            throw new common_1.BadRequestException('Client not found');
+        if (!Number.isInteger(createEventDto.capacity) || createEventDto.capacity < 1 || !Number.isFinite(createEventDto.ticketPrice) || createEventDto.ticketPrice < 0 || Math.abs(createEventDto.ticketPrice * 100 - Math.round(createEventDto.ticketPrice * 100)) > 0.00001 || !Number.isFinite(+new Date(createEventDto.date)))
+            throw new common_1.BadRequestException('Valid event date, capacity and price required');
         const eventId = this.dataStore.generateId('evt');
         const event = {
             eventId,
-            organizerId: organizer ? organizer.organizerId : (createEventDto.organizerId || 'org-001'),
+            organizerId: organizer.organizerId,
             clientId: createEventDto.clientId,
             name,
             category: createEventDto.category || 'General',
@@ -154,6 +160,19 @@ let EventsService = class EventsService {
             throw new common_1.BadRequestException(`Capacity cannot be lower than ${occupied} active registrations`);
         // Support both backend (name) and frontend (title) field names
         const dto = updateEventDto;
+        if (dto.capacity !== undefined && (!Number.isInteger(dto.capacity) || dto.capacity < 1))
+            throw new common_1.BadRequestException('Capacity must be a positive integer');
+        if (dto.ticketPrice !== undefined && (!Number.isFinite(dto.ticketPrice) || dto.ticketPrice < 0 || Math.abs(dto.ticketPrice * 100 - Math.round(dto.ticketPrice * 100)) > 0.00001))
+            throw new common_1.BadRequestException('Ticket price must be nonnegative with at most two decimal places');
+        if (dto.date && !Number.isFinite(+new Date(dto.date)))
+            throw new common_1.BadRequestException('Invalid event date');
+        if (dto.status && !['draft', 'published', 'ongoing', 'completed', 'cancelled'].includes(dto.status))
+            throw new common_1.BadRequestException('Invalid event status');
+        if (dto.status && dto.status !== event.status) {
+            const transitions = { draft: ['published', 'cancelled'], published: ['ongoing', 'completed', 'cancelled'], ongoing: ['completed', 'cancelled'], completed: [], cancelled: [] };
+            if (!transitions[event.status]?.includes(dto.status))
+                throw new common_1.BadRequestException('Invalid event status transition');
+        }
         if (dto.name || dto.title)
             event.name = dto.name || dto.title;
         if (dto.category)
@@ -235,6 +254,8 @@ let EventsService = class EventsService {
             throw new common_1.ForbiddenException('Only organizers and super admin can delete events');
         }
         const index = this.dataStore.events.findIndex((e) => e.eventId === eventId);
+        if (this.dataStore.registrations.some(r => r.eventId === eventId) || this.dataStore.staffAssignments.some(a => a.eventId === eventId))
+            throw new common_1.BadRequestException('Events with registrations or assignments must be cancelled to preserve history');
         this.dataStore.events.splice(index, 1);
         return { message: `Event ${eventId} deleted successfully` };
     }

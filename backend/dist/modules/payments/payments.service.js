@@ -45,8 +45,9 @@ let PaymentsService = class PaymentsService {
         const event = this.db.events.find(e => e.eventId === registration.eventId);
         if (!event || event.status !== 'published')
             throw new common_1.ConflictException('Event is no longer open');
-        if (dto.amount !== event.ticketPrice)
-            throw new common_1.ConflictException('Payment amount does not match the ticket price');
+        const bookedAmount = registration.ticketPriceAtBooking ?? event.ticketPrice;
+        if (dto.amount !== bookedAmount)
+            throw new common_1.ConflictException('Payment amount does not match the reserved ticket price');
         // Prevent double payment
         const existing = this.db.payments.find(p => p.registrationId === dto.registrationId && p.status === 'completed');
         if (existing)
@@ -64,7 +65,7 @@ let PaymentsService = class PaymentsService {
                 registrationId: dto.registrationId,
                 amount: dto.amount,
                 status: 'completed',
-                paymentDate: dto.paymentDate,
+                paymentDate: now.toISOString(),
                 paymentMethod: 'DEMO_PROVIDER',
                 createdAt: now,
                 updatedAt: now,

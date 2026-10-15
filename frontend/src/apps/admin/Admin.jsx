@@ -1,8 +1,11 @@
 import React from 'react';
 import LegacyRuntime from '../../components/LegacyRuntime.jsx';
 import { legacyEvent } from '../../services/legacyEvents.js';
-import source from './runtime.js?raw';
+import runtimeSource from './runtime.js?raw';
+import reportInboxSource from '../../services/financeReportInbox.js?raw';
 import './admin.css';
+import '../../styles/financeReports.css';
+const source = reportInboxSource + '\n' + runtimeSource;
 
 export default function Admin() {
   return <>

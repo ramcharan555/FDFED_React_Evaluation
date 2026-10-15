@@ -5,6 +5,7 @@ import { CreateEventReviewDto, CreateStaffReviewDto } from '../reports/dto/repor
 import { RoleGuard } from '../../common/guards/role.guard';
 import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
 import { UserRole } from '../../common/constants';
+import { UserId } from '../../common/decorators/user-id.decorator';
 
 @ApiTags('reviews')
 @Controller('api/reviews')
@@ -18,8 +19,8 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Submit event review (ATTENDEE or CLIENT, rating 1-5)' })
   @ApiResponse({ status: 201, description: 'Event review submitted' })
   @ApiResponse({ status: 403, description: 'Only ATTENDEE or CLIENT can review events' })
-  createEventReview(@Body() dto: CreateEventReviewDto, @UserRoleDecorator() role: UserRole) {
-    return this.service.createEventReview(dto, role);
+  createEventReview(@Body() dto: CreateEventReviewDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.createEventReview(dto, role, userId);
   }
 
   @Get('events')
@@ -34,8 +35,8 @@ export class ReviewsController {
   @ApiOperation({ summary: 'Submit staff review (EVENT_ORGANIZER only, rating 1-5). Auto-updates staff rating.' })
   @ApiResponse({ status: 201, description: 'Staff review submitted. Staff average rating recalculated.' })
   @ApiResponse({ status: 403, description: 'Only EVENT_ORGANIZER can review staff' })
-  createStaffReview(@Body() dto: CreateStaffReviewDto, @UserRoleDecorator() role: UserRole) {
-    return this.service.createStaffReview(dto, role);
+  createStaffReview(@Body() dto: CreateStaffReviewDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.createStaffReview(dto, role, userId);
   }
 
   @Get('staff')

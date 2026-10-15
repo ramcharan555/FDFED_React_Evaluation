@@ -735,6 +735,8 @@ export class EventRequestsService {
    */
   updatePaymentStatus(requestId: string, dto: UpdatePaymentStatusDto, role: UserRole, userId?: string): any {
     const request = this.findOne(requestId, role, userId);
+    if (![UserRole.EVENT_ORGANIZER, UserRole.SUPER_ADMIN].includes(role)) throw new ForbiddenException('Only the organizer or Super Admin can record demo deposit bookkeeping');
+    if (!['deposit_paid', 'fully_paid', 'deposit_pending', 'unpaid', 'refunded'].includes(dto.paymentStatus)) throw new BadRequestException('Invalid deposit status');
 
     request.paymentStatus = dto.paymentStatus;
     request.updatedAt = new Date();
@@ -746,7 +748,7 @@ export class EventRequestsService {
       role: role,
     });
 
-    return { success: true, message: `Payment status updated to ${dto.paymentStatus}`, data: request };
+    return { success: true, simulated: true, message: `Demo deposit bookkeeping updated to ${dto.paymentStatus}; no money was transferred`, data: request };
   }
 
   /**
@@ -767,7 +769,7 @@ export class EventRequestsService {
     }
 
     // Check agreement condition
-    const isAgreed = request.agreementStatus === 'agreed' || dto?.agreementConfirmed;
+    const isAgreed = request.agreementStatus === 'agreed';
     if (!isAgreed) {
       throw new BadRequestException(
         'Cannot confirm booking: Signed agreement is required before confirmation. (Agreement status: ' +
@@ -778,9 +780,9 @@ export class EventRequestsService {
 
     // Check payment / deposit condition
     const isDepositSatisfied =
+      request.proposals?.[request.proposals.length - 1]?.depositRequired === 0 ||
       request.paymentStatus === 'deposit_paid' ||
-      request.paymentStatus === 'fully_paid' ||
-      dto?.depositConfirmed;
+      request.paymentStatus === 'fully_paid';
 
     if (!isDepositSatisfied) {
       throw new BadRequestException(
@@ -813,7 +815,7 @@ export class EventRequestsService {
       location: 'TBD',
       capacity: request.capacity,
       ticketPrice: 0,
-      status: 'ongoing' as const,
+      status: 'draft' as const,
       description: request.requirements,
       createdAt: new Date(),
       updatedAt: new Date(),

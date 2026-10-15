@@ -1,6 +1,6 @@
 /**
- * In-memory data store for the application
- * Simulates a database without actual persistence
+ * Single-process data store backed by atomic JSON snapshots.
+ * Demo seed records initialize a new store; mutations persist to disk.
  * Includes all entities from the ER diagram
  */
 
@@ -32,6 +32,13 @@ const DATA_COLLECTIONS = [
   'activityLogs',
   'supportTickets',
   'supportAttachments',
+  'financeSettlements',
+  'commissionPolicies',
+  'financeAudit',
+  'financeGrants',
+  'financeReportSubmissions',
+  'employeeReports',
+  'operationTasks',
 ] as const;
 
 type DataCollection = (typeof DATA_COLLECTIONS)[number];
@@ -57,6 +64,8 @@ export interface User {
   name: string;
   email: string;
   password: string;
+  bio?: string;
+  preferences?: { emailNotifications: boolean; smsReminders: boolean; eventRecommendations: boolean };
   userRole: UserRole;
   employeeType?: EmployeeType | string;
   status: 'active' | 'inactive' | 'suspended';
@@ -212,6 +221,7 @@ export interface Registration {
   status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'no-show' | 'attended';
   additionalInfo?: string;
   ticketType: string;
+  ticketPriceAtBooking?: number;
   qrCode?: string;
   verificationId?: string;
   cancellationReason?: string;
@@ -220,6 +230,9 @@ export interface Registration {
   reservationExpiresAt?: Date;
   createdAt: Date;
   updatedAt: Date;
+  reviewStatus?: 'pending' | 'approved' | 'flagged';
+  reviewedBy?: string;
+  reviewReason?: string;
 }
 
 export interface Payment {
@@ -238,7 +251,7 @@ export interface Refund {
   paymentId: string;
   registrationId: string;
   amount: number;
-  status: 'pending' | 'completed' | 'failed' | 'not_applicable';
+  status: 'pending' | 'under_review' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed' | 'not_applicable';
   reason: string;
   requestedAt: Date;
   processedAt?: Date;
@@ -428,6 +441,15 @@ export class DataStore {
   supportTickets: SupportTicket[] = [];
   supportAttachments: SupportAttachment[] = [];
 
+  // Additive finance records; old snapshots safely initialize these empty.
+  financeSettlements: any[] = [];
+  commissionPolicies: any[] = [];
+  financeAudit: any[] = [];
+  financeGrants: any[] = [];
+  financeReportSubmissions: any[] = [];
+  employeeReports: any[] = [];
+  operationTasks: any[] = [];
+
   private constructor() {
     this.initializeSeedData();
     this.restoreFromDisk();
@@ -480,6 +502,21 @@ export class DataStore {
       if (Array.isArray(rows)) Object.assign(this, { [collection]: rows });
     }
 
+    // One-time correction of the original demo department mismatch. Other
+    // users, statuses, credentials and subsequently configured departments stay intact.
+    if (Number(parsed.workspaceDataVersion || 0) < 1) {
+      const legacyDepartments = [
+        { id: 'usr-emp-001', email: 'employee@example.com', department: EmployeeType.EVENT_OPERATIONS },
+        { id: 'usr-emp-002', email: 'elena.coordinator@eventflow.com', department: EmployeeType.EVENT_OPERATIONS },
+        { id: 'usr-emp-003', email: 'arjun.events@eventflow.com', department: EmployeeType.REGISTRATION_VERIFICATION },
+      ];
+      for (const entry of legacyDepartments) {
+        const user = this.users.find(u => u.userId === entry.id && u.email === entry.email && u.userRole === UserRole.EVENT_STAFF && u.employeeType === EmployeeType.SUPPORT_EXECUTIVE);
+        if (user) user.employeeType = entry.department;
+      }
+      this.persist();
+    }
+
     if (Number(parsed.demoSeedVersion || 0) < 2) {
       const mergeSeedRows = <T>(existing: T[], seeds: T[], key: keyof T): T[] => {
         const existingIds = new Set(existing.map(row => row[key]));
@@ -511,7 +548,7 @@ export class DataStore {
     fs.mkdirSync(directory, { recursive: true });
     const snapshot: Partial<Record<DataCollection, unknown>> = {};
     for (const collection of DATA_COLLECTIONS) snapshot[collection] = this[collection];
-    Object.assign(snapshot, { demoSeedVersion: 2 });
+    Object.assign(snapshot, { demoSeedVersion: 2, workspaceDataVersion: 1 });
 
     const temporaryPath = `${this.persistencePath}.tmp`;
     fs.writeFileSync(temporaryPath, JSON.stringify(snapshot, null, 2), { encoding: 'utf8', mode: 0o600 });
@@ -561,7 +598,7 @@ export class DataStore {
         email: 'employee@example.com',
         password: 'Employee@123',
         userRole: UserRole.EVENT_STAFF,
-        employeeType: EmployeeType.SUPPORT_EXECUTIVE,
+        employeeType: EmployeeType.EVENT_OPERATIONS,
         status: 'active',
         phoneNo: '9876543220',
         createdAt: new Date('2024-01-18'),
@@ -597,7 +634,7 @@ export class DataStore {
         email: 'elena.coordinator@eventflow.com',
         password: 'Employee@123',
         userRole: UserRole.EVENT_STAFF,
-        employeeType: EmployeeType.SUPPORT_EXECUTIVE,
+        employeeType: EmployeeType.EVENT_OPERATIONS,
         status: 'active',
         phoneNo: '9876543221',
         createdAt: new Date('2024-02-12'),
@@ -609,7 +646,7 @@ export class DataStore {
         email: 'arjun.events@eventflow.com',
         password: 'Employee@123',
         userRole: UserRole.EVENT_STAFF,
-        employeeType: EmployeeType.SUPPORT_EXECUTIVE,
+        employeeType: EmployeeType.REGISTRATION_VERIFICATION,
         status: 'active',
         phoneNo: '9876543222',
         createdAt: new Date('2024-03-08'),

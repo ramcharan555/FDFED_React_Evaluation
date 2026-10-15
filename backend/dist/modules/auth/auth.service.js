@@ -14,9 +14,13 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const data_store_1 = require("../../common/data-store");
 const jwt_config_1 = require("../../config/jwt.config");
+const password_1 = require("../../common/utils/password");
+const users_service_1 = require("../users/users.service");
+const constants_1 = require("../../common/constants");
 let AuthService = class AuthService {
-    constructor(jwtService) {
+    constructor(jwtService, usersService) {
         this.jwtService = jwtService;
+        this.usersService = usersService;
         this.dataStore = data_store_1.DataStore.getInstance();
     }
     login(loginDto) {
@@ -26,11 +30,8 @@ let AuthService = class AuthService {
         }
         const inputPass = (loginDto.password || '').trim();
         const storedPass = (user.password || '').trim();
-        // Compare passwords: exact, case-insensitive, or normalized alphanumeric
-        const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        const passMatches = storedPass === inputPass ||
-            storedPass.toLowerCase() === inputPass.toLowerCase() ||
-            norm(inputPass) === norm(storedPass);
+        // Retain seeded credentials while verifying all passwords exactly.
+        const passMatches = (0, password_1.verifyPassword)(inputPass, storedPass);
         if (!passMatches) {
             throw new common_1.UnauthorizedException('Invalid email or password');
         }
@@ -58,6 +59,12 @@ let AuthService = class AuthService {
             },
         };
     }
+    register(dto) {
+        if (![constants_1.UserRole.ATTENDEE, constants_1.UserRole.CLIENT, constants_1.UserRole.EVENT_ORGANIZER, constants_1.UserRole.EVENT_STAFF].includes(dto.userRole))
+            throw new common_1.BadRequestException('This role cannot self-register');
+        this.usersService.create({ name: dto.name.trim(), email: dto.email.trim().toLowerCase(), password: dto.password, userRole: dto.userRole, phoneNo: dto.phoneNo }, constants_1.UserRole.SUPER_ADMIN);
+        return this.login({ email: dto.email.trim().toLowerCase(), password: dto.password });
+    }
     /**
      * Validate JWT token and extract payload
      */
@@ -76,6 +83,6 @@ let AuthService = class AuthService {
 exports.AuthService = AuthService;
 exports.AuthService = AuthService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [jwt_1.JwtService])
+    __metadata("design:paramtypes", [jwt_1.JwtService, users_service_1.UsersService])
 ], AuthService);
 //# sourceMappingURL=auth.service.js.map

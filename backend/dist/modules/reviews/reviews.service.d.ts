@@ -3,9 +3,9 @@ import { CreateEventReviewDto, CreateStaffReviewDto } from '../reports/dto/repor
 export declare class ReviewsService {
     private db;
     constructor();
-    createEventReview(dto: CreateEventReviewDto, role: UserRole): any;
+    createEventReview(dto: CreateEventReviewDto, role: UserRole, userId?: string): any;
     findAllEventReviews(eventId?: string): any[];
-    createStaffReview(dto: CreateStaffReviewDto, role: UserRole): any;
+    createStaffReview(dto: CreateStaffReviewDto, role: UserRole, userId?: string): any;
     findAllStaffReviews(staffId?: string): any[];
 }
 //# sourceMappingURL=reviews.service.d.ts.map

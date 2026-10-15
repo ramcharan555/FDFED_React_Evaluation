@@ -3,6 +3,10 @@ import themeSource from '../services/theme.js?raw';
 import scannerSource from '../services/ticket-scanner.js?raw';
 import supportSource from '../services/support.js?raw';
 import paymentCheckoutSource from '../services/paymentCheckout.js?raw';
+import connectedWorkspaceSource from '../services/connectedWorkspace.js?raw';
+import reportInboxSource from '../services/financeReportInbox.js?raw';
+import '../styles/connectedWorkspace.css';
+import '../styles/financeReports.css';
 
 function run(source) {
   const script = document.createElement('script');
@@ -20,7 +24,9 @@ export default function LegacyRuntime({ source, role }) {
     }
     window.__eventFlowLegacyRuntime = { role, source };
     document.body.dataset.eventflowRole = role;
-    const scripts = [run(themeSource), run(scannerSource), run(supportSource), run(source), run(paymentCheckoutSource)];
+    // Connected forms validate historical dates and optional fields independently.
+    const preparedSource = source.replace('function validateInput(target) {', "function validateInput(target) { if (target.closest('.cw-workspace, .cw-form')) return true;");
+    const scripts = [run(themeSource), run(scannerSource), run(supportSource), run(preparedSource), run(paymentCheckoutSource), run(reportInboxSource), run(connectedWorkspaceSource)];
     document.dispatchEvent(new Event('DOMContentLoaded'));
     return () => scripts.forEach(script => script.remove());
   }, [source, role]);
