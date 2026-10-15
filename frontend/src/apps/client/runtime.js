@@ -199,11 +199,41 @@ async function apiGetOrganizerRequests(organizerId) {
   return apiRequest('/event-requests');
 }
 
+async function apiGetEventPlans() {
+  return apiRequest('/event-plans');
+}
+
+async function apiGetEventOrganizers() {
+  return apiRequest('/event-requests/organizers');
+}
+
 async function apiCreateEventRequest(reqData) {
   return apiRequest('/event-requests', {
     method: 'POST',
     body: JSON.stringify(reqData),
   });
+}
+
+async function apiAcceptEventRequest(requestId) {
+  return apiRequest(`/event-requests/${requestId}/accept`, { method: 'POST' });
+}
+
+async function apiRejectEventRequest(requestId, request) {
+  return apiRequest(`/event-requests/${requestId}/reject`, {
+    method: 'POST',
+    body: JSON.stringify(request),
+  });
+}
+
+async function apiRespondToEventRequest(requestId, response) {
+  return apiRequest(`/event-requests/${requestId}/client-response`, {
+    method: 'POST',
+    body: JSON.stringify(response),
+  });
+}
+
+async function apiAcceptCounteroffer(requestId) {
+  return apiRequest(`/event-requests/${requestId}/accept-counteroffer`, { method: 'POST' });
 }
 
 async function apiUpdateRequestStatus(requestId, status) {
@@ -221,10 +251,26 @@ async function apiCreateEventPlan(planData) {
   });
 }
 
-async function apiApproveEventPlan(planId, approvalStatus) {
+async function apiDownloadEventPlanDocument(planId) {
+  const response = await fetch(`${API_BASE_URL}/event-plans/${encodeURIComponent(planId)}/document`, {
+    headers: getAuthHeader() ? { Authorization: getAuthHeader() } : {},
+  });
+  if (!response.ok) {
+    const data = await response.json().catch(() => ({}));
+    const message = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+    throw new ApiError(message || `PDF download failed (${response.status})`, response.status, data);
+  }
+  return response.blob();
+}
+
+async function apiGetWorkflowEvents() {
+  return apiRequest('/events');
+}
+
+async function apiApproveEventPlan(planId, approvalStatus, reason) {
   return apiRequest(`/event-plans/${planId}/approval`, {
     method: 'PATCH',
-    body: JSON.stringify({ approvalStatus }),
+    body: JSON.stringify({ approvalStatus, reason }),
   });
 }
 
@@ -245,6 +291,50 @@ async function apiMakePayment(paymentData) {
   return apiRequest('/payments', {
     method: 'POST',
     body: JSON.stringify(paymentData),
+  });
+}
+
+async function apiPayForWorkflowEvent(eventId) {
+  return apiRequest(`/payments/events/${encodeURIComponent(eventId)}`, {
+    method: 'POST',
+    body: JSON.stringify({ paymentMethod: 'DEMO_PROVIDER' }),
+  });
+}
+
+async function apiCompleteWorkflowEvent(eventId) {
+  return apiRequest(`/events/${encodeURIComponent(eventId)}/complete`, { method: 'POST' });
+}
+
+async function apiGetCompletionReports() {
+  return apiRequest('/reports/events/completion');
+}
+
+async function apiSubmitCompletionReport(eventId, formData) {
+  const response = await fetch(`${API_BASE_URL}/reports/events/${encodeURIComponent(eventId)}/completion`, {
+    method: 'POST',
+    headers: getAuthHeader() ? { Authorization: getAuthHeader() } : {},
+    body: formData,
+  });
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const message = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+    throw new ApiError(message || `Report submission failed (${response.status})`, response.status, data);
+  }
+  return data;
+}
+
+async function apiGetPrivateOrganizerReviews() {
+  return apiRequest('/reviews/client-organizer');
+}
+
+async function apiGetOrganizerProfileReviews(organizerId) {
+  return apiRequest(`/reviews/organizers/${encodeURIComponent(organizerId)}`);
+}
+
+async function apiSubmitPrivateOrganizerReview(reviewData) {
+  return apiRequest('/reviews/client-organizer', {
+    method: 'POST',
+    body: JSON.stringify(reviewData),
   });
 }
 
@@ -355,10 +445,18 @@ window.apiGetOrganizerDashboard = apiGetOrganizerDashboard;
 window.apiGetEventRequests = apiGetEventRequests;
 window.apiGetClientRequests = apiGetClientRequests;
 window.apiGetOrganizerRequests = apiGetOrganizerRequests;
+window.apiGetEventPlans = apiGetEventPlans;
+window.apiGetEventOrganizers = apiGetEventOrganizers;
 window.apiCreateEventRequest = apiCreateEventRequest;
+window.apiAcceptEventRequest = apiAcceptEventRequest;
+window.apiRejectEventRequest = apiRejectEventRequest;
+window.apiRespondToEventRequest = apiRespondToEventRequest;
+window.apiAcceptCounteroffer = apiAcceptCounteroffer;
 window.apiUpdateRequestStatus = apiUpdateRequestStatus;
 window.apiCreateEventPlan = apiCreateEventPlan;
+window.apiGetWorkflowEvents = apiGetWorkflowEvents;
 window.apiApproveEventPlan = apiApproveEventPlan;
+
 window.apiGetAttendeeRegistrations = apiGetAttendeeRegistrations;
 window.apiRegisterForEvent = apiRegisterForEvent;
 window.apiMakePayment = apiMakePayment;
@@ -1935,6 +2033,8 @@ window.EventFlowModules['shared'] = true;
     let CU = null; // current user
     let _confirmCb = null;
     let _currentPage = 'dashboard';
+    let _workflowRequestId = null;
+    let _workflowReturnPage = 'request-status';
 
     const ROLE_LABELS = { superuser: 'Super Administrator', organizer: 'Event Organizer', client: 'Client', staff: 'Event Staff', attendee: 'Attendee' };
     const ROLE_COLORS = { superuser: 'red', organizer: 'purple', client: 'yellow', staff: 'green', attendee: 'blue' };
@@ -2417,7 +2517,9 @@ window.EventFlowModules['shared'] = true;
     function goNav(pg) {
       _currentPage = pg;
       // Keep event-request tabs associated with their parent sidebar section.
-      const sidebarPage = pg === 'staff-event-requests'
+      const sidebarPage = pg === 'request-details'
+        ? 'request-status'
+        : pg === 'staff-event-requests'
         ? (isDepartmentEmployee() ? 'event-requests' : 'assignments')
         : pg;
       document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.pg === sidebarPage));
@@ -2493,6 +2595,23 @@ window.EventFlowModules['shared'] = true;
         }
       }
 
+      if (pg === 'find-organizers' && CU.role === 'client') {
+        try {
+          await syncOrganizerDirectory();
+        } catch (error) {
+          el.innerHTML = `<div class="empty"><div class="empty-title">Organizer directory unavailable</div><p class="empty-desc">${error.message}</p><button class="btn btn-primary mt-16" onclick="renderPage('${pg}')">Try again</button></div>`;
+          return;
+        }
+      }
+      if (['dashboard', 'request-status', 'request-details', 'event-requests', 'ongoing-events', 'notifications'].includes(pg) && ['client', 'organizer'].includes(CU.role)) {
+        try {
+          await syncWorkflowData();
+        } catch (error) {
+          el.innerHTML = `<div class="empty"><div class="empty-title">Workflow data unavailable</div><p class="empty-desc">${error.message}</p><button class="btn btn-primary mt-16" onclick="renderPage('${pg}')">Try again</button></div>`;
+          return;
+        }
+      }
+
       switch (pg) {
         case 'dashboard':
           el.innerHTML = isDepartmentEmployee()
@@ -2516,6 +2635,9 @@ window.EventFlowModules['shared'] = true;
           break;
         case 'request-status':
           el.innerHTML = pageRequestStatus();
+          break;
+        case 'request-details':
+          renderWorkflowRequestDetails(_workflowRequestId);
           break;
         case 'staff':
         case 'find-staff':
@@ -5738,6 +5860,21 @@ window.EventFlowModules['shared'] = true;
       const e = DB.events.find(ev => String(ev.id) === String(id)); if (!e) return;
       const regs = DB.registrations.filter(r => String(r.eventId) === String(id));
       const assigns = DB.staffAssignments.filter(a => String(a.eventId) === String(id));
+      const eventId = e.eventId || id;
+      const eventReviews = DB.clientOrganizerReviews || [];
+      const submittedReview = eventReviews.find(review => String(review.eventId) === String(eventId));
+      const clientOwnsEvent = CU.role === 'client' && e.status === 'completed' &&
+        [CU.id, CU.userId].filter(Boolean).some(userId => String(e.clientUserId || e.clientId || '') === String(userId));
+      const reviewAction = clientOwnsEvent && !submittedReview
+        ? `<section style="margin-top:18px;padding:16px;background:var(--surface2);border:1px solid var(--border);border-radius:10px">
+            <h3 style="margin:0 0 12px">Review the Organizer</h3>
+            <div class="form-group"><label class="form-label" for="event-review-rating">Rating</label><select class="form-control" id="event-review-rating"><option value="">Choose stars</option><option value="5">★★★★★ - Excellent</option><option value="4">★★★★ - Good</option><option value="3">★★★ - Average</option><option value="2">★★ - Poor</option><option value="1">★ - Very poor</option></select></div>
+            <div class="form-group"><label class="form-label" for="event-review-comment">Written review</label><textarea class="form-control" id="event-review-comment" rows="3" required></textarea></div>
+            <button class="btn btn-primary w-full" onclick="submitCompletedEventReview('${eventId}')">Submit Review</button>
+          </section>`
+        : submittedReview
+          ? '<p style="margin-top:16px;color:var(--green);font-weight:600">Your review has been submitted and published on the organizer profile.</p>'
+          : '';
       const bannerHTML = e.image ? `
         <div style="height:140px;border-radius:12px;overflow:hidden;margin-bottom:16px;position:relative;background:${e.color || 'var(--accent)'}18">
           <img src="${e.image}" alt="${e.title || 'Event'}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<div style=\'font-size:52px;text-align:center;padding:30px 0\'>${e.emoji || '📅'}</div>'">
@@ -5758,8 +5895,22 @@ window.EventFlowModules['shared'] = true;
     </div>
     ${e.description ? `<div class="label mb-8">Description</div><p class="muted" style="font-size:13px;line-height:1.7">${e.description}</p>` : ''}
     ${(e.tags || []).length ? `<div class="label mt-16 mb-8">Tags</div><div class="tag-list">${e.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
+    ${reviewAction}
     ${CU.role === 'organizer' ? `<div class="flex gap-8 mt-20"><button class="btn btn-primary w-full" onclick="closeDrawer();openEditEventModal('${id}')">✏️ Edit Event</button></div>` : ''}
   `);
+    }
+
+    function submitCompletedEventReview(eventId) {
+      const rating = Number(v('event-review-rating'));
+      const comment = v('event-review-comment');
+      if (!rating || rating < 1 || rating > 5 || !comment.trim()) {
+        toast('Choose a 1–5 star rating and enter a written review.', 'error');
+        return;
+      }
+      runWorkflowAction(
+        () => apiSubmitPrivateOrganizerReview({ eventId, rating, comment: comment.trim() }),
+        'Review submitted and published to the organizer profile',
+      );
     }
 
     function viewPublicEventDetails(id) {
@@ -7341,8 +7492,439 @@ window.EventFlowModules['shared'] = true;
     </tbody></table>
   </div>`;
     }
+    function workflowPayload(response) {
+      return response && Object.prototype.hasOwnProperty.call(response, 'data') ? response.data : response;
+    }
+
+    function mapWorkflowRequest(request) {
+      return {
+        ...request,
+        id: request.requestId,
+        workflowManaged: true,
+        backendClientId: request.clientId,
+        backendOrganizerId: request.organizerId,
+        clientId: request.clientUserId || (CU.role === 'client' ? CU.id : request.clientId),
+        organizer: request.organizerUserId || (CU.role === 'organizer' ? CU.id : request.organizerId),
+        organizerId: request.organizerId,
+        title: request.eventName,
+        type: request.eventType || 'Event',
+        date: request.eventDate,
+        guests: request.capacity,
+        desc: request.requirements || '',
+        created: request.createdAt,
+        proposals: request.proposals || [],
+        negotiations: request.negotiations || [],
+        clarifications: request.clarifications || [],
+        auditHistory: request.auditHistory || [],
+      };
+    }
+
+    async function syncWorkflowData() {
+      const [requestResponse, planResponse, eventResponse, notificationResponse, reportResponse, reviewResponse] = await Promise.all([
+        apiGetEventRequests(),
+        apiGetEventPlans(),
+        apiGetWorkflowEvents(),
+        apiGetNotifications(),
+        apiGetCompletionReports(),
+        CU.role === 'client' ? apiGetPrivateOrganizerReviews() : Promise.resolve([]),
+      ]);
+      const requests = workflowPayload(requestResponse) || [];
+      const plans = workflowPayload(planResponse) || [];
+      const events = workflowPayload(eventResponse) || [];
+      const notifications = workflowPayload(notificationResponse) || [];
+      DB.eventCompletionReports = workflowPayload(reportResponse) || [];
+      DB.clientOrganizerReviews = workflowPayload(reviewResponse) || [];
+      DB.eventRequests = requests.map(mapWorkflowRequest);
+      DB.eventPlans = plans;
+      DB.notifications = notifications.map(notification => ({
+        ...notification,
+        id: notification.notificationId,
+        date: notification.dateTime || notification.createdAt,
+      }));
+
+      const relatedEventIds = new Set(DB.eventRequests.filter(request => request.eventId).map(request => request.eventId));
+      DB.events = DB.events.filter(event => !relatedEventIds.has(event.eventId || event.id));
+      events.filter(event => relatedEventIds.has(event.eventId)).forEach(event => {
+        DB.events.push({
+          ...event,
+          id: event.eventId,
+          title: event.name || event.title,
+          date: event.date,
+          venue: event.location || event.venue,
+          organizer: CU.role === 'organizer' ? CU.id : event.organizerId,
+          clientId: CU.role === 'client' ? CU.id : event.clientId,
+        });
+      });
+      return DB.eventRequests;
+    }
+
+    async function syncOrganizerDirectory() {
+      const organizers = workflowPayload(await apiGetEventOrganizers()) || [];
+      DB.users = DB.users.filter(user => user.role !== 'organizer').concat(organizers.map(organizer => ({
+        id: organizer.userId,
+        userId: organizer.userId,
+        organizerId: organizer.organizerId,
+        name: organizer.name,
+        email: organizer.email,
+        phone: organizer.phoneNo,
+        role: 'organizer',
+        service: organizer.businessName || 'Event Organizer',
+        rating: organizer.rating,
+        reviewCount: organizer.reviewCount,
+      })));
+    }
+    async function runWorkflowAction(action, successMessage, requestId) {
+      try {
+        const response = await action();
+        await syncWorkflowData();
+        closeModal();
+        closeDrawer();
+        toast(successMessage || workflowPayload(response)?.message || 'Workflow updated', 'success');
+        await renderPage(_currentPage);
+      } catch (error) {
+        toast(error.message || 'Unable to update this event request', 'error');
+      }
+    }
+
+    function workflowHtml(value) {
+      return escapeHtml(String(value ?? ''));
+    }
+
+    async function openEventPlanPdf(planId, fileName, preview) {
+      const previewWindow = preview ? window.open('about:blank', '_blank') : null;
+      try {
+        const response = await fetch(`${API_BASE_URL}/event-plans/${encodeURIComponent(planId)}/document`, {
+          headers: getAuthHeader() ? { Authorization: getAuthHeader() } : {},
+        });
+        if (!response.ok) {
+          const data = await response.json().catch(() => ({}));
+          const message = Array.isArray(data.message) ? data.message.join(', ') : data.message;
+          throw new Error(message || `PDF download failed (${response.status})`);
+        }
+        const objectUrl = URL.createObjectURL(await response.blob());
+        if (preview && previewWindow) {
+          previewWindow.opener = null;
+          previewWindow.location.href = objectUrl;
+        } else {
+          if (previewWindow) previewWindow.close();
+          const link = document.createElement('a');
+          link.href = objectUrl;
+          link.download = decodeURIComponent(fileName) || 'event-plan.pdf';
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+        }
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      } catch (error) {
+        if (previewWindow) previewWindow.close();
+        toast(error.message || 'Unable to open the event plan PDF', 'error');
+      }
+    }
+
+    async function openEventCompletionPhoto(eventId, fileName) {
+      const previewWindow = window.open('about:blank', '_blank');
+      try {
+        const response = await fetch(`${API_BASE_URL}/reports/events/${encodeURIComponent(eventId)}/completion/photos/${encodeURIComponent(fileName)}`, {
+          headers: getAuthHeader() ? { Authorization: getAuthHeader() } : {},
+        });
+        if (!response.ok) throw new Error('Unable to load this report photo');
+        const objectUrl = URL.createObjectURL(await response.blob());
+        if (previewWindow) {
+          previewWindow.opener = null;
+          previewWindow.location.href = objectUrl;
+        }
+        setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      } catch (error) {
+        if (previewWindow) previewWindow.close();
+        toast(error.message || 'Unable to open the report photo', 'error');
+      }
+    }
+
+    function payWorkflowEvent(eventId, requestId, amount) {
+      confirm2('Pay event budget', `Pay the full agreed amount of ₹${Number(amount).toLocaleString()} using the configured demo provider?`, () => {
+        runWorkflowAction(() => apiPayForWorkflowEvent(eventId), 'Full event payment verified', requestId);
+      });
+    }
+
+    function submitClientOrganizerReview(eventId, requestId) {
+      const rating = Number(v('workflow-review-rating'));
+      const comment = v('workflow-review-comment');
+      if (!rating || rating < 1 || rating > 5 || !comment) {
+        toast('Choose a 1–5 star rating and enter a written review.', 'error');
+        return;
+      }
+      runWorkflowAction(() => apiSubmitPrivateOrganizerReview({ eventId, rating, comment }), 'Review submitted and published to the organizer profile', requestId);
+    }
+
+    function viewWorkflowRequestDrawer(id) {
+      _workflowRequestId = String(id);
+      _workflowReturnPage = ['event-requests', 'request-status', 'dashboard', 'ongoing-events', 'completed-events'].includes(_currentPage) ? _currentPage : 'request-status';
+      goNav('request-details');
+    }
+
+    function viewWorkflowEventDetails(eventId) {
+      const request = DB.eventRequests.find(item => String(item.eventId) === String(eventId));
+      if (request) viewWorkflowRequestDrawer(request.id);
+      else openViewEventDrawer(eventId);
+    }
+
+    function viewWorkflowEventReport(eventId) {
+      if (DB.eventRequests.some(item => String(item.eventId) === String(eventId))) {
+        viewWorkflowEventDetails(eventId);
+      } else {
+        viewEventReport(eventId);
+      }
+    }
+
+    function renderWorkflowRequestDetails(id) {
+      const r = DB.eventRequests.find(request => String(request.id) === String(id));
+      const el = g('page-content');
+      if (!r || !el) {
+        if (el) el.innerHTML = '<div class="empty"><div class="empty-title">Request not found</div><button class="btn btn-primary mt-16" onclick="goNav(\'request-status\')">Back to requests</button></div>';
+        return;
+      }
+      const plan = (DB.eventPlans || []).find(item => item.eventPlanId === r.activeEventPlanId)
+        || (DB.eventPlans || []).filter(item => item.requestId === r.requestId).sort((a, b) => (b.revision || 0) - (a.revision || 0))[0];
+      const organizerRole = CU.role === 'organizer';
+      const timeline = [
+        ['Request sent', true],
+        ['Organizer review', !['submitted', 'pending'].includes(r.status)],
+        ['Budget and date agreed', ['planning', 'plan_submitted', 'plan_revision_requested', 'confirmed'].includes(r.status)],
+        ['Event plan submitted', ['plan_submitted', 'plan_revision_requested', 'confirmed'].includes(r.status)],
+        ['Plan approved', ['confirmed', 'approved', 'completed'].includes(r.status)],
+        ['Ongoing event', ['confirmed', 'approved', 'completed'].includes(r.status)],
+        ['Event completed', r.status === 'completed'],
+      ];
+      const currentChange = [...(r.negotiations || [])].reverse().find(item => item.action === 'changes_requested');
+      const plans = (DB.eventPlans || []).filter(item => item.requestId === r.requestId).sort((a, b) => (a.revision || 0) - (b.revision || 0));
+      const organizerActions = ['submitted', 'pending', 'under_review', 'info_requested'].includes(r.status)
+        ? `<div style="display:flex;gap:10px;margin-top:16px"><button class="btn btn-success w-full" onclick="acceptWorkflowRequest('${r.id}')">Accept</button><button class="btn btn-danger w-full" onclick="openWorkflowRejectModal('${r.id}')">Reject</button></div>`
+        : r.status === 'counteroffer_received'
+        ? `<div style="display:flex;gap:10px;margin-top:16px"><button class="btn btn-success w-full" onclick="acceptWorkflowCounteroffer('${r.id}')">Accept Counteroffer</button><button class="btn btn-danger w-full" onclick="openWorkflowRejectModal('${r.id}')">Reject / Propose Changes</button></div>`
+        : ['planning', 'plan_revision_requested'].includes(r.status)
+        ? `<button class="btn btn-primary w-full" style="margin-top:16px" onclick="openWorkflowPlanModal('${r.id}')">${r.status === 'plan_revision_requested' ? 'Edit and Resubmit Plan' : 'Create Event Plan'}</button>`
+        : '';
+      const clientActions = r.status === 'changes_requested'
+        ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px"><button class="btn btn-success" onclick="respondToWorkflowChanges('${r.id}','accept_changes')">Accept Changes</button><button class="btn btn-danger" onclick="respondToWorkflowChanges('${r.id}','reject_changes')">Reject Changes</button><button class="btn btn-primary" onclick="openWorkflowCounterofferModal('${r.id}')">Send Counteroffer</button></div>`
+        : r.status === 'plan_submitted' && plan?.approvalStatus === 'pending'
+        ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px"><button class="btn btn-success" onclick="reviewWorkflowPlan('${plan.eventPlanId}','approved','${r.id}')">Accept Plan</button><button class="btn btn-primary" onclick="openWorkflowPlanRevisionModal('${plan.eventPlanId}','${r.id}')">Request New Plan</button></div>`
+        : '';
+      const negotiationHtml = (r.negotiations || []).map(item => `<div style="padding:10px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:6px;margin-top:8px"><strong>${workflowHtml(String(item.action || '').replaceAll('_', ' '))}</strong><div style="font-size:12px;color:var(--text2);margin-top:4px">${workflowHtml(item.reason)}${item.budget ? ` · Budget ₹${Number(item.budget).toLocaleString()}` : ''}${item.eventDate ? ` · Date ${workflowHtml(item.eventDate)}` : ''}</div></div>`).join('');
+      const planHtml = plan ? `<div style="margin-top:12px;padding:14px;background:var(--surface2);border-radius:10px">
+        <div style="display:flex;justify-content:space-between;gap:8px"><strong>${workflowHtml(plan.title)} · Revision ${plan.revision || 1}</strong><span class="badge badge-${plan.approvalStatus === 'approved' ? 'green' : plan.approvalStatus === 'revision_requested' ? 'yellow' : 'blue'}">${workflowHtml(String(plan.approvalStatus || 'pending').replaceAll('_', ' '))}</span></div>
+        <p style="font-size:13px;color:var(--text2);line-height:1.6">${workflowHtml(plan.description)}</p>
+        <div class="info-row"><span class="info-label">Budget</span><span class="info-value">₹${Number(plan.budget || 0).toLocaleString()}</span></div>
+        <div style="margin-top:12px;padding:14px;border:1px solid var(--border);border-radius:8px">
+          <strong>Event plan document</strong>
+          ${plan.documentFileName ? `<div style="margin-top:6px;color:var(--text2)">${workflowHtml(plan.documentName || 'Event plan PDF')}</div><div style="display:flex;gap:8px;margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="openEventPlanPdf('${plan.eventPlanId}','${encodeURIComponent(plan.documentName || 'event-plan.pdf')}',true)">View PDF</button><button class="btn btn-primary btn-sm" onclick="openEventPlanPdf('${plan.eventPlanId}','${encodeURIComponent(plan.documentName || 'event-plan.pdf')}',false)">Download PDF</button></div>` : '<p style="font-size:13px;color:var(--text3)">No PDF was attached to this plan.</p>'}
+        </div>
+        ${plan.revisionReason ? `<div style="font-size:12px;color:var(--yellow);margin-top:8px">Requested revision: ${workflowHtml(plan.revisionReason)}</div>` : ''}
+        ${plans.length > 1 ? `<details style="margin-top:10px"><summary>Plan revision history (${plans.length})</summary>${plans.map(item => `<div style="font-size:12px;padding:6px 0;border-bottom:1px solid var(--border2)">Revision ${item.revision || 1}: ${workflowHtml(item.title)} — ${workflowHtml(String(item.approvalStatus).replaceAll('_', ' '))}</div>`).join('')}</details>` : ''}
+      </div>` : `<p style="color:var(--text3);font-size:13px">The organizer has not submitted an event plan yet.</p>`;
+
+      const eventId = r.eventId;
+      const event = eventId && DB.events.find(item => String(item.eventId || item.id) === String(eventId));
+      const completionReport = (DB.eventCompletionReports || []).find(item => item.eventId === eventId);
+      const submittedReview = (DB.clientOrganizerReviews || []).find(item => item.eventId === eventId);
+      const isPaid = r.paymentStatus === 'fully_paid';
+      const reportPhotos = (completionReport?.photos || []).map(photo => `<button class="btn btn-ghost btn-xs" onclick="openEventCompletionPhoto('${eventId}','${encodeURIComponent(photo.fileName)}')">View ${workflowHtml(photo.originalName)}</button>`).join(' ');
+      const completionReportHtml = completionReport ? `<div style="margin-top:16px;padding:16px;border:1px solid var(--border);border-radius:10px">
+        <h3 style="margin:0 0 10px">Event Completion Report</h3>
+        <div class="info-row"><span class="info-label">Event</span><span class="info-value">${workflowHtml(completionReport.eventName)} · ${workflowHtml(completionReport.eventDate)}</span></div>
+        <div class="info-row"><span class="info-label">Venue</span><span class="info-value">${workflowHtml(completionReport.venue || '—')}</span></div>
+        <div style="margin-top:10px"><strong>Services provided</strong><p style="white-space:pre-wrap;color:var(--text2)">${workflowHtml(completionReport.servicesProvided)}</p></div>
+        <div style="margin-top:10px"><strong>Expenses</strong><p style="white-space:pre-wrap;color:var(--text2)">${workflowHtml(completionReport.expenses)}</p></div>
+        <div style="margin-top:10px"><strong>Completion notes</strong><p style="white-space:pre-wrap;color:var(--text2)">${workflowHtml(completionReport.completionNotes)}</p></div>
+        ${reportPhotos ? `<div style="margin-top:10px"><strong>Photos</strong><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">${reportPhotos}</div></div>` : ''}
+      </div>` : '';
+      const reviewHtml = completionReport && !submittedReview ? `<div style="margin-top:14px;padding:16px;background:var(--surface2);border-radius:10px">
+        <h3 style="margin:0 0 10px">Review the Organizer</h3>
+        <div class="form-group"><label class="form-label" for="workflow-review-rating">Rating</label><select class="form-control" id="workflow-review-rating"><option value="">Choose stars</option><option value="5">★★★★★ - Excellent</option><option value="4">★★★★ - Good</option><option value="3">★★★ - Average</option><option value="2">★★ - Poor</option><option value="1">★ - Very poor</option></select></div>
+        <div class="form-group"><label class="form-label" for="workflow-review-comment">Written review</label><textarea class="form-control" id="workflow-review-comment" rows="3" required></textarea></div>
+        <button class="btn btn-primary" onclick="submitClientOrganizerReview('${eventId}','${r.id}')">Submit Review</button>
+      </div>` : submittedReview ? '<div style="margin-top:14px;color:var(--green);font-weight:600">Thank you. Your review has been published to the organizer profile.</div>' : '';
+      const lifecycleHtml = eventId && event ? `<section style="margin-top:18px;padding:16px;background:var(--surface2);border-radius:10px">
+        <h3 style="margin:0 0 10px">Ongoing Event Workflow</h3>
+        <div class="info-row"><span class="info-label">Event status</span><span class="info-value">${workflowHtml(event.status)}</span></div>
+        <div class="info-row"><span class="info-label">Payment status</span><span class="info-value" style="color:${isPaid ? 'var(--green)' : 'var(--yellow)'}">${isPaid ? 'Paid' : 'Unpaid'}</span></div>
+        ${event.status === 'ongoing' && !isPaid ? `<div style="margin-top:10px"><strong>Final agreed amount: ₹${Number(plan?.budget || r.budget || 0).toLocaleString()}</strong><div><button class="btn btn-primary" style="margin-top:8px" onclick="payWorkflowEvent('${eventId}','${r.id}',${Number(plan?.budget || r.budget || 0)})">Pay Now</button></div></div>` : ''}
+        ${completionReportHtml}
+        ${reviewHtml}
+      </section>` : '';
+
+      el.innerHTML = `<div class="page-hd">
+        <div class="page-hd-left"><button class="btn btn-ghost btn-sm" onclick="goNav('${_workflowReturnPage}')">← Back to ${_workflowReturnPage === 'ongoing-events' ? 'Ongoing Events' : _workflowReturnPage === 'completed-events' ? 'Completed Events' : _workflowReturnPage === 'event-requests' ? 'Event Requests' : _workflowReturnPage === 'dashboard' ? 'Dashboard' : 'Request Status'}</button><div class="page-title" style="margin-top:12px">${workflowHtml(r.title)}</div><div class="page-sub">Request details, workflow progress, negotiation, and event plan</div></div>
+      </div>
+      <div class="card" style="max-width:1000px">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap">
+          <span class="badge badge-${reqBadge(r.status)}" style="text-transform:capitalize">${String(r.status).replaceAll('_', ' ')}</span>
+          <span style="font-size:12px;color:var(--text3)">Request ID: ${workflowHtml(r.requestId)}</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;margin:16px 0">
+          ${timeline.map(([label, complete]) => `<div style="flex:1;min-width:105px;padding:8px;border-radius:8px;background:${complete ? 'var(--accent-dim)' : 'var(--surface2)'};color:${complete ? 'var(--accent)' : 'var(--text3)'};font-size:11px;font-weight:600">${complete ? '✓ ' : '○ '}${label}</div>`).join('')}
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="info-row"><span class="info-label">Event date</span><span class="info-value">${workflowHtml(r.eventDate || r.date)}</span></div>
+          <div class="info-row"><span class="info-label">Budget</span><span class="info-value">₹${Number(r.budget || 0).toLocaleString()}</span></div>
+          <div class="info-row"><span class="info-label">Guests</span><span class="info-value">${r.capacity || r.guests}</span></div>
+          <div class="info-row"><span class="info-label">Event type</span><span class="info-value">${workflowHtml(r.eventType || r.type)}</span></div>
+        </div>
+        <div style="margin:12px 0"><strong>Event details</strong><p style="white-space:pre-wrap;color:var(--text2);line-height:1.6">${workflowHtml(r.requirements || r.desc || '—')}</p></div>
+        ${currentChange ? `<div style="padding:12px;border-radius:8px;background:rgba(245,158,11,.1);margin:12px 0"><strong>Organizer requested changes</strong><div style="font-size:13px;margin-top:5px">${workflowHtml(currentChange.reason)}</div>${currentChange.budget ? `<div>Proposed budget: ₹${Number(currentChange.budget).toLocaleString()}</div>` : ''}${currentChange.eventDate ? `<div>Proposed date: ${workflowHtml(currentChange.eventDate)}</div>` : ''}</div>` : ''}
+        <div style="margin-top:16px"><strong>Event plan</strong>${planHtml}</div>
+        ${organizerRole ? organizerActions : clientActions}
+        ${lifecycleHtml}
+        ${negotiationHtml ? `<div style="margin-top:18px"><strong>Negotiation history</strong>${negotiationHtml}</div>` : ''}
+        <div style="margin-top:18px"><strong>Progress history</strong>${(r.auditHistory || []).slice().reverse().map(entry => `<div style="padding:8px 0;border-bottom:1px solid var(--border2);font-size:12px"><strong>${workflowHtml(entry.action)}</strong><div style="color:var(--text3)">${entry.timestamp ? workflowHtml(String(entry.timestamp).replace('T', ' ').slice(0, 16)) : ''} · ${workflowHtml(entry.role)}</div></div>`).join('') || '<div style="font-size:12px;color:var(--text3)">No workflow actions yet.</div>'}</div>
+      </div>`;
+    }
+
+    function openWorkflowRejectModal(id) {
+      openModal('Reject Request', `<div class="form-group"><label class="form-label">Choose a response</label><select class="form-control" id="workflow-reject-type" onchange="toggleWorkflowRejectFields()"><option value="budget">Budget Increase</option><option value="date">Date Change</option><option value="both">Both Budget and Date Change</option><option value="other">Other Reason</option><option value="permanent">Permanently Reject Request</option></select></div>
+      <div class="form-group" id="workflow-reject-budget"><label class="form-label">New budget (must be higher)</label><input class="form-control" id="workflow-new-budget" type="number" min="1"></div>
+      <div class="form-group" id="workflow-reject-date" style="display:none"><label class="form-label">New event date</label><input class="form-control" id="workflow-new-date" type="date"></div>
+      <div class="form-group"><label class="form-label">Reason</label><textarea class="form-control" id="workflow-reject-reason" rows="3" required></textarea></div>
+      <div id="workflow-reject-error" style="color:var(--red);font-size:12px"></div>`, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: 'Send Response', cls: 'btn-primary', fn: `submitWorkflowReject('${id}')` },
+      ]);
+      toggleWorkflowRejectFields();
+    }
+
+    function toggleWorkflowRejectFields() {
+      const type = v('workflow-reject-type');
+      const budget = g('workflow-reject-budget'), date = g('workflow-reject-date');
+      if (budget) budget.style.display = ['budget', 'both'].includes(type) ? '' : 'none';
+      if (date) date.style.display = ['date', 'both'].includes(type) ? '' : 'none';
+    }
+
+    function submitWorkflowReject(id) {
+      const type = v('workflow-reject-type'), reason = v('workflow-reject-reason').trim();
+      if (!reason) { g('workflow-reject-error').textContent = 'Please enter a reason.'; return; }
+      const payload = { reason, reasonType: type };
+      if (['budget', 'both'].includes(type)) payload.proposedBudget = Number(v('workflow-new-budget'));
+      if (['date', 'both'].includes(type)) payload.proposedDate = v('workflow-new-date');
+      runWorkflowAction(() => apiRejectEventRequest(id, payload), type === 'permanent' ? 'Request permanently rejected' : 'Changes sent to client', id);
+    }
+
+    function acceptWorkflowRequest(id) {
+      runWorkflowAction(() => apiAcceptEventRequest(id), 'Request accepted; event planning can begin', id);
+    }
+
+    function acceptWorkflowCounteroffer(id) {
+      runWorkflowAction(() => apiAcceptCounteroffer(id), 'Client counteroffer accepted', id);
+    }
+
+    function respondToWorkflowChanges(id, decision) {
+      runWorkflowAction(() => apiRespondToEventRequest(id, { decision }), decision === 'accept_changes' ? 'Changes accepted' : 'Changes rejected', id);
+    }
+
+    function openWorkflowCounterofferModal(id) {
+      const request = DB.eventRequests.find(item => String(item.id) === String(id));
+      if (!request) return;
+      openModal('Change Event Details / Send Counteroffer', `<div class="form-group"><label class="form-label">Event name</label><input class="form-control" id="workflow-counter-name" value="${workflowHtml(request.eventName || request.title)}"></div>
+      <div class="form-group"><label class="form-label">Event type</label><input class="form-control" id="workflow-counter-type" value="${workflowHtml(request.eventType || request.type)}"></div>
+      <div class="form-group"><label class="form-label">Budget</label><input class="form-control" id="workflow-counter-budget" type="number" min="1" value="${request.budget || ''}"></div>
+      <div class="form-group"><label class="form-label">Event date</label><input class="form-control" id="workflow-counter-date" type="date" value="${workflowHtml(request.eventDate || request.date)}"></div>
+      <div class="form-group"><label class="form-label">Guest capacity</label><input class="form-control" id="workflow-counter-capacity" type="number" min="1" step="1" value="${request.capacity || request.guests || ''}"></div>
+      <div class="form-group"><label class="form-label">Preferred venue</label><input class="form-control" id="workflow-counter-venue" value="${workflowHtml(request.venue || '')}"></div>
+      <div class="form-group"><label class="form-label">Event requirements / details</label><textarea class="form-control" id="workflow-counter-requirements" rows="4">${workflowHtml(request.requirements || request.desc || '')}</textarea></div>
+      <div class="form-group"><label class="form-label">Notes</label><textarea class="form-control" id="workflow-counter-notes" rows="3"></textarea></div>
+      <div id="workflow-counter-error" style="color:var(--red);font-size:12px"></div>`, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: 'Send Counteroffer', cls: 'btn-primary', fn: `submitWorkflowCounteroffer('${id}')` },
+      ]);
+    }
+
+    function submitWorkflowCounteroffer(id) {
+      const request = DB.eventRequests.find(item => String(item.id) === String(id));
+      if (!request) return;
+      const budgetValue = v('workflow-counter-budget'), date = v('workflow-counter-date');
+      const capacityValue = v('workflow-counter-capacity');
+      if (!v('workflow-counter-name').trim() || !v('workflow-counter-type').trim() || !budgetValue || !date || !capacityValue) {
+        g('workflow-counter-error').textContent = 'Event name, type, budget, date, and guest capacity are required.';
+        return;
+      }
+      if (date <= today()) {
+        g('workflow-counter-error').textContent = 'Event date must be in the future.';
+        return;
+      }
+      const payload = { decision: 'counteroffer', notes: v('workflow-counter-notes') };
+      const changed = (fieldId, currentValue) => v(fieldId).trim() !== String(currentValue ?? '').trim();
+      if (changed('workflow-counter-name', request.eventName || request.title)) payload.counterofferEventName = v('workflow-counter-name').trim();
+      if (changed('workflow-counter-type', request.eventType || request.type)) payload.counterofferEventType = v('workflow-counter-type').trim();
+      if (budgetValue && Number(budgetValue) !== Number(request.budget)) payload.counterofferBudget = Number(budgetValue);
+      if (date && date !== String(request.eventDate || request.date)) payload.counterofferDate = date;
+      if (capacityValue && Number(capacityValue) !== Number(request.capacity || request.guests)) payload.counterofferCapacity = Number(capacityValue);
+      if (changed('workflow-counter-venue', request.venue)) payload.counterofferVenue = v('workflow-counter-venue').trim();
+      if (changed('workflow-counter-requirements', request.requirements || request.desc)) payload.counterofferRequirements = v('workflow-counter-requirements').trim();
+      if (!Object.keys(payload).some(key => key.startsWith('counteroffer'))) {
+        g('workflow-counter-error').textContent = 'Change at least one event detail before sending.';
+        return;
+      }
+      if (payload.counterofferBudget !== undefined && (!Number.isFinite(payload.counterofferBudget) || payload.counterofferBudget <= 0)) {
+        g('workflow-counter-error').textContent = 'Budget must be greater than zero.';
+        return;
+      }
+      if (payload.counterofferCapacity !== undefined && (!Number.isInteger(payload.counterofferCapacity) || payload.counterofferCapacity < 1)) {
+        g('workflow-counter-error').textContent = 'Guest capacity must be a whole number greater than zero.';
+        return;
+      }
+      runWorkflowAction(() => apiRespondToEventRequest(id, payload), 'Counteroffer sent to organizer', id);
+    }
+
+    function openWorkflowPlanModal(id) {
+      const request = DB.eventRequests.find(item => String(item.id) === String(id));
+      const existing = (DB.eventPlans || []).filter(item => item.requestId === request.requestId).sort((a, b) => (b.revision || 0) - (a.revision || 0))[0];
+      openModal(existing ? 'Revise Event Plan' : 'Create Event Plan', `<div class="form-group"><label class="form-label">Plan title</label><input class="form-control" id="workflow-plan-title" value="${workflowHtml(existing?.title || request.title)}"></div>
+      <div class="form-group"><label class="form-label">Overview</label><textarea class="form-control" id="workflow-plan-description" rows="3">${workflowHtml(existing?.description || request.desc || '')}</textarea></div>
+      <div class="form-group"><label class="form-label">Schedule</label><textarea class="form-control" id="workflow-plan-schedule" rows="4">${workflowHtml(existing?.schedule || '')}</textarea></div>
+      <div class="form-group"><label class="form-label">Services</label><textarea class="form-control" id="workflow-plan-services" rows="3">${workflowHtml(existing?.services || '')}</textarea></div>
+      <div class="form-group"><label class="form-label">Arrangements</label><textarea class="form-control" id="workflow-plan-arrangements" rows="3">${workflowHtml(existing?.arrangements || '')}</textarea></div>
+      <div class="form-group"><label class="form-label">Budget breakdown (item and amount per line)</label><textarea class="form-control" id="workflow-plan-breakdown" rows="4">${workflowHtml(existing?.budgetBreakdown || '')}</textarea></div>
+      <div class="info-row"><span class="info-label">Agreed budget</span><span class="info-value">₹${Number(request.budget).toLocaleString()}</span></div>`, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: existing ? 'Resubmit Plan' : 'Submit Plan', cls: 'btn-primary', fn: `submitWorkflowPlan('${id}')` },
+      ]);
+    }
+
+    function submitWorkflowPlan(id) {
+      const request = DB.eventRequests.find(item => String(item.id) === String(id));
+      const payload = {
+        requestId: request.requestId,
+        title: v('workflow-plan-title').trim(),
+        description: v('workflow-plan-description').trim(),
+        budget: Number(request.budget),
+        capacity: Number(request.capacity),
+        schedule: v('workflow-plan-schedule').trim(),
+        services: v('workflow-plan-services').trim(),
+        arrangements: v('workflow-plan-arrangements').trim(),
+        budgetBreakdown: v('workflow-plan-breakdown').trim(),
+      };
+      if (Object.values(payload).some(value => value === '' || value === 0)) { toast('Complete every plan section before submitting', 'error'); return; }
+      runWorkflowAction(() => apiCreateEventPlan(payload), 'Event plan submitted for client review', id);
+    }
+
+    function openWorkflowPlanRevisionModal(planId, requestId) {
+      openModal('Request New Plan', `<div class="form-group"><label class="form-label">Reason for requesting a new plan</label><textarea class="form-control" id="workflow-plan-reason" rows="4" required></textarea></div><div id="workflow-plan-error" style="color:var(--red);font-size:12px"></div>`, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: 'Request New Plan', cls: 'btn-primary', fn: `submitWorkflowPlanRevision('${planId}','${requestId}')` },
+      ]);
+    }
+
+    function submitWorkflowPlanRevision(planId, requestId) {
+      const reason = v('workflow-plan-reason').trim();
+      if (!reason) { g('workflow-plan-error').textContent = 'A reason is required.'; return; }
+      runWorkflowAction(() => apiApproveEventPlan(planId, 'revision_requested', reason), 'New plan requested', requestId);
+    }
+
+    function reviewWorkflowPlan(planId, approvalStatus, requestId) {
+      runWorkflowAction(() => apiApproveEventPlan(planId, approvalStatus), 'Final event plan approved', requestId);
+    }
+
     function viewRequestDrawer(id) {
       const r = DB.eventRequests.find(r => String(r.id) === String(id)); if (!r) return;
+      if (r.workflowManaged) return viewWorkflowRequestDrawer(id);
       const org = DB.users.find(u => u.id === r.organizer) || { name: 'Pending Assignment' };
       openDrawer(`Request: ${r.title}`, `
     <span class="badge badge-${reqBadge(r.status)} mb-16">${r.status}</span>
@@ -7627,8 +8209,15 @@ window.EventFlowModules['shared'] = true;
   </div>`;
     }
 
-    function openNewRequestForm() {
+    async function openNewRequestForm() {
+      try {
+        await syncOrganizerDirectory();
+      } catch (error) {
+        toast(error.message || 'Unable to load organizers', 'error');
+        return;
+      }
       openDrawer('New Event Request', `
+    <div class="form-group"><label class="form-label">Organizer *</label><select class="form-control" id="nr-organizer">${DB.users.filter(user => user.role === 'organizer').map(user => `<option value="${workflowHtml(user.id)}">${workflowHtml(user.name)} · ${workflowHtml(user.service || 'Event Organizer')}</option>`).join('')}</select></div>
     <div class="form-group"><label class="form-label">Event Title *</label><input class="form-control" id="nr-title" placeholder="e.g. Annual Client Dinner"></div>
     <div class="grid-2"><div class="form-group"><label class="form-label">Event Type *</label><select class="form-control" id="nr-type"><option>Corporate</option><option>Conference</option><option>Wedding</option><option>Concert</option><option>Workshop</option><option>Other</option></select></div><div class="form-group"><label class="form-label">Preferred Date *</label><input class="form-control" id="nr-date" type="date"></div></div>
     <div class="grid-2"><div class="form-group"><label class="form-label">Expected Guests *</label><input class="form-control" id="nr-guests" type="number" placeholder="100"></div><div class="form-group"><label class="form-label">Budget (₹) *</label><input class="form-control" id="nr-budget" type="number" placeholder="10000"></div></div>
@@ -7645,17 +8234,26 @@ window.EventFlowModules['shared'] = true;
       });
     }
 
-    function submitRequest() {
+    async function submitRequest() {
       const title = v('nr-title'), date = v('nr-date'), guests = v('nr-guests'), budget = v('nr-budget'), desc = v('nr-desc');
       if (!title) { toast('Event title is required', 'error'); return; }
       if (!date) { toast('Preferred date is required', 'error'); return; }
       if (!guests || parseInt(guests) < 1) { toast('Enter expected number of guests', 'error'); return; }
       if (!budget || parseInt(budget) < 1) { toast('Enter your budget', 'error'); return; }
       if (!desc || desc.length < 10) { toast('Please provide a detailed description', 'error'); return; }
-      DB.eventRequests.push({ id: DB._nextId.reqs++, clientId: CU.id, title, type: v('nr-type'), date, guests: parseInt(guests), budget: parseInt(budget), status: 'pending', desc, created: today(), venue: v('nr-venue') });
-      toast('Event request submitted!', 'success');
-      closeDrawer();
-      renderPage('request-status');
+      const organizerId = v('nr-organizer');
+      if (!organizerId) { toast('Select an organizer', 'error'); return; }
+      await runWorkflowAction(() => apiCreateEventRequest({
+        clientId: CU.id,
+        organizerId,
+        eventName: title.trim(),
+        eventType: v('nr-type'),
+        eventDate: date,
+        capacity: parseInt(guests, 10),
+        budget: Number(budget),
+        venue: v('nr-venue').trim(),
+        requirements: desc.trim(),
+      }), 'Event request submitted');
     }
 
     function submitPlan(id) {
@@ -8965,9 +9563,8 @@ window.EventFlowModules['shared'] = true;
   
   <div class="grid-3" style="gap:16px">
     ${organizers.length === 0 ? `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No organizers found</div><p>Try adjusting your search filters</p></div>` : organizers.map(o => {
-        const rt = o.rating || 4.2;
-        const rv = o.reviews || (Math.floor(rt * 38) + 12);
-        const ev = o.eventsCount || (Math.floor(rt * 65) + 20);
+        const rt = Number(o.rating) || 0;
+        const rv = Number(o.reviewCount) || 0;
         const orgAv = o.avatarImage ? `
           <div style="width:56px;height:56px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${o.color || 'var(--accent)'}40;position:relative">
             <img src="${o.avatarImage}" alt="${o.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -8981,7 +9578,7 @@ window.EventFlowModules['shared'] = true;
           <div style="flex:1;min-width:0">
             <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
               <span style="font-weight:700;font-size:14.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${o.name}</span>
-              <span style="background:var(--yellow);color:#1a1400;padding:1px 7px;border-radius:10px;font-size:10.5px;font-weight:700;flex-shrink:0">⭐ ${rt.toFixed(1)}</span>
+              <span style="background:var(--yellow);color:#1a1400;padding:1px 7px;border-radius:10px;font-size:10.5px;font-weight:700;flex-shrink:0">⭐ ${rt ? rt.toFixed(1) : '—'}</span>
             </div>
             <div style="font-size:12px;color:var(--accent);font-weight:500;margin-bottom:2px">${o.service || 'Event Organizer'}</div>
             <div style="font-size:11.5px;color:var(--text3)">📍 ${o.city || 'India'}</div>
@@ -8989,9 +9586,7 @@ window.EventFlowModules['shared'] = true;
         </div>
         <p style="font-size:12px;color:var(--text2);line-height:1.5;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${o.bio || 'Professional event organizer with extensive industry experience.'}</p>
         <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
-          <span style="background:var(--surface3);padding:3px 10px;border-radius:6px;font-size:11px;color:var(--text2)"><strong style="color:var(--text)">${ev}</strong> events</span>
           <span style="background:var(--surface3);padding:3px 10px;border-radius:6px;font-size:11px;color:var(--text2)"><strong style="color:var(--text)">${rv}</strong> reviews</span>
-          <span style="background:var(--green)14;padding:3px 10px;border-radius:6px;font-size:11px;color:var(--green);font-weight:600">96% satisfaction</span>
         </div>
         <button class="btn btn-primary btn-sm w-full" onclick="event.stopPropagation();viewOrganizerProfile('${o.id}')" style="justify-content:center;padding:8px;font-size:12.5px">View Profile & Request Event</button>
       </div>`;
@@ -9012,14 +9607,21 @@ window.EventFlowModules['shared'] = true;
       renderPage('find-organizers');
     }
 
-    function viewOrganizerProfile(organizerId) {
+    async function viewOrganizerProfile(organizerId) {
       const org = DB.users.find(u => String(u.id) === String(organizerId));
       if (!org) return;
 
-      const rating = org.rating || 4.2;
-      const reviews = Math.floor(Math.random() * 200) + 50;
-      const events = Math.floor(Math.random() * 300) + 50;
-      const completedEvents = Math.floor(events * 0.9);
+      let profileReviews;
+      let profileReviewsError = '';
+      try {
+        profileReviews = workflowPayload(await apiGetOrganizerProfileReviews(org.organizerId || organizerId));
+      } catch (error) {
+        profileReviewsError = error.message || 'Unable to load organizer reviews';
+        toast(profileReviewsError, 'error');
+      }
+      const reviews = profileReviews?.reviews || [];
+      const totalReviews = Number(profileReviews?.totalReviews ?? org.reviewCount) || 0;
+      const rating = Number(profileReviews?.averageRating ?? org.rating) || 0;
 
       const orgModalAv = org.avatarImage ? `
         <div style="width:80px;height:80px;border-radius:12px;overflow:hidden;flex-shrink:0;background:${org.color || 'var(--accent)'}20;position:relative">
@@ -9036,8 +9638,8 @@ window.EventFlowModules['shared'] = true;
           <div style="font-weight:700;font-size:20px;margin-bottom:4px">${org.name}</div>
           <div style="color:var(--accent);font-weight:500;margin-bottom:8px">${org.service || 'Event Organizer'}</div>
           <div style="display:flex;gap:12px;margin-bottom:8px">
-            <span style="background:var(--yellow);color:#1a1400;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600">⭐ ${rating.toFixed(1)}</span>
-            <span style="color:var(--text2);font-size:13px">${reviews} reviews</span>
+            <span style="background:var(--yellow);color:#1a1400;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600">⭐ ${rating ? rating.toFixed(1) : 'No ratings yet'}</span>
+            <span style="color:var(--text2);font-size:13px">${totalReviews} reviews</span>
             <span style="color:var(--text2);font-size:13px">📍 ${org.city || 'India'}</span>
           </div>
           <div style="color:var(--text2);font-size:13px">${org.bio || 'Professional event organizer'}</div>
@@ -9046,21 +9648,15 @@ window.EventFlowModules['shared'] = true;
     </div>
     
     <div style="margin-bottom:20px">
-      <div class="h4 mb-12">Statistics</div>
-      <div class="grid-3" style="gap:12px;margin-bottom:16px">
-        <div style="background:var(--surface3);padding:12px;border-radius:8px;text-align:center">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">COMPLETED EVENTS</div>
-          <div style="font-size:24px;font-weight:800;color:var(--green)">${completedEvents}</div>
-        </div>
-        <div style="background:var(--surface3);padding:12px;border-radius:8px;text-align:center">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">TOTAL REVIEWS</div>
-          <div style="font-size:24px;font-weight:800;color:var(--blue)">${reviews}</div>
-        </div>
-        <div style="background:var(--surface3);padding:12px;border-radius:8px;text-align:center">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">SATISFACTION RATE</div>
-          <div style="font-size:24px;font-weight:800;color:var(--green)">96%</div>
-        </div>
-      </div>
+      <div class="h4 mb-12">Client Reviews</div>
+      ${profileReviewsError ? `<p style="color:var(--danger);font-size:13px">${workflowHtml(profileReviewsError)}</p>` : reviews.length ? `<div style="display:flex;flex-direction:column;gap:10px">${reviews.map(review => `
+        <article style="padding:12px;background:var(--surface3);border-radius:8px">
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
+            <strong aria-label="${review.rating} out of 5 stars">${'★'.repeat(Number(review.rating))}${'☆'.repeat(5 - Number(review.rating))}</strong>
+            <time style="font-size:12px;color:var(--text3)">${workflowHtml(String(review.createdAt || '').slice(0, 10))}</time>
+          </div>
+          <p style="margin:8px 0 0;color:var(--text2);font-size:13px;line-height:1.6;white-space:pre-wrap">${workflowHtml(review.comment)}</p>
+        </article>`).join('')}</div>` : '<p style="color:var(--text3);font-size:13px">No client reviews yet.</p>'}
     </div>
     
     <div style="margin-bottom:20px">
@@ -9108,18 +9704,26 @@ window.EventFlowModules['shared'] = true;
     <div class="form-group"><label class="form-label">Expected Date *</label><input class="form-control" id="req-date" type="date"></div>
     <div class="form-group"><label class="form-label">Expected Guests</label><input class="form-control" id="req-guests" type="number" placeholder="100"></div>
     <div class="form-group"><label class="form-label">Budget (INR) *</label><input class="form-control" id="req-budget" type="number" placeholder="50000"></div>
+    <div class="form-group"><label class="form-label">Preferred venue (optional)</label><input class="form-control" id="req-venue" placeholder="Venue or city"></div>
     <div class="form-group"><label class="form-label">Description</label><textarea class="form-control" id="req-desc" placeholder="Tell the organizer about your event..."></textarea></div>
   `, [{ lbl: 'Send Request', cls: 'btn-primary', fn: `submitEventRequest('${organizerId}')` }]);
     }
 
-    function submitEventRequest(organizerId) {
+    async function submitEventRequest(organizerId) {
       const title = v('req-title'), type = v('req-type'), date = v('req-date'), guests = v('req-guests') || 0, budget = parseInt(v('req-budget')) || 0, desc = v('req-desc');
       if (!title || !date || budget < 1000) { toast('Please fill required fields', 'error'); return; }
-      DB.eventRequests.push({ id: DB._nextId.reqs++, clientId: CU.id, organizer: organizerId, title, type, date, guests, budget, desc, status: 'pending', created: today() });
-      saveDB();
-      closeModal();
-      renderPage(_currentPage);
-      toast('Request sent to organizer!', 'success');
+      if (parseInt(guests, 10) < 1) { toast('Enter at least one expected guest', 'error'); return; }
+      await runWorkflowAction(() => apiCreateEventRequest({
+        clientId: CU.id,
+        organizerId,
+        eventName: title.trim(),
+        eventType: type,
+        eventDate: date,
+        capacity: parseInt(guests, 10),
+        budget,
+        venue: v('req-venue').trim(),
+        requirements: desc.trim(),
+      }), 'Request sent to organizer');
     }
 
     function pageFindStaff() {
@@ -9564,8 +10168,8 @@ window.EventFlowModules['shared'] = true;
       </div>
       <div class="ev-footer">
         <div class="flex gap-6" style="width:100%;justify-content:space-between">
-          <button class="btn btn-ghost btn-xs w-full" onclick="openViewEventDrawer('${e.id}')" title="View event details">👁️ View Details</button>
-          <button class="btn btn-primary btn-xs" onclick="viewEventReport('${e.id}')" title="View event report">📊 View Report</button>
+          <button class="btn btn-ghost btn-xs w-full" onclick="viewWorkflowEventDetails('${e.id}')" title="View event details">👁️ View Details</button>
+          <button class="btn btn-primary btn-xs" onclick="viewWorkflowEventReport('${e.id}')" title="View completion report">📊 View Report</button>
         </div>
         <div class="tag-list" style="flex:1;justify-content:flex-end">${(e.tags || []).slice(0, 2).map(t => `<span class="tag">${t}</span>`).join('')}</div>
       </div>
@@ -9658,16 +10262,32 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageOngoingEvents() {
-      const ongoing = DB.events.filter(e => e.status === 'ongoing');
+      if (!['client', 'organizer'].includes(CU.role)) {
+        const publicOngoing = DB.events.filter(event => event.status === 'ongoing');
+        return `<div class="page-hd"><div class="page-hd-left"><div class="page-title">Ongoing Events</div><div class="page-sub">Events currently happening right now</div></div></div><div class="events-grid">${publicOngoing.length ? publicOngoing.map(event => evCard(event, 'attendee')).join('') : '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⏱️</div><div class="empty-title">No ongoing events</div></div>'}</div>`;
+      }
+      const ongoing = DB.events.filter(event =>
+        event.status === 'ongoing' &&
+        DB.eventRequests.some(request => String(request.eventId) === String(event.eventId || event.id)),
+      );
 
       return `
   <div class="page-hd">
     <div class="page-hd-left">
       <div class="page-title">Ongoing Events</div>
-      <div class="page-sub">Events currently happening right now</div>
+      <div class="page-sub">Track your approved client–organizer events, payment, and completion reports</div>
     </div>
   </div>
-  <div class="events-grid">${ongoing.length === 0 ? `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⏱️</div><div class="empty-title">No ongoing events</div></div>` : ongoing.map(e => evCard(e, CU.role === 'client' ? 'client' : 'attendee')).join('')}</div>`;
+  <div class="events-grid">${ongoing.length === 0 ? `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⏱️</div><div class="empty-title">No ongoing events</div></div>` : ongoing.map(event => {
+        const request = DB.eventRequests.find(item => String(item.eventId) === String(event.eventId || event.id));
+        const paid = request?.paymentStatus === 'fully_paid';
+        return `<div class="card">
+          <div style="display:flex;justify-content:space-between;gap:8px;align-items:center"><strong>${workflowHtml(event.name || event.title)}</strong><span class="badge badge-blue">Ongoing</span></div>
+          <div style="margin-top:10px;color:var(--text2);font-size:13px">📅 ${workflowHtml(event.date)} · 📍 ${workflowHtml(event.location || event.venue || '—')}</div>
+          <div style="margin-top:10px;font-size:13px">Payment: <strong style="color:${paid ? 'var(--green)' : 'var(--yellow)'}">${paid ? 'Paid' : 'Unpaid'}</strong></div>
+          <button class="btn btn-primary btn-sm" style="margin-top:12px" onclick="viewWorkflowEventDetails('${workflowHtml(event.eventId || event.id)}')">View Details</button>
+        </div>`;
+      }).join('')}</div>`;
     }
 
     // ════════════════════════════════════════════════
@@ -9747,6 +10367,11 @@ window.EventFlowModules['shared'] = true;
         info_requested: 'yellow',
         proposal_sent: 'blue',
         awaiting_client: 'blue',
+        changes_requested: 'orange',
+        counteroffer_received: 'purple',
+        planning: 'blue',
+        plan_submitted: 'purple',
+        plan_revision_requested: 'orange',
         confirmed: 'green',
         approved: 'green',
         rejected: 'red',

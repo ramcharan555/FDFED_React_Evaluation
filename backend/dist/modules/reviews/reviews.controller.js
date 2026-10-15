@@ -19,6 +19,7 @@ const reviews_service_1 = require("./reviews.service");
 const report_dto_1 = require("../reports/dto/report.dto");
 const role_guard_1 = require("../../common/guards/role.guard");
 const user_role_decorator_1 = require("../../common/decorators/user-role.decorator");
+const user_id_decorator_1 = require("../../common/decorators/user-id.decorator");
 const constants_1 = require("../../common/constants");
 let ReviewsController = class ReviewsController {
     constructor(service) {
@@ -29,6 +30,15 @@ let ReviewsController = class ReviewsController {
     }
     findAllEventReviews(eventId) {
         return this.service.findAllEventReviews(eventId);
+    }
+    createClientOrganizerReview(dto, role, userId) {
+        return this.service.createClientOrganizerReview(dto, role, userId);
+    }
+    findClientOrganizerReviews(role, userId, eventId) {
+        return this.service.findClientOrganizerReviews(role, userId, eventId);
+    }
+    findPublicOrganizerReviews(organizerId, role) {
+        return this.service.findPublicOrganizerReviews(organizerId, role);
     }
     createStaffReview(dto, role) {
         return this.service.createStaffReview(dto, role);
@@ -59,6 +69,36 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ReviewsController.prototype, "findAllEventReviews", null);
+__decorate([
+    (0, common_1.Post)('client-organizer'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    (0, swagger_1.ApiOperation)({ summary: 'Submit a client review for the public organizer profile after event completion (CLIENT only)' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [report_dto_1.CreateClientOrganizerReviewDto, String, String]),
+    __metadata("design:returntype", void 0)
+], ReviewsController.prototype, "createClientOrganizerReview", null);
+__decorate([
+    (0, common_1.Get)('client-organizer'),
+    (0, swagger_1.ApiOperation)({ summary: 'List private organizer reviews for the client or authorized admin; organizers are denied' }),
+    __param(0, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(1, (0, user_id_decorator_1.UserId)()),
+    __param(2, (0, common_1.Query)('eventId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], ReviewsController.prototype, "findClientOrganizerReviews", null);
+__decorate([
+    (0, common_1.Get)('organizers/:organizerId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get published organizer profile reviews (CLIENT or SUPER_ADMIN only)' }),
+    __param(0, (0, common_1.Param)('organizerId')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], ReviewsController.prototype, "findPublicOrganizerReviews", null);
 __decorate([
     (0, common_1.Post)('staff'),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),

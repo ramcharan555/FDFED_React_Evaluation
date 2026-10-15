@@ -40,6 +40,9 @@ let EventsController = class EventsController {
     findOne(id, role, userId) {
         return this.eventsService.findOne(id, role, userId);
     }
+    completeClientEvent(id, role, userId) {
+        return this.eventsService.completeClientEvent(id, role, userId);
+    }
     update(id, updateEventDto, role, userId) {
         return this.eventsService.update(id, updateEventDto, role, userId);
     }
@@ -107,6 +110,17 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], EventsController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Post)(':id/complete'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, swagger_1.ApiOperation)({ summary: 'Mark a fully paid client event completed after its event date (assigned organizer only)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], EventsController.prototype, "completeClientEvent", null);
 __decorate([
     (0, common_1.Put)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Update event' }),

@@ -71,6 +71,9 @@ export class EventsService {
       ...event,
       // Frontend-compatible aliases
       id: event.eventId,
+      clientUserId: event.clientId
+        ? this.dataStore.clients.find(client => client.clientId === event.clientId)?.userId
+        : undefined,
       title: event.name,
       price: event.ticketPrice,
       city,
@@ -173,6 +176,9 @@ export class EventsService {
     }
 
     const before = { date: event.date, time: event.time, location: event.location, status: event.status };
+    if (event.clientId && updateEventDto.status === 'completed') {
+      throw new BadRequestException('Client events must be completed through the payment-verified completion workflow');
+    }
     const occupied = this.dataStore.registrations.filter(r =>
       r.eventId === eventId && ['registered', 'attended', 'pending_payment'].includes(r.status) && this.isActiveReservation(r),
     ).length;
@@ -219,6 +225,66 @@ export class EventsService {
       }
     }
     return this.mapEventToFrontend(event);
+  }
+
+  completeClientEvent(eventId: string, role: UserRole, userId?: string): any {
+    if (role !== UserRole.EVENT_ORGANIZER) {
+      throw new ForbiddenException('Only the assigned organizer can complete this event');
+    }
+    const event = this.dataStore.events.find(item => item.eventId === eventId);
+    if (!event || !event.clientId) throw new NotFoundException(`Client event ${eventId} not found`);
+    const organizer = this.dataStore.organizers.find(item => item.userId === userId);
+    if (!organizer || organizer.organizerId !== event.organizerId) {
+      throw new ForbiddenException('You can only complete your own events');
+    }
+    if (event.status !== 'ongoing') {
+      throw new BadRequestException('Only ongoing events can be marked completed');
+    }
+    const eventDateEnd = new Date(`${event.date}T23:59:59`);
+    if (Number.isNaN(eventDateEnd.getTime()) || eventDateEnd > new Date()) {
+      throw new BadRequestException('The event can only be completed after its event date');
+    }
+    const request = this.dataStore.eventRequests.find(item =>
+      item.eventId === eventId && item.organizerId === organizer.organizerId,
+    );
+    const verifiedPayment = this.dataStore.eventWorkflowPayments.find(payment =>
+      payment.eventId === eventId &&
+      payment.requestId === request?.requestId &&
+      payment.status === 'completed' &&
+      payment.amount === request?.budget,
+    );
+    if (!request || request.status !== 'confirmed' || request.paymentStatus !== 'fully_paid' || !verifiedPayment) {
+      throw new BadRequestException('Verified full payment is required before completing the event');
+    }
+    event.status = 'completed';
+    event.updatedAt = new Date();
+    request.status = 'completed';
+    request.updatedAt = event.updatedAt;
+    request.auditHistory = request.auditHistory || [];
+    request.auditHistory.push({
+      id: this.dataStore.generateId('aud'),
+      action: 'Event Marked Completed',
+      performedBy: userId || organizer.organizerId,
+      role,
+      timestamp: event.updatedAt,
+      details: { eventId },
+    });
+    const client = this.dataStore.clients.find(item => item.clientId === request.clientId);
+    if (client) {
+      this.dataStore.notifications.push({
+        notificationId: this.dataStore.generateId('notif'),
+        userId: client.userId,
+        eventId,
+        registrationId: undefined,
+        paymentId: undefined,
+        message: `The organizer marked "${event.name}" as completed.`,
+        type: 'event_completed',
+        read: false,
+        dateTime: event.updatedAt,
+        createdAt: event.updatedAt,
+      });
+    }
+    return { success: true, message: 'Event marked completed', data: this.mapEventToFrontend(event) };
   }
 
   // Delete event

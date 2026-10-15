@@ -11,6 +11,7 @@ export declare class EventsService {
     findAllAdmin(role: UserRole, search?: string, status?: string): any[];
     findOne(eventId: string, role: UserRole, userId?: string): any;
     update(eventId: string, updateEventDto: UpdateEventDto, role: UserRole, userId?: string): any;
+    completeClientEvent(eventId: string, role: UserRole, userId?: string): any;
     delete(eventId: string, role: UserRole, userId?: string): {
         message: string;
     };

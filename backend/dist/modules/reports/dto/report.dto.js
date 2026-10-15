@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.CreateStaffReviewDto = exports.CreateEventReviewDto = exports.CreateStaffReportDto = exports.CreateEventReportDto = void 0;
+exports.CreateClientOrganizerReviewDto = exports.CreateEventCompletionReportDto = exports.CreateStaffReviewDto = exports.CreateEventReviewDto = exports.CreateStaffReportDto = exports.CreateEventReportDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class CreateEventReportDto {
@@ -146,4 +146,47 @@ __decorate([
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateStaffReviewDto.prototype, "comment", void 0);
+class CreateEventCompletionReportDto {
+}
+exports.CreateEventCompletionReportDto = CreateEventCompletionReportDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Services provided during the event' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateEventCompletionReportDto.prototype, "servicesProvided", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Expenses and budget reconciliation' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateEventCompletionReportDto.prototype, "expenses", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Event completion notes' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateEventCompletionReportDto.prototype, "completionNotes", void 0);
+class CreateClientOrganizerReviewDto {
+}
+exports.CreateClientOrganizerReviewDto = CreateClientOrganizerReviewDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Event ID', example: 'evt-001' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateClientOrganizerReviewDto.prototype, "eventId", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Rating (1–5)', minimum: 1, maximum: 5, example: 5 }),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.Max)(5),
+    __metadata("design:type", Number)
+], CreateClientOrganizerReviewDto.prototype, "rating", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Written review' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateClientOrganizerReviewDto.prototype, "comment", void 0);
 //# sourceMappingURL=report.dto.js.map

@@ -28,6 +28,9 @@ let EventRequestsController = class EventRequestsController {
     checkAvailability(organizerId, date) {
         return this.service.checkDateAvailability(organizerId, date);
     }
+    findOrganizers(role) {
+        return this.service.findOrganizers(role);
+    }
     create(dto, role, userId) {
         return this.service.create(dto, role, userId);
     }
@@ -39,6 +42,12 @@ let EventRequestsController = class EventRequestsController {
     }
     startReview(id, role, userId) {
         return this.service.startReview(id, role, userId);
+    }
+    acceptRequest(id, role, userId) {
+        return this.service.acceptRequest(id, role, userId);
+    }
+    acceptCounteroffer(id, role, userId) {
+        return this.service.acceptCounteroffer(id, role, userId);
     }
     requestMissingInfo(id, dto, role, userId) {
         return this.service.requestMissingInfo(id, dto, role, userId);
@@ -84,6 +93,14 @@ __decorate([
     __metadata("design:paramtypes", [String, String]),
     __metadata("design:returntype", void 0)
 ], EventRequestsController.prototype, "checkAvailability", null);
+__decorate([
+    (0, common_1.Get)('organizers'),
+    (0, swagger_1.ApiOperation)({ summary: 'List public organizer profiles for event requests' }),
+    __param(0, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "findOrganizers", null);
 __decorate([
     (0, common_1.Post)(),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
@@ -132,6 +149,26 @@ __decorate([
     __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
 ], EventRequestsController.prototype, "startReview", null);
+__decorate([
+    (0, common_1.Post)(':id/accept'),
+    (0, swagger_1.ApiOperation)({ summary: 'Organizer accepts an event request and starts planning' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "acceptRequest", null);
+__decorate([
+    (0, common_1.Post)(':id/accept-counteroffer'),
+    (0, swagger_1.ApiOperation)({ summary: 'Organizer accepts the client counteroffer and starts planning' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], EventRequestsController.prototype, "acceptCounteroffer", null);
 __decorate([
     (0, common_1.Post)(':id/request-info'),
     (0, swagger_1.ApiOperation)({ summary: 'Request missing information from client (ORGANIZER only)' }),

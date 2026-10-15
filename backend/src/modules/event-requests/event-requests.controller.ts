@@ -50,6 +50,12 @@ export class EventRequestsController {
     return this.service.checkDateAvailability(organizerId, date);
   }
 
+  @Get('organizers')
+  @ApiOperation({ summary: 'List public organizer profiles for event requests' })
+  findOrganizers(@UserRoleDecorator() role: UserRole) {
+    return this.service.findOrganizers(role);
+  }
+
   @Post()
   @HttpCode(HttpStatus.CREATED)
   @ApiOperation({ summary: 'Create event request (CLIENT only)' })
@@ -85,6 +91,18 @@ export class EventRequestsController {
   @ApiResponse({ status: 200, description: 'Status moved to under_review' })
   startReview(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
     return this.service.startReview(id, role, userId);
+  }
+
+  @Post(':id/accept')
+  @ApiOperation({ summary: 'Organizer accepts an event request and starts planning' })
+  acceptRequest(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.acceptRequest(id, role, userId);
+  }
+
+  @Post(':id/accept-counteroffer')
+  @ApiOperation({ summary: 'Organizer accepts the client counteroffer and starts planning' })
+  acceptCounteroffer(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.acceptCounteroffer(id, role, userId);
   }
 
   @Post(':id/request-info')

@@ -26,4 +26,14 @@ export declare class CreateStaffReviewDto {
     rating: number;
     comment: string;
 }
+export declare class CreateEventCompletionReportDto {
+    servicesProvided: string;
+    expenses: string;
+    completionNotes: string;
+}
+export declare class CreateClientOrganizerReviewDto {
+    eventId: string;
+    rating: number;
+    comment: string;
+}
 //# sourceMappingURL=report.dto.d.ts.map

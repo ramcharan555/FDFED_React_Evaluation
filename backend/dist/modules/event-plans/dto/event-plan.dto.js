@@ -16,21 +16,27 @@ class CreateEventPlanDto {
 }
 exports.CreateEventPlanDto = CreateEventPlanDto;
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Event request this plan fulfils', example: 'req-001' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventPlanDto.prototype, "requestId", void 0);
+__decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Event ID (if event already created)', example: 'evt-001' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateEventPlanDto.prototype, "eventId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Client ID', example: 'cli-001' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Client ID (derived from the event request)', example: 'cli-001' }),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateEventPlanDto.prototype, "clientId", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Organizer ID', example: 'org-001' }),
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Organizer ID (derived from the event request)', example: 'org-001' }),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateEventPlanDto.prototype, "organizerId", void 0);
 __decorate([
@@ -57,17 +63,47 @@ __decorate([
     (0, class_validator_1.Min)(1),
     __metadata("design:type", Number)
 ], CreateEventPlanDto.prototype, "capacity", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Detailed event schedule' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventPlanDto.prototype, "schedule", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Services included in the plan' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventPlanDto.prototype, "services", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Venue and event arrangements' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventPlanDto.prototype, "arrangements", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Itemized budget breakdown' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventPlanDto.prototype, "budgetBreakdown", void 0);
 class UpdateEventPlanApprovalDto {
 }
 exports.UpdateEventPlanApprovalDto = UpdateEventPlanApprovalDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Approval status',
-        enum: ['approved', 'rejected'],
+        enum: ['approved', 'rejected', 'revision_requested'],
         example: 'approved',
     }),
-    (0, class_validator_1.IsEnum)(['approved', 'rejected']),
+    (0, class_validator_1.IsEnum)(['approved', 'rejected', 'revision_requested']),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], UpdateEventPlanApprovalDto.prototype, "approvalStatus", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Reason for requesting a revised plan' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateEventPlanApprovalDto.prototype, "reason", void 0);
 //# sourceMappingURL=event-plan.dto.js.map

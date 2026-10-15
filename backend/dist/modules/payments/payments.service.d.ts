@@ -5,6 +5,7 @@ export declare class PaymentsService {
     private processingRegistrations;
     constructor();
     create(dto: CreatePaymentDto, role: UserRole, userId?: string): Promise<any>;
+    payForOngoingEvent(eventId: string, paymentMethod: string, role: UserRole, userId?: string): any;
     processRefund(refundId: string, role: UserRole): any;
     findAll(role: UserRole, userId?: string): any[];
     findOne(id: string, role: UserRole, userId?: string): any;

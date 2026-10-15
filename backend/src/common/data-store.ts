@@ -18,6 +18,9 @@ const DATA_COLLECTIONS = [
   'events',
   'eventRequests',
   'eventPlans',
+  'eventWorkflowPayments',
+  'eventCompletionReports',
+  'clientOrganizerReviews',
   'registrations',
   'payments',
   'refunds',
@@ -172,13 +175,37 @@ export interface EventRequest {
   budget: number;
   capacity: number;
   requirements: string;
-  status: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'confirmed' | 'approved' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';
+  status: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'changes_requested' | 'counteroffer_received' | 'planning' | 'plan_submitted' | 'plan_revision_requested' | 'confirmed' | 'approved' | 'completed' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';
   agreementStatus: 'not_sent' | 'pending_signature' | 'agreed' | 'declined';
   paymentStatus: 'unpaid' | 'deposit_pending' | 'deposit_paid' | 'fully_paid' | 'refunded';
   rejectionReason?: string;
   withdrawalReason?: string;
   currentProposalVersion?: number;
   proposals?: ProposalVersion[];
+  negotiations?: Array<{
+    id: string;
+    action: string;
+    performedBy: string;
+    role: string;
+    reason?: string;
+    budget?: number;
+    eventDate?: string;
+    eventName?: string;
+    eventType?: string;
+    capacity?: number;
+    venue?: string;
+    requirements?: string;
+    timestamp: Date;
+  }>;
+  activeEventPlanId?: string;
+  planRevisionReason?: string;
+  pendingPlanDocument?: {
+    originalName: string;
+    fileName: string;
+    size: number;
+  };
+  eventType?: string;
+  venue?: string;
   clarifications?: RequestClarification[];
   auditHistory?: RequestAuditEntry[];
   eventId?: string;
@@ -189,6 +216,7 @@ export interface EventRequest {
 
 export interface EventPlan {
   eventPlanId: string;
+  requestId?: string;
   eventId?: string;
   clientId: string;
   organizerId: string;
@@ -196,10 +224,65 @@ export interface EventPlan {
   description: string;
   budget: number;
   capacity: number;
+  schedule?: string;
+  services?: string;
+  arrangements?: string;
+  budgetBreakdown?: string;
+  documentName?: string;
+  documentFileName?: string;
+  documentSize?: number;
+  revision?: number;
+  revisionReason?: string;
   status: 'draft' | 'submitted' | 'revised' | 'approved' | 'rejected';
-  approvalStatus: 'pending' | 'approved' | 'rejected';
+  approvalStatus: 'pending' | 'approved' | 'revision_requested' | 'rejected';
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface EventWorkflowPayment {
+  paymentId: string;
+  eventId: string;
+  requestId: string;
+  clientId: string;
+  organizerId: string;
+  amount: number;
+  status: 'completed';
+  paymentDate: string;
+  paymentMethod: 'DEMO_PROVIDER';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EventCompletionReport {
+  reportId: string;
+  eventId: string;
+  requestId: string;
+  clientId: string;
+  organizerId: string;
+  eventName: string;
+  eventDate: string;
+  venue: string;
+  servicesProvided: string;
+  expenses: string;
+  completionNotes: string;
+  photos: Array<{
+    originalName: string;
+    fileName: string;
+    mimeType: string;
+    size: number;
+  }>;
+  submittedAt: Date;
+}
+
+export interface ClientOrganizerReview {
+  reviewId: string;
+  eventId: string;
+  requestId?: string;
+  clientId: string;
+  organizerId: string;
+  rating: number;
+  comment: string;
+  createdAt: Date;
 }
 
 // ==================== REGISTRATION & PAYMENT ====================
@@ -401,6 +484,9 @@ export class DataStore {
   events: Event[] = [];
   eventRequests: EventRequest[] = [];
   eventPlans: EventPlan[] = [];
+  eventWorkflowPayments: EventWorkflowPayment[] = [];
+  eventCompletionReports: EventCompletionReport[] = [];
+  clientOrganizerReviews: ClientOrganizerReview[] = [];
 
   // Registration & Payment
   registrations: Registration[] = [];
@@ -1873,6 +1959,9 @@ export class DataStore {
     this.events = [];
     this.eventRequests = [];
     this.eventPlans = [];
+    this.eventWorkflowPayments = [];
+    this.eventCompletionReports = [];
+    this.clientOrganizerReviews = [];
     this.registrations = [];
     this.payments = [];
     this.refunds = [];

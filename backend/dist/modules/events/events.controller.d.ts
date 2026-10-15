@@ -9,6 +9,7 @@ export declare class EventsController {
     findAllAdmin(role: UserRole, search?: string, status?: string): any[];
     getStatistics(): any;
     findOne(id: string, role: UserRole, userId: string): any;
+    completeClientEvent(id: string, role: UserRole, userId: string): any;
     update(id: string, updateEventDto: UpdateEventDto, role: UserRole, userId: string): any;
     delete(id: string, role: UserRole, userId: string): {
         message: string;

@@ -89,6 +89,17 @@ export class EventsController {
     return this.eventsService.findOne(id, role, userId);
   }
 
+  @Post(':id/complete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Mark a fully paid client event completed after its event date (assigned organizer only)' })
+  completeClientEvent(
+    @Param('id') id: string,
+    @UserRoleDecorator() role: UserRole,
+    @UserId() userId: string,
+  ) {
+    return this.eventsService.completeClientEvent(id, role, userId);
+  }
+
   @Put(':id')
   @ApiOperation({ summary: 'Update event' })
   @ApiResponse({ status: 200, description: 'Event updated successfully' })

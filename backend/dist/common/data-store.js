@@ -52,6 +52,9 @@ const DATA_COLLECTIONS = [
     'events',
     'eventRequests',
     'eventPlans',
+    'eventWorkflowPayments',
+    'eventCompletionReports',
+    'clientOrganizerReviews',
     'registrations',
     'payments',
     'refunds',
@@ -94,6 +97,9 @@ class DataStore {
         this.events = [];
         this.eventRequests = [];
         this.eventPlans = [];
+        this.eventWorkflowPayments = [];
+        this.eventCompletionReports = [];
+        this.clientOrganizerReviews = [];
         // Registration & Payment
         this.registrations = [];
         this.payments = [];
@@ -1480,6 +1486,9 @@ class DataStore {
         this.events = [];
         this.eventRequests = [];
         this.eventPlans = [];
+        this.eventWorkflowPayments = [];
+        this.eventCompletionReports = [];
+        this.clientOrganizerReviews = [];
         this.registrations = [];
         this.payments = [];
         this.refunds = [];

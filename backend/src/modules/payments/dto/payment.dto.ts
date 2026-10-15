@@ -29,3 +29,15 @@ export class CreatePaymentDto {
   @IsNotEmpty()
   paymentDate!: string;
 }
+
+export class CreateEventWorkflowPaymentDto {
+  @ApiProperty({
+    description: 'Simulated payment provider. No card or bank details are accepted.',
+    enum: ['DEMO_PROVIDER'],
+    example: 'DEMO_PROVIDER',
+  })
+  @IsString()
+  @IsNotEmpty()
+  @IsIn(['DEMO_PROVIDER'])
+  paymentMethod!: 'DEMO_PROVIDER';
+}

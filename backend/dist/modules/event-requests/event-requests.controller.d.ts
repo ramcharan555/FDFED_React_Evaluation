@@ -10,10 +10,13 @@ export declare class EventRequestsController {
         pastDate?: boolean;
         conflictEvent?: any;
     };
+    findOrganizers(role: UserRole): any[];
     create(dto: CreateEventRequestDto, role: UserRole, userId: string): any;
     findAll(role: UserRole, userId: string): any[];
     findOne(id: string, role: UserRole, userId: string): any;
     startReview(id: string, role: UserRole, userId: string): any;
+    acceptRequest(id: string, role: UserRole, userId: string): any;
+    acceptCounteroffer(id: string, role: UserRole, userId: string): any;
     requestMissingInfo(id: string, dto: RequestMissingInfoDto, role: UserRole, userId: string): any;
     provideMissingInfo(id: string, dto: ProvideMissingInfoDto, role: UserRole, userId: string): any;
     sendProposal(id: string, dto: SendProposalDto, role: UserRole, userId: string): any;
