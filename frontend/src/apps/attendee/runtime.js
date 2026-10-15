@@ -157,6 +157,10 @@ async function apiGetEvents() {
   return apiRequest('/events');
 }
 
+async function apiGetPublicEvents() {
+  return apiRequest('/public/events');
+}
+
 async function apiCreateEvent(eventData) {
   return apiRequest('/events', {
     method: 'POST',
@@ -234,18 +238,35 @@ async function apiGetAttendeeRegistrations(attendeeId) {
 }
 
 async function apiRegisterForEvent(regData) {
-  return apiRequest('/registrations', {
+  const response = await apiRequest('/registrations', {
     method: 'POST',
     body: JSON.stringify(regData),
   });
+  return response.data || response;
 }
 
 // ─── PAYMENTS ────────────────────────────────────────────────────
 async function apiMakePayment(paymentData) {
-  return apiRequest('/payments', {
+  const response = await apiRequest('/payments', {
     method: 'POST',
-    body: JSON.stringify(paymentData),
+    body: JSON.stringify({ ...paymentData, paymentMethod: 'DEMO_PROVIDER' }),
   });
+  return response.data || response;
+}
+
+async function apiCancelRegistration(registrationId, reason) {
+  const response = await apiRequest(`/registrations/${registrationId}/cancel`, {
+    method: 'PATCH',
+    body: JSON.stringify({ reason }),
+  });
+  return response.data || response;
+}
+
+async function apiConfirmWaitlist(registrationId) {
+  const response = await apiRequest(`/registrations/${registrationId}/waitlist/confirm`, {
+    method: 'POST',
+  });
+  return response.data || response;
 }
 
 // ─── STAFF ASSIGNMENTS ───────────────────────────────────────────
@@ -288,6 +309,10 @@ async function apiMarkAllNotificationsRead() {
   return apiRequest('/notifications/read-all', {
     method: 'PATCH',
   });
+}
+
+async function apiMarkNotificationRead(notificationId) {
+  return apiRequest(`/notifications/${notificationId}/read`, { method: 'PATCH' });
 }
 
 // ─── REPORTS ─────────────────────────────────────────────────────
@@ -347,6 +372,7 @@ window.apiCreateUser = apiCreateUser;
 window.apiUpdateUser = apiUpdateUser;
 window.apiDeleteUser = apiDeleteUser;
 window.apiGetEvents = apiGetEvents;
+window.apiGetPublicEvents = apiGetPublicEvents;
 window.apiCreateEvent = apiCreateEvent;
 window.apiUpdateEvent = apiUpdateEvent;
 window.apiDeleteEvent = apiDeleteEvent;
@@ -362,6 +388,8 @@ window.apiApproveEventPlan = apiApproveEventPlan;
 window.apiGetAttendeeRegistrations = apiGetAttendeeRegistrations;
 window.apiRegisterForEvent = apiRegisterForEvent;
 window.apiMakePayment = apiMakePayment;
+window.apiCancelRegistration = apiCancelRegistration;
+window.apiConfirmWaitlist = apiConfirmWaitlist;
 window.apiGetStaffAssignments = apiGetStaffAssignments;
 window.apiGetStaffStatistics = apiGetStaffStatistics;
 window.apiCreateStaffAssignment = apiCreateStaffAssignment;
@@ -369,6 +397,7 @@ window.apiUpdateAssignmentStatus = apiUpdateAssignmentStatus;
 window.apiVerifyAttendance = apiVerifyAttendance;
 window.apiGetNotifications = apiGetNotifications;
 window.apiMarkAllNotificationsRead = apiMarkAllNotificationsRead;
+window.apiMarkNotificationRead = apiMarkNotificationRead;
 window.apiCreateStaffReport = apiCreateStaffReport;
 window.apiCreateEventReport = apiCreateEventReport;
 window.apiSubmitEventReview = apiSubmitEventReview;
@@ -1967,6 +1996,7 @@ window.EventFlowModules['shared'] = true;
       document.getElementById('about').style.display = p === 'about' ? 'block' : 'none';
       document.getElementById('contact').style.display = p === 'contact' ? 'block' : 'none';
       document.getElementById('app').style.display = p === 'app' ? 'block' : 'none';
+      if (p === 'find-events') loadPublicAttendeeEvents();
     }
     function gotoLogin(role) {
       showPage('login');
@@ -2495,9 +2525,21 @@ window.EventFlowModules['shared'] = true;
 
       switch (pg) {
         case 'dashboard':
-          el.innerHTML = isDepartmentEmployee()
-            ? dashDepartmentEmployee()
-            : ({ organizer: dashOrganizer, client: dashClient, staff: dashStaff, attendee: dashAttendee }[r] || dashAttendee)();
+          if (r === 'attendee') {
+            el.innerHTML = `<div class="empty"><div class="empty-icon">📊</div><div class="empty-title">Loading dashboard…</div></div>`;
+            try {
+              const [serverEvents, serverRegistrations] = await Promise.all([apiGetEvents(), apiGetAttendeeRegistrations()]);
+              attendeeEventCatalog = (Array.isArray(serverEvents) ? serverEvents : []).map(normalizeAttendeeEvent);
+              attendeeRegistrationCatalog = (Array.isArray(serverRegistrations) ? serverRegistrations : []).map(normalizeAttendeeRegistration);
+              el.innerHTML = dashAttendee();
+            } catch (error) {
+              el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Dashboard could not be loaded</div><p class="empty-desc">${error.message || 'The server did not return attendee data.'}</p><button class="btn btn-primary mt-16" onclick="goNav('dashboard')">Try Again</button></div>`;
+            }
+          } else {
+            el.innerHTML = isDepartmentEmployee()
+              ? dashDepartmentEmployee()
+              : ({ organizer: dashOrganizer, client: dashClient, staff: dashStaff }[r] || dashAttendee)();
+          }
           break;
         case 'registrations':
           el.innerHTML = pageRegistrationsForEmployee();
@@ -2546,10 +2588,32 @@ window.EventFlowModules['shared'] = true;
           el.innerHTML = pageStaffRequests();
           break;
         case 'browse-events':
-          el.innerHTML = pageBrowseEvents();
+          el.innerHTML = `<div class="empty"><div class="empty-icon">📅</div><div class="empty-title">Loading events…</div></div>`;
+          try {
+            const [serverEvents, serverRegistrations] = await Promise.all([
+              apiGetEvents(),
+              attendeeRegistrationCatalog.length ? Promise.resolve(null) : apiGetAttendeeRegistrations().catch(() => [])
+            ]);
+            attendeeEventCatalog = (Array.isArray(serverEvents) ? serverEvents : []).map(normalizeAttendeeEvent);
+            if (serverRegistrations) {
+              attendeeRegistrationCatalog = (Array.isArray(serverRegistrations) ? serverRegistrations : []).map(normalizeAttendeeRegistration);
+            }
+            el.innerHTML = pageBrowseEvents();
+          } catch (error) {
+            attendeeEventCatalog = [];
+            el.innerHTML = `<div class="page-hd"><div class="page-hd-left"><div class="page-title">Browse Events</div><div class="page-sub">Discover and register for upcoming events.</div></div></div><div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Events could not be loaded</div><p class="empty-desc">${error.message || 'The server did not return the event catalog.'}</p><button class="btn btn-primary mt-16" onclick="goNav('browse-events')">Try Again</button></div>`;
+          }
           break;
         case 'my-tickets':
-          el.innerHTML = pageMyTickets();
+          el.innerHTML = `<div class="empty"><div class="empty-icon">🎟️</div><div class="empty-title">Loading registrations…</div></div>`;
+          try {
+            const serverRegistrations = await apiGetAttendeeRegistrations();
+            attendeeRegistrationCatalog = (Array.isArray(serverRegistrations) ? serverRegistrations : []).map(normalizeAttendeeRegistration);
+            el.innerHTML = pageMyTickets();
+          } catch (error) {
+            attendeeRegistrationCatalog = [];
+            el.innerHTML = `<div class="page-hd"><div class="page-hd-left"><div class="page-title">My Registrations</div></div></div><div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Registrations could not be loaded</div><p class="empty-desc">${error.message || 'The server did not return your registrations.'}</p><button class="btn btn-primary mt-16" onclick="goNav('my-tickets')">Try Again</button></div>`;
+          }
           break;
         case 'find-organizers':
           el.innerHTML = pageFindOrganizers();
@@ -2564,7 +2628,20 @@ window.EventFlowModules['shared'] = true;
           el.innerHTML = pageOngoingEvents();
           break;
         case 'notifications':
-          el.innerHTML = pageNotifications();
+          if (r === 'attendee') {
+            el.innerHTML = `<div class="empty"><div class="empty-icon">🔔</div><div class="empty-title">Loading notifications…</div></div>`;
+            try {
+              const serverNotifications = await apiGetNotifications();
+              attendeeNotificationCatalog = (Array.isArray(serverNotifications) ? serverNotifications : []).map(n => ({
+                id: n.notificationId, title: notificationTitle(n.type), msg: n.message, time: new Date(n.dateTime).toLocaleString(), read: n.read, type: notificationTone(n.type), icon: '🔔',
+              }));
+              el.innerHTML = pageNotifications();
+            } catch (error) {
+              el.innerHTML = `<div class="empty"><div class="empty-icon">⚠️</div><div class="empty-title">Notifications could not be loaded</div><p class="empty-desc">${error.message || 'Please try again.'}</p></div>`;
+            }
+          } else {
+            el.innerHTML = pageNotifications();
+          }
           break;
         case 'profile':
           el.innerHTML = pageProfile();
@@ -4866,48 +4943,333 @@ window.EventFlowModules['shared'] = true;
     }
 
     function dashAttendee() {
-      const myRegs = DB.registrations.filter(r => String(r.attendeeId) === String(CU.id));
-      const upcoming = myRegs.filter(r => { const e = DB.events.find(ev => String(ev.id) === String(r.eventId)); return e && ['upcoming', 'full', 'ongoing'].includes(e.status); });
-      const totalSpent = myRegs.reduce((s, r) => s + r.amount, 0);
+      const now = new Date();
+      function esc(v) {
+        return String(v ?? '').replace(/[&<>"']/g, c =>
+          ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
+      }
+
+      // Use authenticated attendee's actual records
+      const myRegs = (attendeeRegistrationCatalog && attendeeRegistrationCatalog.length > 0)
+        ? attendeeRegistrationCatalog
+        : (DB.registrations || []).filter(r => String(r.attendeeId) === String(CU.id));
+
+      const allEvents = (attendeeEventCatalog && attendeeEventCatalog.length > 0)
+        ? attendeeEventCatalog
+        : (DB.events || []);
+
+      function findEvent(eventId) {
+        return allEvents.find(e => String(e.id) === String(eventId) || String(e.eventId) === String(eventId))
+          || (DB.events || []).find(e => String(e.id) === String(eventId) || String(e.eventId) === String(eventId))
+          || { id: eventId, title: 'Event', emoji: '🎟️', date: '', time: '', venue: '', price: 0, status: 'upcoming', category: 'General' };
+      }
+
+      // ─── 1. SUMMARY METRICS ───────────────────────────────────────────
+      // Confirmed Registrations: confirmed / registered status
+      const confirmedRegs = myRegs.filter(r => r.status === 'confirmed' || r.status === 'registered');
+
+      // Awaiting Action: only actionable unresolved items (not expired)
+      const awaitingActionRegs = myRegs.filter(r => {
+        if (r.status === 'pending_payment') {
+          return !r.reservationExpiresAt || new Date(r.reservationExpiresAt) > now;
+        }
+        if (r.status === 'waitlisted') {
+          return r.offerExpiresAt && new Date(r.offerExpiresAt) > now;
+        }
+        return false;
+      });
+
+      // Events Attended: verified attendance
+      const attendedRegs = myRegs.filter(r => r.checkedIn || r.status === 'attended');
+
+      // Net Spent: successful payments minus completed refunds
+      let totalPaid = 0;
+      let totalRefunded = 0;
+      myRegs.forEach(r => {
+        const isPaid = r.payment === 'completed' || r.payment === 'paid' || r.paymentObj?.status === 'completed';
+        if (isPaid) {
+          totalPaid += Number(r.paymentObj?.amount ?? r.amount ?? 0);
+        }
+        const isRefunded = r.refundStatus === 'completed' || r.payment === 'refunded' || r.refundObj?.status === 'completed';
+        if (isRefunded) {
+          totalRefunded += Number(r.refundObj?.amount ?? r.amount ?? 0);
+        }
+      });
+      const netSpent = Math.max(0, totalPaid - totalRefunded);
+
+      // ─── 2. RECOMMENDED FOR YOU (Directly below summary cards) ────────
+      const activeOrPendingEventIds = new Set(
+        myRegs.filter(r => r.status !== 'cancelled').map(r => String(r.eventId))
+      );
+
+      const recommended = allEvents
+        .filter(e => {
+          const st = (e.status || '').toLowerCase();
+          if (st === 'completed' || st === 'cancelled') return false;
+          if (e.date && new Date(`${e.date}T23:59:59`) < now) return false;
+          if (activeOrPendingEventIds.has(String(e.id)) || activeOrPendingEventIds.has(String(e.eventId))) return false;
+          return true;
+        })
+        .sort((a, b) => {
+          const aRemaining = a.remainingCapacity !== undefined ? a.remainingCapacity : ((a.capacity || 100) - (a.registered || 0));
+          const bRemaining = b.remainingCapacity !== undefined ? b.remainingCapacity : ((b.capacity || 100) - (b.registered || 0));
+          const aHasCap = aRemaining > 0 && a.status !== 'full';
+          const bHasCap = bRemaining > 0 && b.status !== 'full';
+          if (aHasCap && !bHasCap) return -1;
+          if (!aHasCap && bHasCap) return 1;
+          return new Date(a.date || 0) - new Date(b.date || 0);
+        })
+        .slice(0, 4);
+
+      // ─── 3. UPCOMING EVENTS (Confirmed future registrations only) ─────
+      const upcomingRegs = myRegs.filter(r => {
+        if (!['confirmed', 'registered'].includes(r.status)) return false;
+        if (r.checkedIn || r.status === 'attended') return false;
+        const e = findEvent(r.eventId);
+        return e.date && new Date(`${e.date}T23:59:59`) >= now;
+      });
+
+      function canCancelReg(r, e) {
+        if (r.checkedIn || ['attended', 'cancelled', 'no-show'].includes(r.status)) return false;
+        return true;
+      }
+
+      // ─── 4. NEEDS ATTENTION (Only unresolved items) ─────────────────
+      const needsAttentionRegs = awaitingActionRegs;
+
+      // ─── 5. RECENT ACTIVITY (Chronological, non-duplicated) ───────────
+      const activityList = [];
+      myRegs.forEach(r => {
+        const e = findEvent(r.eventId);
+        const baseTime = new Date(r.date || 0).getTime() || (now.getTime() - 86400000);
+
+        if (r.checkedIn || r.status === 'attended') {
+          const checkInTime = r.checkedInAt ? new Date(r.checkedInAt).getTime() : baseTime + 10000;
+          activityList.push({
+            key: `checkin-${r.id || r.registrationId}`,
+            icon: '✅',
+            title: 'Checked In',
+            desc: `${e.title}${r.ticketId && r.ticketId !== '—' ? ' · ' + r.ticketId : ''}`,
+            date: r.checkedInAt || r.date || 'Recently',
+            badge: 'Attended',
+            badgeColor: 'green',
+            amountStr: '',
+            timestamp: checkInTime,
+          });
+        }
+
+        if (r.refundStatus === 'completed' || r.refundObj?.status === 'completed' || r.payment === 'refunded') {
+          const refundTime = r.refundObj?.completedAt ? new Date(r.refundObj.completedAt).getTime() : baseTime + 8000;
+          const refAmt = Number(r.refundObj?.amount ?? r.amount ?? 0);
+          activityList.push({
+            key: `refund-${r.id || r.registrationId}`,
+            icon: '↩️',
+            title: 'Refund Processed',
+            desc: `${e.title}${r.ticketId && r.ticketId !== '—' ? ' · ' + r.ticketId : ''}`,
+            date: r.refundObj?.completedAt || r.cancelledAt || r.date || 'Recently',
+            badge: 'Refunded',
+            badgeColor: 'blue',
+            amountStr: refAmt > 0 ? `+₹${refAmt.toLocaleString('en-IN')}` : '',
+            timestamp: refundTime,
+          });
+        } else if (r.refundStatus === 'pending' || r.refundObj?.status === 'pending') {
+          const refundTime = r.refundObj?.requestedAt ? new Date(r.refundObj.requestedAt).getTime() : baseTime + 7500;
+          const refAmt = Number(r.refundObj?.amount ?? r.refundAmount ?? r.amount ?? 0);
+          activityList.push({
+            key: `refund-pending-${r.id || r.registrationId}`,
+            icon: '⏳',
+            title: 'Simulated Refund Initiated',
+            desc: `${e.title}${r.ticketId && r.ticketId !== '—' ? ' · ' + r.ticketId : ''}`,
+            date: r.refundObj?.requestedAt ? new Date(r.refundObj.requestedAt).toLocaleDateString() : 'Recently',
+            badge: 'Refund Pending',
+            badgeColor: 'yellow',
+            amountStr: refAmt > 0 ? `₹${refAmt.toLocaleString('en-IN')}` : '',
+            timestamp: refundTime,
+          });
+        }
+
+        if (r.status === 'cancelled') {
+          const cancelTime = r.cancelledAt ? new Date(r.cancelledAt).getTime() : baseTime + 6000;
+          activityList.push({
+            key: `cancel-${r.id || r.registrationId}`,
+            icon: '✕',
+            title: 'Registration Cancelled',
+            desc: `${e.title}${r.ticketId && r.ticketId !== '—' ? ' · ' + r.ticketId : ''}`,
+            date: r.cancelledAt || r.date || 'Recently',
+            badge: 'Cancelled',
+            badgeColor: 'red',
+            amountStr: '',
+            timestamp: cancelTime,
+          });
+        }
+
+        if (r.payment === 'completed' || r.payment === 'paid' || r.paymentObj?.status === 'completed') {
+          const payTime = r.paymentObj?.createdAt ? new Date(r.paymentObj.createdAt).getTime() : baseTime + 4000;
+          const payAmt = Number(r.paymentObj?.amount ?? r.amount ?? 0);
+          if (payAmt > 0) {
+            activityList.push({
+              key: `pay-${r.id || r.registrationId}`,
+              icon: '💳',
+              title: 'Payment Completed',
+              desc: `${e.title} · ${r.paymentObj?.paymentMethod || 'Online Payment'}`,
+              date: r.paymentObj?.createdAt || r.date || 'Recently',
+              badge: 'Paid',
+              badgeColor: 'green',
+              amountStr: `₹${payAmt.toLocaleString('en-IN')}`,
+              timestamp: payTime,
+            });
+          }
+        }
+
+        const isWaitlisted = r.status === 'waitlisted';
+        const isPending = r.status === 'pending_payment';
+        activityList.push({
+          key: `reg-${r.id || r.registrationId}`,
+          icon: isWaitlisted ? '⏳' : (isPending ? '📝' : (e.emoji || '🎟️')),
+          title: isWaitlisted ? 'Waitlist Joined' : (isPending ? 'Registration Pending' : 'Event Registered'),
+          desc: `${e.title}${r.ticketId && r.ticketId !== '—' ? ' · ' + r.ticketId : ''}`,
+          date: r.date || 'Recently',
+          badge: isWaitlisted ? 'Waitlisted' : (isPending ? 'Pending' : 'Confirmed'),
+          badgeColor: isWaitlisted || isPending ? 'yellow' : 'green',
+          amountStr: r.amount === 0 ? 'Free' : `₹${Number(r.amount).toLocaleString('en-IN')}`,
+          timestamp: baseTime,
+        });
+      });
+
+      activityList.sort((a, b) => b.timestamp - a.timestamp);
+      const seenKeys = new Set();
+      const uniqueActivities = [];
+      for (const act of activityList) {
+        if (!seenKeys.has(act.key)) {
+          seenKeys.add(act.key);
+          uniqueActivities.push(act);
+        }
+      }
+      const recentActivities = uniqueActivities.slice(0, 5);
+
+      // ─── BUILD HTML ──────────────────────────────────────────────────
       return `
   <div class="page-hd">
-    <div class="page-hd-left"><div class="page-title">My Dashboard</div><div class="page-sub">Welcome back, ${CU.name}! Here are your upcoming events.</div></div>
+    <div class="page-hd-left"><div class="page-title">My Dashboard</div><div class="page-sub">Welcome back, ${esc(CU.name || 'Attendee')}! Here are your event highlights.</div></div>
     <div class="page-hd-right"><button class="btn btn-primary" onclick="goNav('browse-events')">🔍 Browse Events</button></div>
   </div>
-  <div class="grid-3 mb-20">
-    <div class="stat-card"><div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">🎟️</div><div class="stat-value" style="color:var(--accent)">${myRegs.length}</div><div class="stat-label">Registered Events</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:var(--green-dim);color:var(--green)">📅</div><div class="stat-value" style="color:var(--green)">${upcoming.length}</div><div class="stat-label">Upcoming</div></div>
-    <div class="stat-card"><div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">💳</div><div class="stat-value" style="color:var(--yellow)">₹${totalSpent}</div><div class="stat-label">Total Spent</div></div>
+
+  <!-- Summary Cards -->
+  <div class="grid-4 mb-20">
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--green-dim);color:var(--green)">🎟️</div>
+      <div class="stat-value" style="color:var(--green)">${confirmedRegs.length}</div>
+      <div class="stat-label">Confirmed Registrations</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">⏳</div>
+      <div class="stat-value" style="color:var(--yellow)">${awaitingActionRegs.length}</div>
+      <div class="stat-label">Awaiting Action</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--blue-dim,rgba(66,153,225,.12));color:var(--blue,#4299e1)">✅</div>
+      <div class="stat-value" style="color:var(--blue,#4299e1)">${attendedRegs.length}</div>
+      <div class="stat-label">Events Attended</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">💰</div>
+      <div class="stat-value" style="color:var(--yellow)">₹${netSpent.toLocaleString('en-IN')}</div>
+      <div class="stat-label">Net Spent</div>
+    </div>
   </div>
-  ${upcoming.length > 0 ? `<div class="h4 mb-16">Upcoming Events</div>
-  <div class="events-grid">${upcoming.map(r => {
-        const e = DB.events.find(ev => String(ev.id) === String(r.eventId)); return e ? evCard(e, 'attendee', r) : ''
-      }).join('')}</div>
-  <div style="display:flex;flex-direction:column;gap:12px;margin-top:24px">
-    ${upcoming.map(r => {
-        const e = DB.events.find(ev => String(ev.id) === String(r.eventId)); return e ? `<div class="card p-0" style="display:flex;justify-content:space-between;align-items:center;padding:16px">
-      <div><div style="font-weight:600">${e.title}</div><div class="small">${r.ticketId}</div></div>
-      <button class="btn btn-danger btn-xs" onclick="cancelTicket('${r.id}')">✕ Cancel Ticket</button>
-    </div>`: '';
-      }).join('')}
-  </div>`: `
-  <div class="empty"><div class="empty-icon">🎟️</div><div class="empty-title">No upcoming events</div><div class="empty-desc">Browse and register for events to see them here.</div><button class="btn btn-primary mt-16" onclick="goNav('browse-events')">Browse Events</button></div>`}
-  <div class="h4 mb-16 mt-24">Recommended For You</div>
-  <div class="events-grid">${DB.events.filter(e => e.status === 'upcoming' && !myRegs.some(r => String(r.eventId) === String(e.id))).slice(0, 3).map(e => evCard(e, 'attendee')).join('')}</div>
-  ${myRegs.length > 0 ? `<div class="h4 mb-12 mt-24">Recent Activity</div>
-  <div class="card p-0">
-    ${myRegs.slice(-3).reverse().map(r => {
-        const e = DB.events.find(ev => String(ev.id) === String(r.eventId)) || { title: 'Event', emoji: '🎟️' }; return `
-      <div class="flex items-center justify-between" style="padding:12px 16px;border-bottom:1px solid var(--border)">
-        <div class="flex items-center gap-10"><span style="font-size:22px">${e.emoji}</span>
-          <div><div style="font-size:13.5px;font-weight:500">${e.title}</div><div class="small">${r.ticketId} · ${r.date}</div></div>
-        </div>
-        <div class="text-right"><div style="font-weight:600;color:var(--green)">${r.amount === 0 ? 'Free' : '₹' + r.amount}</div>
-          <span class="badge badge-${r.checkedIn ? 'green' : 'purple'}">${r.checkedIn ? 'Attended' : 'Registered'}</span>
-        </div>
-      </div>`}).join('')}
-  </div>`: ''}`;
+
+  <!-- Recommended For You (Directly below summary cards) -->
+  <div class="h4 mb-16">✨ Recommended For You</div>
+  <div class="events-grid">
+    ${recommended.length
+      ? recommended.map(e => evCard(e, 'attendee')).join('')
+      : `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">✨</div><div class="empty-title">No recommendations right now</div><p class="empty-desc">You are up to date on all available events.</p></div>`
     }
+  </div>
+
+  <!-- Upcoming Events (Confirmed future registrations) -->
+  <div class="h4 mb-16 mt-24">📅 Upcoming Events</div>
+  ${upcomingRegs.length > 0 ? `
+  <div style="display:flex;flex-direction:column;gap:12px">
+    ${upcomingRegs.map(r => {
+      const e = findEvent(r.eventId);
+      const allowCancel = canCancelReg(r, e);
+      return `<div class="card p-0" style="display:flex;justify-content:space-between;align-items:center;padding:16px;gap:12px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;gap:14px;min-width:0;flex:1">
+          <span style="font-size:32px;flex-shrink:0">${esc(e.emoji || '🎟️')}</span>
+          <div style="min-width:0">
+            <div style="font-weight:700;font-size:15px;margin-bottom:3px">${esc(e.title)}</div>
+            <div class="small" style="color:var(--text2)">📅 ${esc(e.date)}${e.time ? ' · ' + esc(e.time) : ''}${e.venue ? ' · 📍 ' + esc(e.venue) : ''}</div>
+            <div class="small mt-4"><span class="badge badge-green">${esc(r.ticketId || 'Confirmed')}</span></div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;flex-shrink:0;align-items:center">
+          <button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')">👁️ View Details</button>
+          <button class="btn btn-primary btn-xs" onclick="openViewTicketModal('${r.id || r.registrationId}')">🎫 View Ticket</button>
+          ${allowCancel ? `<button class="btn btn-danger btn-xs" onclick="cancelTicket('${r.id || r.registrationId}')">✕ Cancel Registration</button>` : ''}
+        </div>
+      </div>`;
+    }).join('')}
+  </div>` : `
+  <div class="empty">
+    <div class="empty-icon">🎟️</div>
+    <div class="empty-title">No upcoming events</div>
+    <div class="empty-desc">Browse and register for events to see them here.</div>
+    <button class="btn btn-primary mt-16" onclick="goNav('browse-events')">Browse Events</button>
+  </div>`}
+
+  <!-- Needs Attention (Only unresolved items) -->
+  ${needsAttentionRegs.length > 0 ? `
+  <div class="h4 mb-12 mt-24">⚠️ Needs Attention</div>
+  <div class="card p-0">
+    ${needsAttentionRegs.map(r => {
+      const e = findEvent(r.eventId);
+      const isPendingPay = r.status === 'pending_payment';
+      const expiry = r.reservationExpiresAt || r.offerExpiresAt;
+      const expiryStr = expiry ? ` · Expires: ${new Date(expiry).toLocaleDateString()} ${new Date(expiry).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}` : '';
+      const desc = isPendingPay
+        ? `Payment required to confirm your reservation.${expiryStr}`
+        : `Waitlist offer available! Accept before it expires.${expiryStr}`;
+      const actionBtn = isPendingPay
+        ? `<button class="btn btn-primary btn-xs" onclick="completeDemoPayment('${r.registrationId || r.id}')">💳 Pay Now</button>`
+        : `<button class="btn btn-primary btn-xs" onclick="acceptWaitlistOffer('${r.registrationId || r.id}')">✓ Accept Offer</button>`;
+      return `<div class="flex items-center justify-between" style="padding:12px 16px;border-bottom:1px solid var(--border)">
+        <div>
+          <div style="font-weight:600">${esc(e.title)}</div>
+          <div class="small" style="color:var(--yellow)">${desc}</div>
+        </div>
+        <div class="flex gap-8">
+          ${actionBtn}
+          <button class="btn btn-ghost btn-xs" onclick="goNav('my-tickets')">Review →</button>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>` : ''}
+
+  <!-- Recent Activity -->
+  ${recentActivities.length > 0 ? `
+  <div class="h4 mb-12 mt-24">🕐 Recent Activity</div>
+  <div class="card p-0">
+    ${recentActivities.map((act, idx) => {
+      const isLast = idx === recentActivities.length - 1;
+      return `<div class="flex items-center justify-between" style="padding:12px 16px${isLast ? '' : ';border-bottom:1px solid var(--border)'}">
+        <div class="flex items-center gap-10">
+          <span style="font-size:22px">${act.icon}</span>
+          <div>
+            <div style="font-size:13.5px;font-weight:500">${esc(act.title)}</div>
+            <div class="small">${esc(act.desc)} · ${esc(act.date)}</div>
+          </div>
+        </div>
+        <div class="text-right">
+          ${act.amountStr ? `<div style="font-weight:600;color:var(--green)">${act.amountStr}</div>` : ''}
+          <span class="badge badge-${act.badgeColor}">${act.badge}</span>
+        </div>
+      </div>`;
+    }).join('')}
+  </div>` : ''}
+`;
+    }
+    window.dashAttendee = dashAttendee;
 
     // ════════════════════════════════════════════════
     //  ADMIN SUBPAGE 1: USER REPORTS (BAR GRAPHS)
@@ -5571,7 +5933,9 @@ window.EventFlowModules['shared'] = true;
     }
     function evCard(e, role, reg = null) {
       const pct = Math.min(100, Math.round((e.registered / e.capacity) * 100));
-      const regForThis = reg || DB.registrations.find(r => String(r.attendeeId) === String(CU.id) && String(r.eventId) === String(e.id));
+      const regForThis = reg || (role === 'attendee'
+        ? attendeeRegistrationCatalog.find(r => r.status !== 'cancelled' && String(r.eventId) === String(e.id))
+        : DB.registrations.find(r => r.status !== 'cancelled' && String(r.attendeeId) === String(CU.id) && String(r.eventId) === String(e.id)));
       const bannerContent = e.image ? `
         <img src="${e.image}" alt="${e.title || 'Event'}" class="ev-banner-img" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
         <div class="ev-banner-fallback" style="display:none;align-items:center;justify-content:center;font-size:52px;width:100%;height:100%">${e.emoji || '📅'}</div>
@@ -5596,7 +5960,7 @@ window.EventFlowModules['shared'] = true;
         <div class="prog"><div class="prog-fill" style="width:${pct}%"></div></div>
       </div>
       <div class="ev-footer">
-        ${role === 'attendee' ? `<div class="flex gap-6" style="width:100%;justify-content:space-between"><button class="btn btn-sm ${regForThis ? 'btn-ghost' : 'btn-primary'}" onclick="regForEvent('${e.id}')" ${(e.status === 'full' && !regForThis) || e.status === 'completed' ? 'disabled' : ''} style="${(e.status === 'full' && !regForThis) || e.status === 'completed' ? 'opacity:.5' : ''}">${regForThis ? '✓ Registered' : e.status === 'full' ? 'Event Full' : 'Register'}</button><button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')" title="View event details">View Details</button></div>` :
+        ${role === 'attendee' ? `<div class="flex gap-6" style="width:100%;justify-content:space-between"><button class="btn btn-sm ${regForThis ? 'btn-ghost' : 'btn-primary'}" onclick="regForEvent('${e.id}')" ${((e.status === 'full' && !e.waitlistEnabled) && !regForThis) || e.status === 'completed' || e.status === 'cancelled' ? 'disabled' : ''} style="${((e.status === 'full' && !e.waitlistEnabled) && !regForThis) || e.status === 'completed' || e.status === 'cancelled' ? 'opacity:.5' : ''}">${regForThis ? regForThis.status === 'waitlisted' ? 'Waitlisted' : regForThis.status === 'pending_payment' ? 'Payment Pending' : regForThis.status === 'attended' ? 'Attended' : '✓ Registered' : e.status === 'full' ? (e.waitlistEnabled ? 'Join Waitlist' : 'Event Full') : 'Register'}</button><button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')" title="View event details">View Details</button></div>` :
           role === 'organizer' ? `<div class="actions"><button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')" title="View event details">👁️ View</button><button class="btn btn-ghost btn-xs" onclick="openEditEventModal('${e.id}')">✏️ Edit</button><button class="btn btn-xs btn-danger" onclick="deleteEvent('${e.id}')">🗑️</button></div>` :
             role === 'superuser' ? `<div class="actions"><button class="btn btn-ghost btn-xs w-full" onclick="openViewEventDrawer('${e.id}')" title="View event details">👁️ View</button></div>` :
               role === 'staff' || role === 'client' ? `<div class="flex gap-6"><button class="btn btn-ghost btn-xs w-full" onclick="openViewEventDrawer('${e.id}')" title="View event details">👁️ View Details</button></div>` :
@@ -5664,16 +6028,7 @@ window.EventFlowModules['shared'] = true;
           closeModal(); renderPage(_currentPage); toast('Event created!', 'success');
         })
         .catch(function (err) {
-          // Fallback: save locally
-          const evId = DB._nextId ? DB._nextId.events++ : Date.now();
-          DB.events.push({
-            id: evId, title, category: v('ne-cat'), date, time: v('ne-time'),
-            venue, city: v('ne-city'), capacity: parseInt(cap), registered: 0,
-            price: parseInt(v('ne-price')) || 0, status: v('ne-status') || 'upcoming',
-            organizer: CU.id, description: v('ne-desc'), emoji: '📅', color: '#7c6ff7',
-          });
-          saveDB();
-          closeModal(); renderPage(_currentPage); toast('Event created (local)!', 'success');
+          toast(err.message || 'Event creation failed.', 'error');
         });
     }
     function openEditEventModal(id) {
@@ -5710,9 +6065,8 @@ window.EventFlowModules['shared'] = true;
         .then(function () {
           e.title = newTitle; e.date = newDate; e.time = newTime; e.venue = newVenue; e.capacity = newCap; e.price = newPrice; e.status = newStatus; e.description = newDesc;
           closeModal(); renderPage('events'); toast('Event updated successfully', 'success');
-        }).catch(function () {
-          e.title = newTitle; e.date = newDate; e.time = newTime; e.venue = newVenue; e.capacity = newCap; e.price = newPrice; e.status = newStatus; e.description = newDesc;
-          saveDB(); closeModal(); renderPage('events'); toast('Event updated (local)', 'success');
+        }).catch(function (err) {
+          toast(err.message || 'Event update failed.', 'error');
         });
     }
     function deleteEvent(id) {
@@ -5726,11 +6080,8 @@ window.EventFlowModules['shared'] = true;
             if (idx > -1) { DB.events.splice(idx, 1); }
             DB.registrations = DB.registrations.filter(r => String(r.eventId) !== String(id));
             renderPage(_currentPage); toast('Event deleted', 'info');
-          }).catch(function () {
-            const idx = DB.events.findIndex(ev => String(ev.id) === String(id));
-            if (idx > -1) { DB.events.splice(idx, 1); saveDB(); }
-            DB.registrations = DB.registrations.filter(r => String(r.eventId) !== String(id));
-            renderPage(_currentPage); toast('Event deleted (local)', 'info');
+          }).catch(function (err) {
+            toast(err.message || 'Event deletion failed.', 'error');
           });
       });
     }
@@ -5747,10 +6098,10 @@ window.EventFlowModules['shared'] = true;
     ${bannerHTML}
     <span class="badge badge-${evStatBadge(e.status)} mb-16">${e.status}</span>
     <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:20px">
-      <div class="info-row"><span class="info-label">Category</span><span class="info-value">${e.category}</span></div>
-      <div class="info-row"><span class="info-label">Date & Time</span><span class="info-value">${e.date} · ${e.time}</span></div>
-      <div class="info-row"><span class="info-label">Venue</span><span class="info-value" style="max-width:200px;text-align:right">${e.venue}</span></div>
-      <div class="info-row"><span class="info-label">City</span><span class="info-value">${e.city || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Category</span><span class="info-value">${escapeHtml(e.category)}</span></div>
+      <div class="info-row"><span class="info-label">Date & Time</span><span class="info-value">${escapeHtml(e.date)} · ${escapeHtml(e.time)}</span></div>
+      <div class="info-row"><span class="info-label">Venue</span><span class="info-value" style="max-width:200px;text-align:right">${escapeHtml(e.venue)}</span></div>
+      <div class="info-row"><span class="info-label">City</span><span class="info-value">${escapeHtml(e.city || '—')}</span></div>
       <div class="info-row"><span class="info-label">Capacity</span><span class="info-value">${e.registered} / ${e.capacity}</span></div>
       <div class="info-row"><span class="info-label">Price</span><span class="info-value" style="color:var(--green)">${e.price === 0 ? 'Free' : '₹' + e.price}</span></div>
       <div class="info-row"><span class="info-label">Registrations</span><span class="info-value">${regs.length}</span></div>
@@ -5758,13 +6109,13 @@ window.EventFlowModules['shared'] = true;
     </div>
     ${e.description ? `<div class="label mb-8">Description</div><p class="muted" style="font-size:13px;line-height:1.7">${e.description}</p>` : ''}
     ${(e.tags || []).length ? `<div class="label mt-16 mb-8">Tags</div><div class="tag-list">${e.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
-    ${CU.role === 'organizer' ? `<div class="flex gap-8 mt-20"><button class="btn btn-primary w-full" onclick="closeDrawer();openEditEventModal('${id}')">✏️ Edit Event</button></div>` : ''}
+    ${CU?.role === 'organizer' ? `<div class="flex gap-8 mt-20"><button class="btn btn-primary w-full" onclick="closeDrawer();openEditEventModal('${id}')">✏️ Edit Event</button></div>` : ''}
   `);
     }
 
     function viewPublicEventDetails(id) {
-      const e = DB.events.find(ev => ev.id === id); if (!e) return;
-      const regs = DB.registrations.filter(r => r.eventId === id);
+      const e = DB.events.find(ev => String(ev.id) === String(id)); if (!e) return;
+      const regs = DB.registrations.filter(r => String(r.eventId) === String(id));
       const org = DB.users.find(u => u.id === e.organizer) || { name: '—', avatar: '?' };
       const bannerHTML = e.image ? `
         <div style="height:140px;border-radius:12px;overflow:hidden;margin-bottom:16px;position:relative;background:${e.color || 'var(--accent)'}18">
@@ -5781,14 +6132,14 @@ window.EventFlowModules['shared'] = true;
     ${bannerHTML}
     <span class="badge badge-${evStatBadge(e.status)} mb-16">${e.status}</span>
     <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:20px">
-      <div class="info-row"><span class="info-label">Category</span><span class="info-value">${e.category}</span></div>
-      <div class="info-row"><span class="info-label">Date & Time</span><span class="info-value">${e.date} · ${e.time}</span></div>
-      <div class="info-row"><span class="info-label">Venue</span><span class="info-value" style="max-width:200px;text-align:right">${e.venue}</span></div>
-      <div class="info-row"><span class="info-label">City</span><span class="info-value">${e.city || '—'}</span></div>
+      <div class="info-row"><span class="info-label">Category</span><span class="info-value">${escapeHtml(e.category)}</span></div>
+      <div class="info-row"><span class="info-label">Date & Time</span><span class="info-value">${escapeHtml(e.date)} · ${escapeHtml(e.time)}</span></div>
+      <div class="info-row"><span class="info-label">Venue</span><span class="info-value" style="max-width:200px;text-align:right">${escapeHtml(e.venue)}</span></div>
+      <div class="info-row"><span class="info-label">City</span><span class="info-value">${escapeHtml(e.city || '—')}</span></div>
       <div class="info-row"><span class="info-label">Capacity</span><span class="info-value">${e.registered} / ${e.capacity}</span></div>
       <div class="info-row"><span class="info-label">Price</span><span class="info-value" style="color:var(--green)">${e.price === 0 ? 'Free' : '₹' + e.price}</span></div>
     </div>
-    ${e.description ? `<div class="label mb-8">Description</div><p style="font-size:13px;line-height:1.7;color:var(--text);margin-bottom:16px">${e.description}</p>` : ''}
+    ${e.description ? `<div class="label mb-8">Description</div><p style="font-size:13px;line-height:1.7;color:var(--text);margin-bottom:16px">${escapeHtml(e.description)}</p>` : ''}
     <div class="label mb-8">Organizer</div>
     <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:8px;margin-bottom:16px">
       ${orgAvHTML}
@@ -5799,6 +6150,69 @@ window.EventFlowModules['shared'] = true;
     </div>
     ${(e.tags || []).length ? `<div class="label mb-8">Tags</div><div class="tag-list">${e.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
   `);
+    }
+
+    let publicAttendeeEventsLoaded = false;
+    let publicAttendeeEventsRequest = null;
+    function loadPublicAttendeeEvents() {
+      const grid = g('public-events-grid');
+      if (!grid || publicAttendeeEventsLoaded) return;
+      if (publicAttendeeEventsRequest) return publicAttendeeEventsRequest;
+
+      grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📅</div><div class="empty-title">Loading events…</div></div>`;
+      publicAttendeeEventsRequest = apiGetPublicEvents()
+        .then(function (events) {
+          const now = new Date();
+          const available = (Array.isArray(events) ? events : [])
+            .map(normalizeAttendeeEvent)
+            .filter(event => event.status !== 'cancelled' && event.status !== 'completed' && new Date(`${event.date}T23:59:59`) >= now);
+          attendeeEventCatalog = available;
+          publicAttendeeEventsLoaded = true;
+          renderPublicAttendeeEvents(grid, available);
+        })
+        .catch(function (error) {
+          grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">⚠️</div><div class="empty-title">Events could not be loaded</div><p class="empty-desc">${escapeHtml(error.message || 'The event catalog is unavailable.')}</p><button class="btn btn-primary mt-16" type="button" data-retry-public-events>Try Again</button></div>`;
+          grid.querySelector('[data-retry-public-events]')?.addEventListener('click', function () {
+            publicAttendeeEventsRequest = null;
+            loadPublicAttendeeEvents();
+          });
+        })
+        .finally(function () {
+          publicAttendeeEventsRequest = null;
+        });
+      return publicAttendeeEventsRequest;
+    }
+
+    function renderPublicAttendeeEvents(grid, events) {
+      if (!events.length) {
+        grid.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📅</div><div class="empty-title">No upcoming events</div><p class="empty-desc">Check back soon for new events.</p></div>`;
+        return;
+      }
+
+      grid.innerHTML = events.map(event => `
+        <div class="fe-card">
+          <div class="fe-card-img">
+            <div class="fe-card-img-fallback" style="background:${escapeHtml(event.color || 'var(--surface2)')}">${escapeHtml(event.emoji || '📅')}</div>
+            <div class="fe-card-img-overlay"></div>
+            <span class="fe-card-price">${event.price === 0 ? 'FREE' : `₹${Number(event.price).toLocaleString('en-IN')}`}</span>
+          </div>
+          <div class="fe-card-body">
+            <div class="fe-card-title">${escapeHtml(event.title)}</div>
+            <div class="fe-card-meta"><span>📅 ${escapeHtml(event.date)}</span><span>📍 ${escapeHtml(event.city || event.venue)}</span><span>${escapeHtml(event.category)}</span></div>
+            <p class="fe-card-desc">${escapeHtml(event.description || 'Join us for this upcoming event.')}</p>
+            <div class="fe-card-actions">
+              <button class="btn btn-ghost btn-xs w-full" type="button" data-public-event-details="${escapeHtml(event.id)}">👁️ Details</button>
+              <button class="btn btn-primary btn-xs w-full" type="button" data-public-event-register>Register</button>
+            </div>
+          </div>
+        </div>`).join('');
+
+      grid.querySelectorAll('[data-public-event-details]').forEach(button => {
+        button.addEventListener('click', () => viewPublicEventDetails(button.dataset.publicEventDetails));
+      });
+      grid.querySelectorAll('[data-public-event-register]').forEach(button => {
+        button.addEventListener('click', () => gotoLogin('attendee'));
+      });
     }
 
     function viewEventReport(eventId) {
@@ -5888,34 +6302,85 @@ window.EventFlowModules['shared'] = true;
     // ════════════════════════════════════════════════
     //  BROWSE EVENTS (Attendee)
     // ════════════════════════════════════════════════
+    let attendeeEventCatalog = [];
+    function normalizeAttendeeEvent(event) {
+      const existing = DB.events.find(e => e.eventId === event.eventId || e.title === event.title);
+      const remaining = event.remainingCapacity !== undefined
+        ? Number(event.remainingCapacity)
+        : Math.max(0, Number(event.capacity || 0) - Number(event.registered || 0));
+      const normalized = {
+        ...(existing || {}),
+        ...event,
+        id: event.eventId || event.id,
+        eventId: event.eventId || event.id,
+        title: event.title || event.name,
+        emoji: event.emoji || existing?.emoji || '📅',
+        venue: event.venue || event.location,
+        price: Number(event.price ?? event.ticketPrice ?? 0),
+        registered: Number(event.registered || 0),
+        remainingCapacity: remaining,
+        status: remaining === 0 ? 'full' : (event.status === 'published' ? 'upcoming' : event.status),
+      };
+      const index = DB.events.findIndex(e => String(e.id) === String(normalized.id));
+      if (index >= 0) DB.events[index] = normalized;
+      else DB.events.push(normalized);
+      return normalized;
+    }
+    function getRegisteredEventIdSet() {
+      const set = new Set();
+      (attendeeRegistrationCatalog || [])
+        .filter(r => r.status !== 'cancelled')
+        .forEach(r => {
+          if (r.eventId) set.add(String(r.eventId));
+          if (r.event?.id) set.add(String(r.event.id));
+          if (r.event?.eventId) set.add(String(r.event.eventId));
+        });
+      (DB.registrations || [])
+        .filter(r => r.status !== 'cancelled' && (String(r.attendeeId) === String(CU?.id) || String(r.attendeeId) === String(CU?.userId) || r.attendeeId === 5))
+        .forEach(r => {
+          if (r.eventId) set.add(String(r.eventId));
+        });
+      return set;
+    }
+
     function pageBrowseEvents() {
-      const avail = DB.events.filter(e => e.status !== 'completed');
+      const now = new Date();
+      const registeredIds = getRegisteredEventIdSet();
+      const avail = attendeeEventCatalog.filter(e =>
+        e.status !== 'completed' &&
+        e.status !== 'cancelled' &&
+        new Date(`${e.date}T23:59:59`) >= now &&
+        !registeredIds.has(String(e.id)) &&
+        !registeredIds.has(String(e.eventId))
+      );
       return `
   <div class="page-hd">
-    <div class="page-hd-left"><div class="page-title">Browse Events</div><div class="page-sub">Discover and register for upcoming events.</div></div>
+    <div class="page-hd-left"><div class="page-title">Browse Events</div><div class="page-sub">Discover and register for new upcoming events.</div></div>
   </div>
   <div class="filter-row">
     <div class="search-box input-group"><span class="input-icon">🔍</span><input class="form-control" id="be-q" placeholder="Search events…" oninput="refreshBrowse()"></div>
     <select class="form-control filter-select" id="be-cat" onchange="refreshBrowse()">
-      <option value="">All Categories</option><option>Conference</option><option>Corporate</option><option>Concert</option><option>Workshop</option><option>Networking</option>
+      <option value="">All Categories</option>${[...new Set(avail.map(e => e.category).filter(Boolean))].sort().map(category => `<option>${escapeHtml(category)}</option>`).join('')}
     </select>
     <select class="form-control filter-select" id="be-price" onchange="refreshBrowse()">
       <option value="">Any Price</option><option value="free">Free Only</option><option value="paid">Paid Only</option>
     </select>
     <select class="form-control filter-select" id="be-city" onchange="refreshBrowse()">
       <option value="">Any City</option>
-      ${[...new Set(DB.events.map(e => e.city).filter(Boolean))].map(c => `<option>${c}</option>`).join('')}
+      ${[...new Set(avail.map(e => e.city).filter(Boolean))].map(c => `<option>${escapeHtml(c)}</option>`).join('')}
     </select>
   </div>
-  <div class="events-grid" id="browse-grid">${avail.map(e => evCard(e, 'attendee')).join('')}</div>`;
+  <div class="events-grid" id="browse-grid">${avail.length ? avail.map(e => evCard(e, 'attendee')).join('') : `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📅</div><div class="empty-title">No new upcoming events to register</div><p class="empty-desc">You are already registered for all available events or check back soon for new events.</p></div>`}</div>`;
     }
     function refreshBrowse() {
       const q = (g('be-q') || {}).value?.toLowerCase() || '';
       const cat = (g('be-cat') || {}).value || '';
       const price = (g('be-price') || {}).value || '';
       const city = (g('be-city') || {}).value || '';
-      const list = DB.events.filter(e => {
-        if (e.status === 'completed') return false;
+      const registeredIds = getRegisteredEventIdSet();
+      const list = attendeeEventCatalog.filter(e => {
+        if (e.status === 'completed' || e.status === 'cancelled' || new Date(`${e.date}T23:59:59`) < new Date()) return false;
+        if (registeredIds.has(String(e.id)) || registeredIds.has(String(e.eventId))) return false;
         return (!q || e.title.toLowerCase().includes(q))
           && (!cat || e.category === cat)
           && (!price || (price === 'free' && e.price === 0) || (price === 'paid' && e.price > 0))
@@ -5923,131 +6388,962 @@ window.EventFlowModules['shared'] = true;
       });
       g('browse-grid').innerHTML = list.map(e => evCard(e, 'attendee')).join('') || `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No events match</div><p class="empty-desc">Try adjusting your filters.</p></div>`;
     }
-    function regForEvent(eventId) {
-      const e = DB.events.find(ev => String(ev.id) === String(eventId));
-      if (!e || e.status === 'full') { toast(e ? 'Sorry, this event is full' : 'Event not found', 'error'); return; }
-      const existing = DB.registrations.find(r => String(r.attendeeId) === String(CU.id) && String(r.eventId) === String(eventId));
-      if (existing) { openViewTicketModal(existing.id); return; }
-      const regThumb = e.image ? `
-        <div style="width:48px;height:48px;border-radius:8px;overflow:hidden;flex-shrink:0;background:${e.color || 'var(--accent)'}20;position:relative">
-          <img src="${e.image}" alt="${e.title || 'Event'}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<span style=\'font-size:32px\'>${e.emoji || '📅'}</span>'">
-        </div>
-      ` : `<span style="font-size:32px">${e.emoji || '📅'}</span>`;
-
-      // Show registration flow
-      openModal(`Register — ${e.title}`, `
-    <div style="background:${e.color}12;border:1px solid ${e.color}30;border-radius:var(--r-lg);padding:16px;margin-bottom:20px">
-      <div class="flex items-center gap-12">
-        ${regThumb}
-        <div>
-          <div style="font-weight:700;font-size:15px">${e.title}</div>
-          <div class="small">📅 ${e.date} · ${e.time}</div>
-          <div class="small">📍 ${e.venue}</div>
-        </div>
-      </div>
-    </div>
-    <div class="info-row" style="padding:8px 0"><span class="info-label">Attendee</span><span class="info-value">${CU.name}</span></div>
-    <div class="info-row" style="padding:8px 0"><span class="info-label">Email</span><span class="info-value">${CU.email}</span></div>
-    <div class="info-row" style="padding:8px 0 16px"><span class="info-label">Ticket Price</span><span class="info-value" style="color:var(--green);font-size:16px;font-weight:700">${e.price === 0 ? 'FREE' : '₹' + e.price}</span></div>
-    ${e.price > 0 ? `
-    <div style="background:var(--surface3);border-radius:var(--r);padding:16px;border:1px solid var(--border)">
-      <div class="h4 mb-12">💳 Payment Information</div>
-      <div class="form-group"><label class="form-label">Cardholder Name</label><input class="form-control" id="pay-name" placeholder="Name on card" autocomplete="off"></div>
-      <div class="form-group"><label class="form-label">Card Number *</label><input class="form-control" id="pay-card" placeholder="1234 5678 9012 3456" maxlength="19" oninput="fmtCard(this)"></div>
-      <div class="grid-2">
-        <div class="form-group"><label class="form-label">Expiry *</label><input class="form-control" id="pay-exp" placeholder="MM/YY" maxlength="5" oninput="fmtExp(this)"></div>
-        <div class="form-group"><label class="form-label">CVV *</label><input class="form-control" id="pay-cvv" placeholder="123" maxlength="3" inputmode="numeric" pattern="[0-9]{3}" oninput="this.value=this.value.replace(/[^0-9]/g,'')" autocomplete="cc-csc"></div>
-      </div>
-    </div>`: `<div style="text-align:center;padding:12px;background:var(--green-dim);border-radius:var(--r);color:var(--green);font-weight:500;font-size:13.5px">✓ This is a free event — no payment required!</div>`}
-  `, [{ lbl: e.price === 0 ? 'Confirm Registration' : 'Pay & Register', cls: 'btn-success', fn: `confirmReg('${eventId}')` }]);
+    function toggleRegTerms(checked) {
+      const btn = g('reg-proceed-btn') || g('modal-foot')?.querySelector('.btn-primary, .btn-success, .btn-warning');
+      if (btn) {
+        btn.disabled = !checked;
+        btn.style.opacity = checked ? '1' : '0.5';
+        btn.style.cursor = checked ? 'pointer' : 'not-allowed';
+      }
     }
-    function fmtCard(el) { el.value = el.value.replace(/\D/g, '').replace(/(.{4})/g, '$1 ').trim(); }
-    function fmtExp(el) { let v = el.value.replace(/\D/g, ''); if (v.length >= 2) v = v.slice(0, 2) + '/' + v.slice(2); el.value = v; }
-    function confirmReg(eventId) {
-      const e = DB.events.find(ev => String(ev.id) === String(eventId)); if (!e) return;
-      if (e.price > 0) {
-        const card = v('pay-card').replace(/\s/g, '');
-        if (!card || card.length < 16) { toast('Enter a valid 16-digit card number', 'error'); return; }
-        const exp = v('pay-exp');
-        if (!exp || exp.length < 5) { toast('Enter expiry date (MM/YY)', 'error'); return; }
-        const cvvVal = v('pay-cvv'); if (!cvvVal || cvvVal.length < 3 || !/^[0-9]{3}$/.test(cvvVal)) { toast('CVV must be exactly 3 digits (numbers only)', 'error'); return; }
+    window.toggleRegTerms = toggleRegTerms;
+
+    function formatCardNumber(input) {
+      const digits = input.value.replace(/\D/g, '').substring(0, 16);
+      const parts = digits.match(/.{1,4}/g);
+      input.value = parts ? parts.join(' ') : digits;
+    }
+    window.formatCardNumber = formatCardNumber;
+
+    function formatCardExp(input) {
+      const digits = input.value.replace(/\D/g, '').substring(0, 4);
+      if (digits.length >= 3) {
+        input.value = digits.substring(0, 2) + '/' + digits.substring(2);
+      } else {
+        input.value = digits;
+      }
+    }
+    window.formatCardExp = formatCardExp;
+
+    function switchCheckoutTab(tab) {
+      const cardForm = g('checkout-card-form');
+      const upiForm = g('checkout-upi-form');
+      const cardBtn = g('tab-btn-card');
+      const upiBtn = g('tab-btn-upi');
+      if (tab === 'card') {
+        if (cardForm) cardForm.style.display = 'block';
+        if (upiForm) upiForm.style.display = 'none';
+        if (cardBtn) cardBtn.className = 'btn btn-primary';
+        if (upiBtn) upiBtn.className = 'btn btn-ghost';
+        window._activeCheckoutTab = 'card';
+      } else {
+        if (cardForm) cardForm.style.display = 'none';
+        if (upiForm) upiForm.style.display = 'block';
+        if (cardBtn) cardBtn.className = 'btn btn-ghost';
+        if (upiBtn) upiBtn.className = 'btn btn-primary';
+        window._activeCheckoutTab = 'upi';
+      }
+    }
+    window.switchCheckoutTab = switchCheckoutTab;
+
+    function applyUpiSuffix(suffix) {
+      const input = g('pay-upi-id');
+      if (!input) return;
+      const base = input.value.split('@')[0].trim() || (CU.email ? CU.email.split('@')[0] : 'user');
+      input.value = base + suffix;
+      input.focus();
+    }
+    window.applyUpiSuffix = applyUpiSuffix;
+
+    function regForEvent(eventId) {
+      const e = DB.events.find(ev => String(ev.id) === String(eventId))
+        || (attendeeEventCatalog || []).find(ev => String(ev.id) === String(eventId) || String(ev.eventId) === String(eventId));
+      if (!e) { toast('Event not found.', 'error'); return; }
+
+      // Revalidate event state
+      if (e.status === 'cancelled') {
+        toast('This event has been cancelled and is no longer accepting registrations.', 'error');
+        return;
+      }
+      if (e.status === 'completed' || (e.date && new Date(`${e.date}T23:59:59`) < new Date())) {
+        toast('This event has already concluded.', 'error');
+        return;
+      }
+      if (e.status === 'full' && !e.waitlistEnabled) {
+        toast('Sorry, this event is full and the waitlist is closed.', 'error');
+        return;
       }
 
-      // Call backend registration API
-      const backendEventId = e.eventId || String(eventId);
-      const attendeeId = CU.userId || CU.id;
-      apiRegisterForEvent({ attendeeId: String(attendeeId), eventId: backendEventId, ticketType: e.price === 0 ? 'free' : 'standard' })
-        .then(function (regData) {
-          // If paid event, also create payment
-          if (e.price > 0) {
-            apiMakePayment({ registrationId: regData.registrationId, amount: e.price, paymentMethod: 'CARD', paymentDate: new Date().toISOString().split('T')[0] })
-              .catch(function () { }); // payment fire-and-forget
+      // Revalidate attendee registration eligibility
+      const existing = (attendeeRegistrationCatalog || []).find(r => r.status !== 'cancelled' && String(r.eventId) === String(eventId))
+        || (DB.registrations || []).find(r => r.status !== 'cancelled' && String(r.attendeeId) === String(CU.id) && String(r.eventId) === String(eventId));
+      if (existing) {
+        toast('You already have an active registration for this event.', 'info');
+        openViewTicketModal(existing.id || existing.registrationId);
+        return;
+      }
+
+      const regThumb = e.image ? `
+        <div style="width:52px;height:52px;border-radius:10px;overflow:hidden;flex-shrink:0;background:${e.color || 'var(--accent)'}20;position:relative">
+          <img src="${e.image}" alt="${e.title || 'Event'}" style="width:100%;height:100%;object-fit:cover" onerror="this.parentElement.innerHTML='<span style=\'font-size:32px\'>${e.emoji || '📅'}</span>'">
+        </div>
+      ` : `<span style="font-size:36px">${e.emoji || '📅'}</span>`;
+
+      const isFull = e.status === 'full';
+      const remainingSeats = Math.max(0, (e.capacity || 100) - (e.registered || 0));
+
+      const reviewModalHtml = `
+        <div style="display:flex;flex-direction:column;gap:14px;max-height:75vh;overflow-y:auto;padding-right:4px">
+          <!-- Event Header Banner -->
+          <div style="background:${e.color || 'var(--accent)'}14;border:1px solid ${e.color || 'var(--accent)'}30;border-radius:10px;padding:14px;display:flex;align-items:center;gap:14px">
+            ${regThumb}
+            <div style="flex:1;min-width:0">
+              <div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;flex-wrap:wrap">
+                <span class="badge badge-purple">${escapeHtml(e.category || 'Event')}</span>
+                <span class="badge badge-${evStatBadge(e.status)}">${e.status}</span>
+                ${e.price === 0 ? '<span class="badge badge-green">Free Admission</span>' : `<span class="badge badge-blue">₹${e.price}</span>`}
+              </div>
+              <div style="font-weight:700;font-size:16px;line-height:1.3">${escapeHtml(e.title)}</div>
+              <div class="small" style="color:var(--text2);margin-top:4px">📅 ${escapeHtml(e.date)} · ${escapeHtml(e.time || 'TBA')}</div>
+              <div class="small" style="color:var(--text2)">📍 ${escapeHtml(e.venue)}${e.city ? ', ' + escapeHtml(e.city) : ''}</div>
+            </div>
+          </div>
+
+          <!-- Event Details Grid -->
+          <div style="border:1px solid var(--border);border-radius:8px;padding:10px 14px;background:var(--surface2)">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+              <div>
+                <div class="label" style="font-size:11px;margin-bottom:2px">Attendee</div>
+                <div style="font-weight:600">${escapeHtml(CU.name)}</div>
+                <div class="small" style="color:var(--text3)">${escapeHtml(CU.email)}</div>
+              </div>
+              <div>
+                <div class="label" style="font-size:11px;margin-bottom:2px">Availability & Capacity</div>
+                <div style="font-weight:600;color:${isFull ? 'var(--yellow)' : 'var(--green)'}">
+                  ${isFull ? 'Waitlist Only (Capacity Full)' : `${remainingSeats} seats available`}
+                </div>
+                <div class="small" style="color:var(--text3)">Total capacity: ${e.capacity || 100} attendees</div>
+              </div>
+            </div>
+            ${e.description ? `
+              <div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
+                <div class="label" style="font-size:11px;margin-bottom:2px">About This Event</div>
+                <div style="font-size:12.5px;color:var(--text2);line-height:1.5">${escapeHtml(e.description)}</div>
+              </div>
+            ` : ''}
+          </div>
+
+          <!-- Cancellation & Refund Policies -->
+          <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+            <div style="background:var(--surface3);padding:8px 12px;font-size:11px;font-weight:700;color:var(--text2);text-transform:uppercase;letter-spacing:0.5px">
+              Event Policies & Cancellation Rules
+            </div>
+            <div style="padding:12px;display:flex;flex-direction:column;gap:10px;font-size:12.5px">
+              <div>
+                <strong style="color:var(--text)">⏳ Cancellation Deadline:</strong>
+                <div style="color:var(--text2);margin-top:2px">
+                  ${e.cancellationDeadline ? `${e.cancellationDeadline} (Cutoff at 23:59:59 IST)` : 'No cancellation deadline configured (Eligible prior to event start)'}
+                </div>
+              </div>
+              <div>
+                <strong style="color:var(--text)">↩️ Refund Policy:</strong>
+                <div style="color:var(--text2);margin-top:2px">
+                  ${e.price === 0
+                    ? 'Free Registration: No ticket payment is taken. Cancelling releases your reserved seat with no monetary refund due.'
+                    : `Eligible for a full simulated refund if cancelled on or before ${e.cancellationDeadline || 'the event date'}. Cancellations after this deadline are non-refundable per organizer policy.`}
+                </div>
+              </div>
+              <div>
+                <strong style="color:var(--text)">📢 Cancellation & Postponement Rules:</strong>
+                <div style="color:var(--text2);margin-top:2px">
+                  If this event is cancelled, postponed, or rescheduled by the organizer, registered attendees will be notified promptly via email and the platform dashboard. Any eligible simulated refunds will be initiated automatically.
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Real-world Terms & Conditions Box -->
+          <div>
+            <div class="label" style="font-size:12px;margin-bottom:4px;font-weight:700">Terms & Conditions</div>
+            <div style="max-height:130px;overflow-y:auto;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:12px;line-height:1.6;color:var(--text2)">
+              <p style="margin-bottom:6px"><strong>1. Admission & Identification:</strong> A valid digital QR ticket must be presented at the check-in desk upon arrival. Attendees agree to present a valid photo ID matching the registered attendee name upon request.</p>
+              <p style="margin-bottom:6px"><strong>2. Non-Transferability:</strong> Registrations, tickets, and waitlist allocations are issued strictly to the registered attendee and may not be transferred, duplicated, or resold.</p>
+              <p style="margin-bottom:6px"><strong>3. Code of Conduct:</strong> Attendees must adhere to venue guidelines, safety instructions, and organizer protocols. Disruptive, illegal, or abusive conduct will result in immediate removal without refund.</p>
+              <p style="margin-bottom:6px"><strong>4. Cancellation Compliance:</strong> Cancellation requests must be submitted through your EventFlow portal prior to the stated deadline. Late cancellations forfeit refund eligibility.</p>
+              <p style="margin-bottom:6px"><strong>5. Program Changes:</strong> Event schedules, speaker lineups, topics, or room allocations may be subject to operational adjustments by the organizer without compromising overall event validity.</p>
+              <p style="margin-bottom:0"><strong>6. Simulated Payment Notice:</strong> Payments in EventFlow are processed in a simulated demo environment. No real banking debits or actual currency exchanges occur.</p>
+            </div>
+          </div>
+
+          <!-- Required Agreement Checkbox -->
+          <div style="background:var(--surface3);border:1px solid var(--border);border-radius:8px;padding:12px;display:flex;align-items:flex-start;gap:10px">
+            <input type="checkbox" id="reg-terms-check" style="width:18px;height:18px;margin-top:2px;cursor:pointer;accent-color:var(--accent)" onchange="window.toggleRegTerms(this.checked)">
+            <label for="reg-terms-check" style="font-size:13px;line-height:1.4;cursor:pointer;color:var(--text);font-weight:500">
+              I have reviewed the event details and agree to the <strong>Terms & Conditions</strong>, <strong>Cancellation Policy</strong>, and <strong>Event Rules</strong>.
+            </label>
+          </div>
+        </div>
+      `;
+
+      const proceedBtnLabel = isFull
+        ? 'Join Waitlist'
+        : (e.price === 0 ? 'Confirm Free Registration' : 'Proceed to Payment');
+      const proceedBtnClass = isFull
+        ? 'btn-warning'
+        : (e.price === 0 ? 'btn-success' : 'btn-primary');
+
+      openModal(
+        `Review & Register — ${e.title}`,
+        reviewModalHtml,
+        [
+          {
+            lbl: proceedBtnLabel,
+            cls: proceedBtnClass,
+            fn: `proceedFromEventReview('${eventId}')`
           }
-          // Update local DB
+        ],
+        true
+      );
+
+      // Initially disable the proceed button until checkbox is checked
+      setTimeout(() => {
+        const proceedBtn = g('modal-foot')?.querySelector('.btn-primary, .btn-success, .btn-warning');
+        if (proceedBtn) {
+          proceedBtn.id = 'reg-proceed-btn';
+          proceedBtn.disabled = true;
+          proceedBtn.style.opacity = '0.5';
+          proceedBtn.style.cursor = 'not-allowed';
+        }
+      }, 20);
+    }
+    window.regForEvent = regForEvent;
+
+    function proceedFromEventReview(eventId) {
+      const termsAccepted = g('reg-terms-check')?.checked;
+      if (!termsAccepted) {
+        toast('Please accept the Terms & Conditions to proceed.', 'warning');
+        return;
+      }
+
+      const e = DB.events.find(ev => String(ev.id) === String(eventId))
+        || (attendeeEventCatalog || []).find(ev => String(ev.id) === String(eventId) || String(ev.eventId) === String(eventId));
+      if (!e) { toast('Event not found.', 'error'); return; }
+
+      // Revalidate event availability, capacity, and registration eligibility
+      if (e.status === 'cancelled') {
+        toast('This event has been cancelled and is no longer accepting registrations.', 'error');
+        closeModal();
+        return;
+      }
+      if (e.status === 'completed' || (e.date && new Date(`${e.date}T23:59:59`) < new Date())) {
+        toast('This event has already concluded.', 'error');
+        closeModal();
+        return;
+      }
+      if (e.status === 'full' && !e.waitlistEnabled) {
+        toast('This event is full and the waitlist is closed.', 'error');
+        closeModal();
+        return;
+      }
+
+      const existing = (attendeeRegistrationCatalog || []).find(r => r.status !== 'cancelled' && String(r.eventId) === String(eventId))
+        || (DB.registrations || []).find(r => r.status !== 'cancelled' && String(r.attendeeId) === String(CU.id) && String(r.eventId) === String(eventId));
+      if (existing) {
+        toast('You already have an active registration for this event.', 'warning');
+        closeModal();
+        openViewTicketModal(existing.id || existing.registrationId);
+        return;
+      }
+
+      const proceedBtn = g('reg-proceed-btn') || g('modal-foot')?.querySelector('.btn-primary, .btn-success, .btn-warning');
+      if (proceedBtn) {
+        proceedBtn.disabled = true;
+        proceedBtn.textContent = e.price > 0 && e.status !== 'full' ? 'Reserving your place…' : 'Processing Registration…';
+      }
+
+      const attendeeId = CU.userId || CU.id;
+      const backendEventIdPromise = e.eventId
+        ? Promise.resolve(e.eventId)
+        : apiGetEvents().then(events => {
+          const match = (Array.isArray(events) ? events : []).find(item =>
+            String(item.name || item.title || '').trim().toLowerCase() === String(e.title || '').trim().toLowerCase(),
+          );
+          if (!match) throw new ApiError('This event is no longer available in the server catalog. Refresh events and try again.', 404);
+          return match.eventId || match.id;
+        });
+
+      backendEventIdPromise.then(id => {
+        // Step 1: Call backend registration API
+        return apiRegisterForEvent({
+          attendeeId: String(attendeeId),
+          eventId: String(id),
+          ticketType: e.price === 0 ? 'free' : 'standard',
+          joinWaitlist: e.status === 'full',
+        });
+      })
+      .then(function (regData) {
+        // Case A: Free Event — Skip payment after acceptance and validation
+        if (e.price === 0 && e.status !== 'full') {
           const n = DB._nextId.regs++;
-          const ticketId = regData.ticketId || `TKT-2026-${String(n).padStart(3, '0')}`;
+          const ticketId = regData.verificationId || regData.ticketId || `TKT-2026-${String(n).padStart(3, '0')}`;
           const seat = e.category === 'Conference' ? `A-${Math.floor(Math.random() * 200 + 1).toString().padStart(3, '0')}` : 'GA';
-          DB.registrations.push({ id: n, attendeeId: CU.id, eventId: e.id, date: today(), ticketId, status: 'confirmed', payment: e.price === 0 ? 'free' : 'paid', amount: e.price, checkedIn: false, seat, verificationId: regData.verificationId || ticketId });
-          e.registered = Math.min(e.registered + 1, e.capacity);
+          DB.registrations.push({
+            id: n,
+            registrationId: regData.registrationId,
+            attendeeId: CU.id,
+            eventId: e.id,
+            date: today(),
+            ticketId,
+            status: 'confirmed',
+            payment: 'free',
+            amount: 0,
+            checkedIn: false,
+            seat,
+            verificationId: ticketId
+          });
+          e.registered = Math.min((e.registered || 0) + 1, e.capacity);
           if (e.registered >= e.capacity) e.status = 'full';
-          saveDB(); closeModal();
+          saveDB();
+          closeModal();
           toast('🎉 Registration confirmed! Check your tickets.', 'success');
           goNav('my-tickets');
-        })
-        .catch(function (err) {
-          // Fallback: create locally if backend fails
-          const n = DB._nextId.regs++;
-          const ticketId = `TKT-2026-${String(n).padStart(3, '0')}`;
-          const seat = e.category === 'Conference' ? `A-${Math.floor(Math.random() * 200 + 1).toString().padStart(3, '0')}` : 'GA';
-          DB.registrations.push({ id: n, attendeeId: CU.id, eventId: e.id, date: today(), ticketId, status: 'confirmed', payment: e.price === 0 ? 'free' : 'paid', amount: e.price, checkedIn: false, seat });
-          e.registered = Math.min(e.registered + 1, e.capacity);
-          if (e.registered >= e.capacity) e.status = 'full';
-          saveDB(); closeModal();
-          toast(err.message || '🎉 Registration confirmed (local)!', err.status === 409 ? 'warning' : 'success');
-          goNav('my-tickets');
-        });
-    }
+          return;
+        }
 
-    function cancelTicket(regId) {
-      const r = DB.registrations.find(reg => reg.id == regId);
-      if (!r) return;
-      const e = DB.events.find(ev => ev.id === r.eventId);
-      confirm2('Cancel Ticket', 'Are you sure you want to cancel this ticket? You will receive a refund within 5-7 business days.', () => {
-        if (e) e.registered = Math.max(0, e.registered - 1);
-        const idx = DB.registrations.indexOf(r);
-        if (idx > -1) DB.registrations.splice(idx, 1);
-        saveDB();
-        renderPage(_currentPage);
-        toast('Ticket cancelled. Refund initiated.', 'success');
+        // Case B: Waitlisted Event — No payment required for waitlist
+        if (regData.status === 'waitlisted' || e.status === 'full') {
+          const n = DB._nextId.regs++;
+          DB.registrations.push({
+            id: n,
+            registrationId: regData.registrationId,
+            attendeeId: CU.id,
+            eventId: e.id,
+            date: today(),
+            ticketId: '',
+            status: 'waitlisted',
+            payment: 'not_due',
+            amount: 0,
+            checkedIn: false,
+            seat: '',
+            verificationId: ''
+          });
+          saveDB();
+          closeModal();
+          toast(`Joined waitlist${regData.waitlistPosition ? ` at position ${regData.waitlistPosition}` : ''}.`, 'success');
+          goNav('my-tickets');
+          return;
+        }
+
+        // Case C: Paid Event — Open checkout page with correct event ID and amount
+        closeModal();
+        openPaymentCheckoutModal(e, regData);
+      })
+      .catch(function (err) {
+        if (proceedBtn) {
+          proceedBtn.disabled = false;
+          proceedBtn.textContent = e.price > 0 && e.status !== 'full' ? `Proceed to Payment (₹${e.price})` : 'Confirm Registration';
+        }
+        toast(err.message || 'Registration could not be completed.', err.status === 409 ? 'warning' : 'error');
       });
     }
+    window.proceedFromEventReview = proceedFromEventReview;
+
+    function openPaymentCheckoutModal(e, regData) {
+      window._activeCheckoutTab = 'card';
+      const checkoutHtml = `
+        <div style="display:flex;flex-direction:column;gap:16px">
+          <!-- Order Summary Card -->
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+              <div>
+                <div style="font-weight:700;font-size:15px">${escapeHtml(e.title)}</div>
+                <div class="small" style="color:var(--text2);margin-top:2px">📅 ${escapeHtml(e.date)} · 📍 ${escapeHtml(e.venue)}</div>
+              </div>
+              <span class="badge badge-yellow">Reservation Held</span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;border-top:1px solid var(--border);padding-top:10px;font-size:13px">
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">1x Standard Attendee Admission</span><span>₹${e.price}</span></div>
+              <div style="display:flex;justify-content:space-between"><span style="color:var(--text2)">Processing Fee</span><span style="color:var(--green)">Free</span></div>
+              <div style="display:flex;justify-content:space-between;font-weight:700;font-size:15px;border-top:1px dashed var(--border);padding-top:8px;margin-top:2px">
+                <span>Total Amount</span>
+                <span style="color:var(--green)">₹${e.price}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Payment Method Tabs -->
+          <div>
+            <label class="label" style="margin-bottom:8px">Select Payment Method</label>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+              <button type="button" class="btn btn-primary" id="tab-btn-card" onclick="window.switchCheckoutTab('card')" style="display:flex;align-items:center;justify-content:center;gap:6px">
+                💳 Credit / Debit Card
+              </button>
+              <button type="button" class="btn btn-ghost" id="tab-btn-upi" onclick="window.switchCheckoutTab('upi')" style="display:flex;align-items:center;justify-content:center;gap:6px">
+                📱 UPI ID
+              </button>
+            </div>
+
+            <!-- Card Payment Form -->
+            <div id="checkout-card-form">
+              <div class="form-group mb-12">
+                <label class="form-label">Cardholder Name</label>
+                <input class="form-control" id="pay-card-name" value="${escapeHtml(CU.name)}" placeholder="e.g. Priya Patel">
+              </div>
+              <div class="form-group mb-12">
+                <label class="form-label">Card Number</label>
+                <div class="input-group">
+                  <span class="input-icon">💳</span>
+                  <input class="form-control mono" id="pay-card-num" placeholder="4532 8901 2345 6789" maxlength="19" oninput="window.formatCardNumber(this)">
+                </div>
+              </div>
+              <div class="grid-2" style="gap:10px">
+                <div class="form-group">
+                  <label class="form-label">Expiry Date</label>
+                  <input class="form-control mono" id="pay-card-exp" placeholder="MM/YY" maxlength="5" oninput="window.formatCardExp(this)">
+                </div>
+                <div class="form-group">
+                  <label class="form-label">CVV</label>
+                  <input class="form-control mono" id="pay-card-cvv" type="password" placeholder="123" maxlength="4">
+                </div>
+              </div>
+            </div>
+
+            <!-- UPI Payment Form -->
+            <div id="checkout-upi-form" style="display:none">
+              <div class="form-group mb-12">
+                <label class="form-label">Virtual Payment Address (UPI ID)</label>
+                <div class="input-group">
+                  <span class="input-icon">📱</span>
+                  <input class="form-control mono" id="pay-upi-id" placeholder="yourname@bank (e.g. priya@okhdfcbank)">
+                </div>
+                <div class="small mt-4" style="color:var(--text3)">Enter your registered UPI ID to verify payment.</div>
+              </div>
+              <div style="display:flex;gap:6px;flex-wrap:wrap;align-items:center">
+                <span class="small" style="color:var(--text2)">Quick Suffix:</span>
+                <button type="button" class="btn btn-ghost btn-xs" onclick="window.applyUpiSuffix('@okhdfcbank')">@okhdfcbank</button>
+                <button type="button" class="btn btn-ghost btn-xs" onclick="window.applyUpiSuffix('@okicici')">@okicici</button>
+                <button type="button" class="btn btn-ghost btn-xs" onclick="window.applyUpiSuffix('@oksbi')">@oksbi</button>
+                <button type="button" class="btn btn-ghost btn-xs" onclick="window.applyUpiSuffix('@paytm')">@paytm</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Simulated Demo Notice -->
+          <div style="background:var(--surface3);border-left:3px solid var(--accent);border-radius:6px;padding:10px 12px;font-size:12px;color:var(--text2)">
+            🔒 <strong>Demo Environment Notice:</strong> Payments in EventFlow are simulated demonstration records. Field entries are validated for real-world format and simulated verification. No real bank debits will occur.
+          </div>
+
+          <div id="checkout-status-area" style="display:none;padding:10px;border-radius:6px;text-align:center;font-size:13px;font-weight:600"></div>
+        </div>
+      `;
+
+      openModal(`Checkout — Pay ₹${e.price}`, checkoutHtml, [
+        {
+          lbl: `Pay ₹${e.price}`,
+          cls: 'btn-success',
+          fn: `executeCheckoutPayment('${e.id}', '${regData.registrationId}')`
+        }
+      ], true);
+    }
+    window.openPaymentCheckoutModal = openPaymentCheckoutModal;
+
+    function executeCheckoutPayment(eventId, registrationId) {
+      const e = DB.events.find(ev => String(ev.id) === String(eventId))
+        || (attendeeEventCatalog || []).find(ev => String(ev.id) === String(eventId) || String(ev.eventId) === String(eventId));
+      if (!e) { toast('Event details are unavailable.', 'error'); return; }
+
+      const tab = window._activeCheckoutTab || 'card';
+      if (tab === 'card') {
+        const name = (g('pay-card-name')?.value || '').trim();
+        const num = (g('pay-card-num')?.value || '').replace(/\s+/g, '');
+        const exp = (g('pay-card-exp')?.value || '').trim();
+        const cvv = (g('pay-card-cvv')?.value || '').trim();
+
+        if (name.length < 2) {
+          toast('Please enter the cardholder name.', 'warning');
+          g('pay-card-name')?.focus();
+          return;
+        }
+        if (num.length !== 16 || !/^\d{16}$/.test(num)) {
+          toast('Please enter a valid 16-digit card number.', 'warning');
+          g('pay-card-num')?.focus();
+          return;
+        }
+        if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(exp)) {
+          toast('Please enter a valid expiry date in MM/YY format.', 'warning');
+          g('pay-card-exp')?.focus();
+          return;
+        }
+        if (!/^\d{3,4}$/.test(cvv)) {
+          toast('Please enter a valid 3 or 4 digit CVV.', 'warning');
+          g('pay-card-cvv')?.focus();
+          return;
+        }
+      } else {
+        const upiId = (g('pay-upi-id')?.value || '').trim();
+        if (!/^[a-zA-Z0-9.\-_]{2,}@[a-zA-Z]{2,}$/.test(upiId)) {
+          toast('Please enter a valid UPI ID (e.g. username@okhdfcbank).', 'warning');
+          g('pay-upi-id')?.focus();
+          return;
+        }
+      }
+
+      const payBtn = g('modal-foot')?.querySelector('.btn-success');
+      const statusArea = g('checkout-status-area');
+      if (payBtn) {
+        payBtn.disabled = true;
+        payBtn.textContent = 'Processing Payment…';
+      }
+      if (statusArea) {
+        statusArea.style.display = 'block';
+        statusArea.style.background = 'var(--surface2)';
+        statusArea.style.color = 'var(--text)';
+        statusArea.innerHTML = '⏳ Verifying with simulated banking gateway…';
+      }
+
+      apiMakePayment({
+        registrationId,
+        amount: e.price,
+        paymentMethod: 'DEMO_PROVIDER',
+        paymentDate: new Date().toISOString().split('T')[0]
+      })
+      .then(function (payment) {
+        if (statusArea) {
+          statusArea.style.background = 'var(--green-dim, rgba(34,197,94,0.15))';
+          statusArea.style.color = 'var(--green)';
+          statusArea.innerHTML = '✅ Payment verified! Confirming registration…';
+        }
+
+        const n = DB._nextId.regs++;
+        const ticketId = payment.registration?.verificationId || `TKT-2026-${String(n).padStart(3, '0')}`;
+        const seat = e.category === 'Conference' ? `A-${Math.floor(Math.random() * 200 + 1).toString().padStart(3, '0')}` : 'GA';
+
+        const newReg = {
+          id: n,
+          registrationId,
+          attendeeId: CU.id,
+          eventId: e.id,
+          date: today(),
+          ticketId,
+          status: 'confirmed',
+          payment: 'completed',
+          amount: e.price,
+          checkedIn: false,
+          seat,
+          verificationId: payment.registration?.verificationId || ticketId,
+          qrCode: payment.registration?.qrCode || null
+        };
+
+        const existingIdx = DB.registrations.findIndex(r => r.registrationId === registrationId);
+        if (existingIdx >= 0) DB.registrations[existingIdx] = newReg;
+        else DB.registrations.push(newReg);
+
+        const catIdx = (attendeeRegistrationCatalog || []).findIndex(r => r.registrationId === registrationId);
+        if (catIdx >= 0) attendeeRegistrationCatalog[catIdx] = { ...attendeeRegistrationCatalog[catIdx], ...newReg };
+        else attendeeRegistrationCatalog.push(newReg);
+
+        e.registered = Math.min((e.registered || 0) + 1, e.capacity);
+        if (e.registered >= e.capacity) e.status = 'full';
+        saveDB();
+
+        setTimeout(() => {
+          closeModal();
+          toast('🎉 Payment verified! Registration confirmed.', 'success');
+          goNav('my-tickets');
+        }, 500);
+      })
+      .catch(function (error) {
+        if (payBtn) {
+          payBtn.disabled = false;
+          payBtn.textContent = `Pay ₹${e.price}`;
+        }
+        if (statusArea) {
+          statusArea.style.background = 'var(--red-dim, rgba(239,68,68,0.15))';
+          statusArea.style.color = 'var(--red)';
+          statusArea.innerHTML = `❌ Verification failed: ${error.message || 'Payment rejected'}`;
+        }
+        toast(error.message || 'Payment could not be completed.', 'error');
+      });
+    }
+    window.executeCheckoutPayment = executeCheckoutPayment;
+
+    function cancelTicket(regId) {
+      const r = (attendeeRegistrationCatalog || []).find(reg => String(reg.id) === String(regId) || String(reg.registrationId) === String(regId))
+        || (DB.registrations || []).find(reg => String(reg.id) === String(regId) || String(reg.registrationId) === String(regId));
+      if (!r) {
+        toast('Registration record not found.', 'error');
+        return;
+      }
+
+      // Prevent duplicate cancellation attempt if already cancelled
+      if (r.status === 'cancelled') {
+        toast('This ticket has already been cancelled.', 'warning');
+        return;
+      }
+      if (r.checkedIn || r.status === 'attended') {
+        toast('Cannot cancel an attended event.', 'error');
+        return;
+      }
+
+      const e = (DB.events || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId))
+        || (attendeeEventCatalog || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId))
+        || { title: 'Event', date: '—', venue: '—', price: 0, cancellationDeadline: null };
+
+      const isWaitlist = r.status === 'waitlisted';
+      const isPaid = (r.payment === 'completed' || r.payment === 'paid' || r.paymentObj?.status === 'completed') && (r.amount > 0);
+      const deadline = e.cancellationDeadline;
+
+      let deadlinePassed = false;
+      let deadlineStr = 'No cancellation deadline configured (Free cancellation prior to event)';
+      if (deadline) {
+        const deadlineDate = new Date(`${deadline}T23:59:59`);
+        deadlinePassed = new Date() > deadlineDate;
+        deadlineStr = `${deadline} ${deadlinePassed ? '<span class="badge badge-red badge-xs">Deadline Passed</span>' : '<span class="badge badge-green badge-xs">Active</span>'}`;
+      }
+
+      let refundEligibilityBadge = '';
+      let refundEligibilityText = '';
+      let estimatedRefundAmount = 0;
+      let refundNotice = '';
+
+      if (isWaitlist) {
+        refundEligibilityBadge = '<span class="badge badge-gray">No Payment Collected</span>';
+        refundEligibilityText = 'Waitlist entry — no payment was taken. Leaving the waitlist releases your queue position.';
+        estimatedRefundAmount = 0;
+      } else if (!isPaid && r.amount === 0) {
+        refundEligibilityBadge = '<span class="badge badge-gray">Free Event Registration</span>';
+        refundEligibilityText = 'This was a free event registration. No monetary charge was incurred.';
+        estimatedRefundAmount = 0;
+      } else if (isPaid) {
+        if (!deadlinePassed) {
+          estimatedRefundAmount = Number(r.amount || 0);
+          refundEligibilityBadge = '<span class="badge badge-green">✓ Eligible for Simulated Refund</span>';
+          refundEligibilityText = `Within the event's configured cancellation policy window. Eligible for full refund.`;
+          refundNotice = `
+            <div style="background:var(--surface3);border-left:3px solid var(--accent);padding:10px 14px;border-radius:6px;font-size:12.5px;color:var(--text)">
+              <strong>ℹ️ Simulated Payment Notice:</strong> Payments in EventFlow are simulated demonstration transactions. On confirmation, a simulated refund of <strong>₹${estimatedRefundAmount}</strong> will be marked as pending. No real currency is debited or returned to any bank account.
+            </div>`;
+        } else {
+          estimatedRefundAmount = 0;
+          refundEligibilityBadge = '<span class="badge badge-red">✕ Ineligible (Policy Expired)</span>';
+          refundEligibilityText = `The cancellation deadline (${deadline}) has passed. Per the event's policy, this registration is non-refundable.`;
+          refundNotice = `
+            <div style="background:var(--surface3);border-left:3px solid var(--yellow);padding:10px 14px;border-radius:6px;font-size:12.5px;color:var(--text)">
+              <strong>⚠️ Policy Window Expired:</strong> In accordance with the organizer's configured policy, cancellations after ${deadline} are not eligible for a refund. Cancelling will release your reserved seat and invalidate your ticket without refund.
+            </div>`;
+        }
+      } else {
+        refundEligibilityBadge = '<span class="badge badge-yellow">Payment Not Finalized</span>';
+        refundEligibilityText = 'No completed payment record exists for this registration.';
+        estimatedRefundAmount = 0;
+      }
+
+      const modalHtml = `
+        <div style="display:flex;flex-direction:column;gap:14px">
+          <!-- Event Header -->
+          <div style="display:flex;align-items:center;gap:12px;padding:12px;background:var(--surface2);border-radius:8px">
+            <span style="font-size:32px">${e.emoji || '🎟️'}</span>
+            <div style="flex:1;min-width:0">
+              <div style="font-weight:700;font-size:15px">${e.title}</div>
+              <div class="small" style="color:var(--text2);margin-top:2px">📅 ${e.date || '—'}${e.time ? ' · ' + e.time : ''}${e.venue ? ' · 📍 ' + e.venue : ''}</div>
+              <div class="small mt-2">Ticket ID: <code class="mono" style="background:var(--surface3);padding:1px 6px;border-radius:4px">${r.ticketId || '—'}</code></div>
+            </div>
+          </div>
+
+          <!-- Policy & Eligibility Table -->
+          <div style="border:1px solid var(--border);border-radius:8px;overflow:hidden">
+            <div style="display:grid;grid-template-columns:140px 1fr;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;align-items:center">
+              <div style="color:var(--text2);font-weight:600">Cancellation Policy</div>
+              <div>${deadlineStr}</div>
+            </div>
+            <div style="display:grid;grid-template-columns:140px 1fr;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);font-size:13px;align-items:center">
+              <div style="color:var(--text2);font-weight:600">Refund Eligibility</div>
+              <div>
+                ${refundEligibilityBadge}
+                <div class="small mt-2" style="color:var(--text2)">${refundEligibilityText}</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:140px 1fr;gap:10px;padding:10px 14px;font-size:13px;background:var(--surface2);align-items:center">
+              <div style="color:var(--text2);font-weight:600">Est. Refund Amount</div>
+              <div>
+                <strong style="font-size:16px;color:${estimatedRefundAmount > 0 ? 'var(--green)' : 'var(--text2)'}">
+                  ${estimatedRefundAmount > 0 ? `₹${estimatedRefundAmount} (Simulated)` : '₹0 (No refund)'}
+                </strong>
+              </div>
+            </div>
+          </div>
+
+          <!-- Notice banner -->
+          ${refundNotice}
+
+          <!-- Invalidation Warning -->
+          <div style="font-size:12px;color:var(--text3);line-height:1.4">
+            ⚠️ <strong>Ticket Invalidation:</strong> On confirmation, your registration will be cancelled, your ticket QR code will be permanently disabled, and capacity will be released to waitlisted attendees. This action cannot be undone.
+          </div>
+        </div>
+      `;
+
+      openModal(
+        isWaitlist ? 'Leave Waitlist' : 'Cancel Ticket Confirmation',
+        modalHtml,
+        [
+          {
+            lbl: isWaitlist ? 'Leave Waitlist' : 'Confirm Cancellation',
+            cls: 'btn-danger',
+            fn: `confirmExecuteCancellation('${r.registrationId || r.id}')`
+          }
+        ],
+        true
+      );
+    }
+    window.cancelTicket = cancelTicket;
+
+    function confirmExecuteCancellation(regId) {
+      const r = (attendeeRegistrationCatalog || []).find(reg => String(reg.id) === String(regId) || String(reg.registrationId) === String(regId))
+        || (DB.registrations || []).find(reg => String(reg.id) === String(regId) || String(reg.registrationId) === String(regId));
+      if (!r) { toast('Registration record not found.', 'error'); closeModal(); return; }
+
+      // Prevent duplicate cancellation attempt
+      if (r.status === 'cancelled') {
+        closeModal();
+        toast('This ticket has already been cancelled.', 'warning');
+        return;
+      }
+
+      const backendRegId = r.registrationId;
+      if (!backendRegId) {
+        toast('This registration record has no backend ID.', 'error');
+        closeModal();
+        return;
+      }
+
+      const e = (DB.events || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId))
+        || (attendeeEventCatalog || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId));
+
+      const footBtn = g('modal-foot')?.querySelector('.btn-danger');
+      if (footBtn) { footBtn.disabled = true; footBtn.textContent = 'Processing Cancellation…'; }
+
+      apiCancelRegistration(backendRegId, 'Cancelled by attendee')
+        .then(function (res) {
+          closeModal();
+          const cancelledData = res.data || res;
+
+          // Update registration in memory
+          r.status = 'cancelled';
+          r.cancelledAt = cancelledData.cancelledAt || new Date().toISOString();
+          r.verificationId = '';
+          if (cancelledData.refund) {
+            r.refundStatus = cancelledData.refund.status;
+            r.refundObj = cancelledData.refund;
+            r.refundAmount = cancelledData.refund.amount;
+          } else {
+            r.refundStatus = 'not_applicable';
+          }
+
+          // Update in catalog
+          const catItem = (attendeeRegistrationCatalog || []).find(item => String(item.id) === String(regId) || String(item.registrationId) === String(backendRegId));
+          if (catItem) {
+            catItem.status = 'cancelled';
+            catItem.cancelledAt = r.cancelledAt;
+            catItem.verificationId = '';
+            catItem.refundStatus = r.refundStatus;
+            catItem.refundObj = r.refundObj;
+            catItem.refundAmount = r.refundAmount;
+          }
+
+          // Release capacity
+          if (e && e.registered > 0) {
+            e.registered = Math.max(0, e.registered - 1);
+            if (e.status === 'full') e.status = 'upcoming';
+          }
+
+          // Track Recent Activity / Notifications
+          const hasPendingRefund = cancelledData.refund && cancelledData.refund.status === 'pending' && cancelledData.refund.amount > 0;
+          if (!DB.notifications) DB.notifications = [];
+          DB.notifications.unshift({
+            id: DB._nextId ? DB._nextId.notifs++ : Date.now(),
+            title: hasPendingRefund ? 'Ticket Cancelled (Simulated Refund Pending)' : 'Ticket Cancelled',
+            msg: hasPendingRefund
+              ? `Cancelled registration for "${e?.title || 'Event'}". A simulated refund of ₹${cancelledData.refund.amount} has been initiated.`
+              : `Cancelled registration for "${e?.title || 'Event'}".`,
+            time: 'Just now',
+            read: false,
+            type: hasPendingRefund ? 'info' : 'warning',
+            icon: '✕'
+          });
+
+          saveDB();
+          renderPage(_currentPage);
+
+          if (hasPendingRefund) {
+            toast(`Ticket cancelled. Simulated refund of ₹${cancelledData.refund.amount} is pending.`, 'success');
+          } else {
+            toast('Ticket cancelled successfully.', 'info');
+          }
+        })
+        .catch(function (err) {
+          if (footBtn) { footBtn.disabled = false; footBtn.textContent = 'Confirm Cancellation'; }
+          if (err.status === 409) {
+            closeModal();
+            toast('This registration has already been cancelled.', 'warning');
+            r.status = 'cancelled';
+            saveDB();
+            renderPage(_currentPage);
+          } else if (err.status === 400) {
+            closeModal();
+            toast(err.message || 'Cannot cancel an attended event.', 'error');
+          } else {
+            toast(err.message || 'Cancellation failed. Please try again.', 'error');
+          }
+        });
+    }
+    window.confirmExecuteCancellation = confirmExecuteCancellation;
 
     // ════════════════════════════════════════════════
     //  MY TICKETS
     // ════════════════════════════════════════════════
+    let attendeeRegistrationCatalog = [];
+    function normalizeAttendeeRegistration(registration) {
+      const event = registration.event ? normalizeAttendeeEvent(registration.event) : DB.events.find(e => String(e.id) === String(registration.eventId));
+      const normalized = {
+        id: registration.registrationId,
+        registrationId: registration.registrationId,
+        attendeeId: CU.id,
+        eventId: event?.id || registration.eventId,
+        date: registration.registrationDate,
+        ticketId: registration.verificationId || '—',
+        status: registration.status === 'registered' ? 'confirmed' : registration.status,
+        payment: registration.payment?.status || (event?.price === 0 && registration.status === 'registered' ? 'free' : 'not_due'),
+        refundStatus: registration.refund?.status || null,
+        refundObj: registration.refund || null,
+        refundAmount: registration.refund?.amount ?? 0,
+        amount: registration.payment?.amount ?? event?.price ?? 0,
+        checkedIn: registration.checkInStatus === 'checked-in' || registration.status === 'attended',
+        seat: registration.ticketType || 'General Admission',
+        verificationId: registration.verificationId || '',
+        offerExpiresAt: registration.offerExpiresAt || null,
+        cancelledAt: registration.cancelledAt,
+      };
+      const index = DB.registrations.findIndex(r => r.registrationId === registration.registrationId);
+      if (index >= 0) DB.registrations[index] = normalized;
+      else DB.registrations.push(normalized);
+      return normalized;
+    }
+
+    function filterMyTickets(filterVal) {
+      sessionStorage.setItem('ticket_filter', filterVal || 'all');
+      renderPage('my-tickets');
+    }
+    window.filterMyTickets = filterMyTickets;
+
     function pageMyTickets() {
-      const regs = DB.registrations.filter(r => r.attendeeId === CU.id);
-      if (!regs.length) return `<div class="page-hd"><div class="page-hd-left"><div class="page-title">My Tickets</div></div></div><div class="empty"><div class="empty-icon">🎟️</div><div class="empty-title">No tickets yet</div><p class="empty-desc">Browse events and register to get your tickets here.</p><button class="btn btn-primary mt-16" onclick="goNav('browse-events')">Browse Events</button></div>`;
+      const regs = attendeeRegistrationCatalog;
+      if (!regs.length) {
+        return `<div class="page-hd"><div class="page-hd-left"><div class="page-title">My Registrations</div></div></div><div class="empty"><div class="empty-icon">🎟️</div><div class="empty-title">No registrations yet</div><p class="empty-desc">Browse events and register to see them here.</p><button class="btn btn-primary mt-16" onclick="goNav('browse-events')">Browse Events</button></div>`;
+      }
+
+      const activeFilter = sessionStorage.getItem('ticket_filter') || 'all';
+      const allCount = regs.length;
+      const registeredCount = regs.filter(r => ['confirmed', 'registered', 'attended'].includes(r.status)).length;
+      const waitlistedCount = regs.filter(r => r.status === 'waitlisted').length;
+      const refundCount = regs.filter(r =>
+        r.refundStatus === 'pending' ||
+        r.refundStatus === 'completed' ||
+        r.payment === 'refunded' ||
+        (r.refundObj && r.refundObj.amount > 0) ||
+        (r.status === 'cancelled' && (r.amount > 0 || r.refundStatus))
+      ).length;
+      const cancelledCount = regs.filter(r => r.status === 'cancelled').length;
+
+      let filtered = regs;
+      if (activeFilter === 'registered') {
+        filtered = regs.filter(r => ['confirmed', 'registered', 'attended'].includes(r.status));
+      } else if (activeFilter === 'waitlisted') {
+        filtered = regs.filter(r => r.status === 'waitlisted');
+      } else if (activeFilter === 'refund') {
+        filtered = regs.filter(r =>
+          r.refundStatus === 'pending' ||
+          r.refundStatus === 'completed' ||
+          r.payment === 'refunded' ||
+          (r.refundObj && r.refundObj.amount > 0) ||
+          (r.status === 'cancelled' && (r.amount > 0 || r.refundStatus))
+        );
+      } else if (activeFilter === 'cancelled') {
+        filtered = regs.filter(r => r.status === 'cancelled');
+      }
+
+      let emptyLabel = 'tickets';
+      if (activeFilter === 'registered') emptyLabel = 'registered or confirmed event tickets';
+      else if (activeFilter === 'waitlisted') emptyLabel = 'waitlisted event tickets';
+      else if (activeFilter === 'refund') emptyLabel = 'refund-required or refunded event tickets';
+      else if (activeFilter === 'cancelled') emptyLabel = 'cancelled event tickets';
+
       return `
-  <div class="page-hd">
-    <div class="page-hd-left"><div class="page-title">My Tickets</div><div class="page-sub">${regs.length} ticket(s)</div></div>
+  <div class="page-hd" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div class="page-hd-left">
+      <div class="page-title">My Registrations</div>
+      <div class="page-sub">${filtered.length} of ${allCount} registration(s) shown</div>
+    </div>
+    <div class="page-hd-right" style="display:flex;align-items:center;gap:10px">
+      <label for="ticket-filter" class="small" style="font-weight:600;color:var(--text2);white-space:nowrap">Filter Tickets:</label>
+      <select class="form-control filter-select" id="ticket-filter" onchange="filterMyTickets(this.value)" style="min-width:240px">
+        <option value="all" ${activeFilter === 'all' ? 'selected' : ''}>All Tickets (${allCount})</option>
+        <option value="registered" ${activeFilter === 'registered' ? 'selected' : ''}>Registered / Confirmed (${registeredCount})</option>
+        <option value="waitlisted" ${activeFilter === 'waitlisted' ? 'selected' : ''}>Waitlisted Events (${waitlistedCount})</option>
+        <option value="refund" ${activeFilter === 'refund' ? 'selected' : ''}>Refund Required / Status (${refundCount})</option>
+        <option value="cancelled" ${activeFilter === 'cancelled' ? 'selected' : ''}>Cancelled Tickets (${cancelledCount})</option>
+      </select>
+    </div>
   </div>
-  <div style="display:flex;flex-direction:column;gap:16px">
-    ${regs.map(r => {
-        const e = DB.events.find(ev => ev.id === r.eventId) || { title: 'Unknown', emoji: '🎟️', color: '#7c6ff7', venue: '', date: '', time: '' };
+  <div id="my-tickets-container" style="display:flex;flex-direction:column;gap:16px">
+    ${filtered.length > 0 ? filtered.map(r => {
+        const e = DB.events.find(ev => ev.id === r.eventId || ev.eventId === r.eventId)
+          || (attendeeEventCatalog || []).find(ev => ev.id === r.eventId || ev.eventId === r.eventId)
+          || { title: 'Unknown', emoji: '🎟️', color: '#7c6ff7', venue: '', date: '', time: '' };
         return ticketCard(r, e);
-      }).join('')}
+      }).join('') : `
+      <div class="empty" style="padding:40px 20px">
+        <div class="empty-icon">🎟️</div>
+        <div class="empty-title">No ${emptyLabel} found</div>
+        <p class="empty-desc">Try choosing a different option from the dropdown filter above.</p>
+      </div>
+    `}
   </div>`;
     }
+
     function ticketCard(r, e) {
-      const qr = renderTicketQRCode(r.verificationId || r.ticketId);
-      return `<div class="ticket">
+      const isCancelled = r.status === 'cancelled';
+      const hasValidTicket = !isCancelled && r.status === 'confirmed' && !!r.verificationId;
+      const qr = hasValidTicket
+        ? renderTicketQRCode(r.verificationId)
+        : isCancelled
+          ? `<div style="text-align:center;padding:12px 8px;border:1px dashed var(--red);border-radius:8px;background:var(--red-dim, rgba(239,68,68,0.08))"><div style="font-size:24px">🚫</div><div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.5px">Cancelled</div><div class="small" style="font-size:10px;color:var(--text3)">QR Disabled</div></div>`
+          : r.status === 'waitlisted'
+            ? `<div style="text-align:center;padding:12px 8px;border:1px dashed var(--yellow);border-radius:8px;background:var(--yellow-dim, rgba(234,179,8,0.08))"><div style="font-size:24px">⏳</div><div style="font-size:11px;font-weight:700;color:var(--yellow)">Waitlisted</div></div>`
+            : `<span class="small">No valid ticket</span>`;
+
+      const paymentLabel = r.refundStatus === 'completed' || r.payment === 'refunded'
+        ? '↩️ Demo Refund Completed'
+        : r.refundStatus === 'pending'
+          ? '⏳ Demo Refund Pending'
+          : r.refundStatus === 'not_applicable'
+            ? 'Policy Expired (No Refund)'
+            : r.payment === 'free'
+              ? 'Free Ticket'
+              : r.payment === 'completed'
+                ? '✓ Demo Payment Confirmed'
+                : r.status === 'pending_payment' || r.payment === 'pending'
+                  ? 'Payment Pending'
+                  : 'No Payment Due';
+
+      let refundBadge = '';
+      if (r.refundStatus === 'pending') {
+        refundBadge = `<span class="badge badge-yellow">↩️ Simulated Refund: Pending (₹${r.refundObj?.amount ?? r.amount})</span>`;
+      } else if (r.refundStatus === 'completed') {
+        refundBadge = `<span class="badge badge-blue">↩️ Simulated Refund: Completed (₹${r.refundObj?.amount ?? r.amount})</span>`;
+      } else if (isCancelled && r.refundStatus === 'not_applicable') {
+        refundBadge = `<span class="badge badge-gray">No Refund (Policy Expired)</span>`;
+      }
+
+      return `<div class="ticket" style="${isCancelled ? 'opacity:0.85;border-color:var(--border);' : ''}">
     <div class="ticket-top">
       <div class="flex justify-between items-start">
         <div style="flex:1;min-width:0">
-          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
-            <span style="font-size:28px">${e.emoji}</span>
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
+            <span style="font-size:28px">${e.emoji || '🎟️'}</span>
             <span class="badge badge-${evStatBadge(e.status)}">${e.status}</span>
+            <span class="badge badge-${r.status === 'confirmed' || r.status === 'attended' ? 'green' : r.status === 'cancelled' ? 'red' : 'yellow'}">${r.status}</span>
+            ${refundBadge}
           </div>
           <div style="font-family:var(--font-head);font-size:17px;font-weight:700;line-height:1.3;margin-bottom:8px">${e.title}</div>
           <div class="small" style="margin-bottom:2px">📅 ${e.date} · ${e.time}</div>
@@ -6060,26 +7356,59 @@ window.EventFlowModules['shared'] = true;
     <div class="ticket-bot">
       <div class="grid-2" style="gap:8px">
         <div><div class="label mb-4">Attendee</div><div style="font-weight:500;font-size:13.5px">${CU.name}</div></div>
-        <div><div class="label mb-4">Ticket ID</div><div class="mono">${r.ticketId}</div></div>
+        <div>
+          <div class="label mb-4">Ticket ID</div>
+          <div class="mono" style="${isCancelled ? 'text-decoration:line-through;color:var(--text3);' : ''}">${r.ticketId || '—'}</div>
+        </div>
         <div><div class="label mb-4">Seat / Zone</div><div style="font-weight:500;font-size:13.5px">${r.seat || 'GA'}</div></div>
         <div><div class="label mb-4">Amount</div><div style="font-weight:700;font-size:15px;color:var(--green)">${r.amount === 0 ? 'Free' : '₹' + r.amount}</div></div>
       </div>
-      <div class="flex justify-between items-center mt-12">
-        <span class="badge badge-${r.checkedIn ? 'green' : 'purple'}">${r.checkedIn ? '✅ Checked In' : '⏳ Not Yet Checked In'}</span>
-        <span class="badge badge-green">✓ ${r.payment === 'free' ? 'Free Ticket' : 'Payment Confirmed'}</span>
+      <div class="flex justify-between items-center mt-12 flex-wrap gap-8">
+        <span class="badge badge-${r.checkedIn ? 'green' : isCancelled ? 'red' : 'purple'}">${r.checkedIn ? '✅ Checked In' : isCancelled ? '🚫 Ticket Invalidated' : '⏳ Not Yet Checked In'}</span>
+        <span class="badge badge-${r.payment === 'completed' || r.payment === 'free' ? 'green' : r.refundStatus === 'pending' ? 'yellow' : 'gray'}">${paymentLabel}</span>
       </div>
+      ${r.status === 'pending_payment' ? `<button class="btn btn-primary btn-sm mt-12" onclick="completeDemoPayment('${r.registrationId}')">Complete Demo Payment</button>` : ''}
+      ${r.status === 'waitlisted' && r.offerExpiresAt ? `<button class="btn btn-primary btn-sm mt-12" onclick="acceptWaitlistOffer('${r.registrationId}')">Accept Waitlist Offer</button>` : ''}
+      ${!r.checkedIn && !['attended', 'no-show', 'cancelled'].includes(r.status) && ['confirmed', 'waitlisted', 'pending_payment'].includes(r.status) ? `<button class="btn btn-danger btn-sm mt-12" onclick="cancelTicket('${r.registrationId || r.id}')">${r.status === 'waitlisted' ? 'Leave Waitlist' : 'Cancel Registration'}</button>` : ''}
+      ${isCancelled ? `<div class="small mt-12" style="color:var(--text3);font-style:italic">❌ Registration cancelled${r.cancelledAt ? ' on ' + new Date(r.cancelledAt).toLocaleDateString() : ''}. Ticket QR and seat capacity are invalidated.</div>` : ''}
     </div>
   </div>`;
     }
+    function completeDemoPayment(registrationId) {
+      const registration = (attendeeRegistrationCatalog || []).find(r => r.registrationId === registrationId || String(r.id) === String(registrationId))
+        || (DB.registrations || []).find(r => r.registrationId === registrationId || String(r.id) === String(registrationId));
+      const event = registration && ((attendeeEventCatalog || []).find(e => String(e.id) === String(registration.eventId) || String(e.eventId) === String(registration.eventId)) || (DB.events || []).find(e => String(e.id) === String(registration.eventId)));
+      if (!registration || !event) { toast('Registration details are unavailable.', 'error'); return; }
+      openPaymentCheckoutModal(event, registration);
+    }
+    window.completeDemoPayment = completeDemoPayment;
+
+    function acceptWaitlistOffer(registrationId) {
+      const reg = (attendeeRegistrationCatalog || []).find(r => r.registrationId === registrationId || String(r.id) === String(registrationId));
+      const regId = reg ? reg.registrationId : registrationId;
+      apiConfirmWaitlist(regId)
+        .then(function (registration) {
+          toast(registration.status === 'pending_payment' ? 'Place reserved. Complete payment to receive your ticket.' : 'Waitlist offer accepted.', 'success');
+          renderPage(_currentPage);
+        })
+        .catch(function (error) { toast(error.message || 'The waitlist offer could not be accepted.', 'error'); });
+    }
+    window.acceptWaitlistOffer = acceptWaitlistOffer;
+
     function makeQR() {
       const cells = Array.from({ length: 25 }, () => Math.random() > 0.5);
       return cells.map(on => `<div class="qr-cell${on ? ' on' : ''}"></div>`).join('');
     }
     function openViewTicketModal(regId) {
-      const r = DB.registrations.find(r => r.id == regId); if (!r) return;
-      const e = DB.events.find(ev => ev.id === r.eventId) || { title: 'Event', emoji: '🎟️', venue: '', date: '', time: '' };
+      const r = (attendeeRegistrationCatalog || []).find(reg => String(reg.id) === String(regId) || String(reg.registrationId) === String(regId))
+        || (DB.registrations || []).find(reg => String(reg.id) === String(regId) || String(reg.registrationId) === String(regId));
+      if (!r) return;
+      const e = (attendeeEventCatalog || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId))
+        || (DB.events || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId))
+        || { title: 'Event', emoji: '🎟️', venue: '', date: '', time: '' };
       openModal('Your Ticket', ticketCard(r, e), [], false);
     }
+    window.openViewTicketModal = openViewTicketModal;
 
     // ════════════════════════════════════════════════
     //  ATTENDEE MANAGEMENT
@@ -8635,7 +9964,18 @@ window.EventFlowModules['shared'] = true;
     // ════════════════════════════════════════════════
     //  NOTIFICATIONS
     // ════════════════════════════════════════════════
+    let attendeeNotificationCatalog = [];
+    function notificationTitle(type) {
+      return ({ registration_confirmed: 'Registration Confirmed', pending_payment: 'Payment Required', waitlist_offer: 'Waitlist Offer', refund_completed: 'Refund Completed', event_changed: 'Event Updated', event_cancelled: 'Event Cancelled' })[type] || 'EventFlow Update';
+    }
+    function notificationTone(type) {
+      if (['registration_confirmed', 'payment_confirmed', 'refund_completed'].includes(type)) return 'success';
+      if (['pending_payment', 'waitlist_offer', 'event_changed'].includes(type)) return 'warning';
+      if (type === 'event_cancelled') return 'error';
+      return 'info';
+    }
     function visibleNotifications() {
+      if (CU?.role === 'attendee') return attendeeNotificationCatalog;
       return CU?.role === 'staff' && CU.employeeType === 'SUPPORT_FINANCE'
         ? DB.notifications.filter(notification => notification.employeeType === 'SUPPORT_FINANCE')
         : DB.notifications;
@@ -8663,6 +10003,12 @@ window.EventFlowModules['shared'] = true;
   </div>`;
     }
     function markNotifRead(id) {
+      if (CU.role === 'attendee') {
+        apiMarkNotificationRead(id)
+          .then(function () { const n = attendeeNotificationCatalog.find(item => item.id === id); if (n) n.read = true; renderPage('notifications'); })
+          .catch(function (error) { toast(error.message || 'Notification could not be updated.', 'error'); });
+        return;
+      }
       const n = DB.notifications.find(n => n.id == id);
       if (!n) return;
       n.read = true;
@@ -8679,6 +10025,12 @@ window.EventFlowModules['shared'] = true;
       }
     }
     function markAllRead() {
+      if (CU.role === 'attendee') {
+        apiMarkAllNotificationsRead()
+          .then(function () { attendeeNotificationCatalog.forEach(n => n.read = true); renderPage('notifications'); toast('All notifications marked as read', 'success'); })
+          .catch(function (error) { toast(error.message || 'Notifications could not be updated.', 'error'); });
+        return;
+      }
       visibleNotifications().forEach(n => n.read = true);
       renderPage('notifications'); updateNotifDot(); if (isDepartmentEmployee()) buildEmployeeNav(CU.employeeType); else buildNav(CU.role); toast('All notifications marked as read', 'success');
     }

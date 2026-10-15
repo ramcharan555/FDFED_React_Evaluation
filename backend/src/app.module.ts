@@ -1,9 +1,11 @@
-import { MiddlewareConsumer, Module, NestModule, RequestMethod } from '@nestjs/common';
+import { Module, MiddlewareConsumer, NestModule, RequestMethod } from '@nestjs/common';
+import { APP_INTERCEPTOR } from '@nestjs/core';
 import { ThrottlerModule } from '@nestjs/throttler';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
 import { EventsAuditMiddleware } from './common/middleware/events-audit.middleware';
+import { DataStorePersistenceInterceptor } from './common/interceptors/data-store-persistence.interceptor';
 
 // Existing modules
 import { EventsModule } from './modules/events/events.module';
@@ -53,7 +55,13 @@ import { SupportModule } from './modules/support/support.module';
     SupportModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [
+    AppService,
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: DataStorePersistenceInterceptor,
+    },
+  ],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer) {

@@ -5980,7 +5980,7 @@ window.EventFlowModules['shared'] = true;
         .then(function (regData) {
           // If paid event, also create payment
           if (e.price > 0) {
-            apiMakePayment({ registrationId: regData.registrationId, amount: e.price, paymentMethod: 'CARD', paymentDate: new Date().toISOString().split('T')[0] })
+            apiMakePayment({ registrationId: regData.registrationId, amount: e.price, paymentMethod: 'DEMO_PROVIDER', paymentDate: new Date().toISOString().split('T')[0] })
               .catch(function () { }); // payment fire-and-forget
           }
           // Update local DB
@@ -9738,7 +9738,23 @@ window.EventFlowModules['shared'] = true;
     function showErr(id) { const el = g(id); if (el) el.classList.add('show') }
     function hideErr(id) { const el = g(id); if (el) el.classList.remove('show') }
     function evStatBadge(s) { return { upcoming: 'purple', full: 'red', completed: 'green' }[s] || 'gray' }
-    function reqBadge(s) { return { pending: 'yellow', approved: 'green', rejected: 'red', in_review: 'purple' }[s] || 'gray' }
+    function reqBadge(s) {
+      return {
+        submitted: 'yellow',
+        pending: 'yellow',
+        under_review: 'purple',
+        in_review: 'purple',
+        info_requested: 'yellow',
+        proposal_sent: 'blue',
+        awaiting_client: 'blue',
+        confirmed: 'green',
+        approved: 'green',
+        rejected: 'red',
+        withdrawn: 'gray',
+        cancelled: 'gray',
+        expired: 'red'
+      }[s] || 'gray';
+    }
 
     // ════════════════════════════════════════════════
     //  BOOTSTRAP

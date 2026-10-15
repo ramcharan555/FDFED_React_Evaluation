@@ -8,7 +8,7 @@ export class StaffAssignmentsService {
   private db: DataStore;
   constructor() { this.db = DataStore.getInstance(); }
 
-  create(dto: CreateStaffAssignmentDto, role: UserRole): any {
+  create(dto: CreateStaffAssignmentDto, role: UserRole, userId?: string): any {
     if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only EVENT_ORGANIZER can assign staff');
     }
@@ -16,6 +16,12 @@ export class StaffAssignmentsService {
     // Verify event exists
     const event = this.db.events.find(e => e.eventId === dto.eventId);
     if (!event) throw new NotFoundException(`Event ${dto.eventId} not found`);
+    if (role === UserRole.EVENT_ORGANIZER) {
+      const organizer = this.db.organizers.find(o => o.userId === userId);
+      if (!organizer || organizer.organizerId !== event.organizerId || dto.organizerId !== organizer.organizerId) {
+        throw new ForbiddenException('You can only assign staff to your own events');
+      }
+    }
 
     // Verify staff exists
     const staff = this.db.staffProfiles.find(s => s.staffId === dto.staffId);
@@ -98,6 +104,12 @@ export class StaffAssignmentsService {
       }
     } else if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Access denied');
+    }
+    if (role === UserRole.EVENT_ORGANIZER) {
+      const organizer = this.db.organizers.find(o => o.userId === userId);
+      if (!organizer || assignment.organizerId !== organizer.organizerId) {
+        throw new ForbiddenException('You can only update assignments for your own events');
+      }
     }
 
     assignment.status = dto.status;

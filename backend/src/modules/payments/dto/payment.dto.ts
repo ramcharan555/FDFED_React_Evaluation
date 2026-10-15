@@ -1,5 +1,5 @@
 import {
-  IsString, IsNotEmpty, IsNumber, IsPositive,
+  IsString, IsNotEmpty, IsNumber, IsPositive, IsIn,
 } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
@@ -15,12 +15,13 @@ export class CreatePaymentDto {
   amount!: number;
 
   @ApiProperty({
-    description: 'Payment method',
-    enum: ['Credit Card', 'Debit Card', 'UPI', 'Net Banking', 'Cash'],
-    example: 'Credit Card',
+    description: 'Simulated payment provider. No card or bank details are accepted.',
+    enum: ['DEMO_PROVIDER'],
+    example: 'DEMO_PROVIDER',
   })
   @IsString()
   @IsNotEmpty()
+  @IsIn(['DEMO_PROVIDER'])
   paymentMethod!: string;
 
   @ApiProperty({ description: 'Payment date (YYYY-MM-DD)', example: '2024-06-01' })

@@ -226,7 +226,7 @@ export default function Employee3() {
 <span style={{"color": "var(--accent)", "fontFamily": "monospace", "fontSize": "11px"}}>Employee@123</span>
 </div>
 <div onClick={event => legacyEvent("fillLogin('marcus.ops@eventflow.com', 'Employee@123')", event)} style={{"cursor": "pointer", "display": "flex", "justifyContent": "space-between", "alignItems": "center", "padding": "4px 6px", "borderRadius": "6px", "background": "var(--surface)"}}>
-<span><span className="badge badge-purple" style={{"marginRight": "4px"}}>Employee</span> <strong>Support &amp; Finance:</strong> marcus.ops@eventflow.com</span>
+<span><span className="badge badge-purple" style={{"marginRight": "4px"}}>Employee</span> <strong>Finance Executive:</strong> marcus.ops@eventflow.com</span>
 <span style={{"color": "var(--accent)", "fontFamily": "monospace", "fontSize": "11px"}}>Employee@123</span>
 </div>
 <div onClick={event => legacyEvent("fillLogin('organizer@example.com', 'Organizer@123')", event)} style={{"cursor": "pointer", "display": "flex", "justifyContent": "space-between", "alignItems": "center", "padding": "4px 6px", "borderRadius": "6px", "background": "var(--surface)"}}>

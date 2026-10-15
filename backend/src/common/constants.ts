@@ -82,11 +82,14 @@ export const ROLE_PERMISSIONS = {
   },
   [UserRole.EVENT_STAFF]: {
     'staff-assignments': ['read', 'update'],
-    events: ['read'],
+    events: ['create', 'read', 'update'],
+    registrations: ['create', 'read', 'update'],
     attendance: ['create', 'update', 'verify'],
-    reports: ['create', 'read'],
+    reports: ['create', 'read', 'update'],
     reviews: ['create', 'read'],
     notifications: ['read'],
+    users: ['read', 'update'],
+    'event-requests': ['create', 'read', 'update'],
   },
   [UserRole.ATTENDEE]: {
     events: ['read'],
@@ -100,7 +103,9 @@ export const ROLE_PERMISSIONS = {
 };
 
 export enum EmployeeType {
+  SUPPORT_EXECUTIVE = 'SUPPORT_EXECUTIVE',
   REGISTRATION_VERIFICATION = 'REGISTRATION_VERIFICATION',
   EVENT_OPERATIONS = 'EVENT_OPERATIONS',
   SUPPORT_FINANCE = 'SUPPORT_FINANCE',
+  FINANCE_EXECUTIVE = 'FINANCE_EXECUTIVE',
 }

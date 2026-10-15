@@ -353,6 +353,31 @@
         ]
       }
     },
+    "/api/public/events": {
+      "get": {
+        "operationId": "PublicEventsController_findAll",
+        "summary": "Get published events for the public attendee catalog",
+        "parameters": [
+          {
+            "name": "search",
+            "required": false,
+            "in": "query",
+            "description": "Search by event name or location",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "List of published events"
+          }
+        },
+        "tags": [
+          "events"
+        ]
+      }
+    },
     "/api/attendees": {
       "post": {
         "operationId": "AttendeesController_create",
@@ -1829,6 +1854,149 @@
         ]
       }
     },
+    "/api/registrations/{id}/details": {
+      "patch": {
+        "operationId": "RegistrationsController_updateDetails",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateRegistrationDetailsDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "registrations"
+        ]
+      }
+    },
+    "/api/registrations/{id}/waitlist/confirm": {
+      "post": {
+        "operationId": "RegistrationsController_confirmWaitlist",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "registrations"
+        ]
+      }
+    },
+    "/api/registrations/{id}/cancel": {
+      "patch": {
+        "operationId": "RegistrationsController_cancel",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelRegistrationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "registrations"
+        ]
+      }
+    },
     "/api/payments": {
       "post": {
         "operationId": "PaymentsController_create",
@@ -1896,6 +2064,48 @@
             "in": "header",
             "description": "User role",
             "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "payments"
+        ]
+      }
+    },
+    "/api/payments/refunds/{id}/process": {
+      "post": {
+        "operationId": "PaymentsController_processRefund",
+        "summary": "Complete a simulated refund (SUPER_ADMIN only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
             "schema": {
               "type": "string"
             }
@@ -1990,6 +2200,39 @@
           },
           "409": {
             "description": "Attendee already checked in"
+          }
+        },
+        "tags": [
+          "attendance"
+        ]
+      }
+    },
+    "/api/attendance/reconcile/{eventId}": {
+      "post": {
+        "operationId": "AttendanceController_reconcile",
+        "summary": "Mark confirmed non-attendees as no-shows after an event concludes",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
           }
         },
         "tags": [
@@ -3538,12 +3781,37 @@
             "type": "string",
             "description": "Additional information",
             "example": "Vegetarian meal preference"
+          },
+          "joinWaitlist": {
+            "type": "boolean",
+            "description": "Join the waitlist when the event is full"
           }
         },
         "required": [
           "attendeeId",
           "eventId",
           "ticketType"
+        ]
+      },
+      "UpdateRegistrationDetailsDto": {
+        "type": "object",
+        "properties": {
+          "additionalInfo": {
+            "type": "string",
+            "description": "Corrected attendee-provided registration information"
+          }
+        }
+      },
+      "CancelRegistrationDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Cancellation reason"
+          }
+        },
+        "required": [
+          "reason"
         ]
       },
       "CreatePaymentDto": {
@@ -3561,15 +3829,11 @@
           },
           "paymentMethod": {
             "type": "string",
-            "description": "Payment method",
+            "description": "Simulated payment provider. No card or bank details are accepted.",
             "enum": [
-              "Credit Card",
-              "Debit Card",
-              "UPI",
-              "Net Banking",
-              "Cash"
+              "DEMO_PROVIDER"
             ],
-            "example": "Credit Card"
+            "example": "DEMO_PROVIDER"
           },
           "paymentDate": {
             "type": "string",

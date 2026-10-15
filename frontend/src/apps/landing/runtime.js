@@ -1941,7 +1941,7 @@ const ROLE_COLORS = { superuser: 'red', organizer: 'purple', client: 'yellow', s
 const DEMO_CREDS = {
   employee: { email: 'employee@example.com', pw: 'Employee@123' },
   employee1: { email: 'arjun.events@eventflow.com', pw: 'Employee@123' },
-  employee2: { email: 'employee@example.com', pw: 'Employee@123' },
+  employee2: { email: 'marcus.ops@eventflow.com', pw: 'Employee@123' },
   employee3: { email: 'marcus.ops@eventflow.com', pw: 'Employee@123' },
   organizer: { email: 'organizer@example.com', pw: 'Organizer@123' },
   client: { email: 'client@example.com', pw: 'Client@123' },
@@ -10006,9 +10006,11 @@ function getRoleWorkspace(user) {
 
   if ((role === 'staff' || role === 'employee') && empType) {
     const employeePages = {
+      SUPPORT_EXECUTIVE: { key: 'employee1' },
       REGISTRATION_VERIFICATION: { key: 'employee1' },
-      EVENT_OPERATIONS: { key: 'employee2' },
-      SUPPORT_FINANCE: { key: 'employee3' },
+      EVENT_OPERATIONS: { key: 'employee1' },
+      SUPPORT_FINANCE: { key: 'employee2' },
+      FINANCE_EXECUTIVE: { key: 'employee2' },
     };
     if (employeePages[empType]) return employeePages[empType];
   }
@@ -10021,11 +10023,11 @@ function getRoleWorkspace(user) {
     client: { key: 'client' },
     staff: { key: 'customer-support' },
     event_staff: { key: 'customer-support' },
-    employee: { key: 'customer-support' },
+    employee: { key: 'employee1' },
     attendee: { key: 'attendee' },
     employee1: { key: 'employee1' },
     employee2: { key: 'employee2' },
-    employee3: { key: 'employee3' },
+    employee3: { key: 'employee2' },
   };
   return rolePages[role] || null;
 }

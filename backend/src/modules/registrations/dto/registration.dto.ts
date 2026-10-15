@@ -1,6 +1,4 @@
-import {
-  IsString, IsNotEmpty, IsOptional, IsEnum,
-} from 'class-validator';
+import { IsBoolean, IsString, IsNotEmpty, IsOptional } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateRegistrationDto {
@@ -20,6 +18,25 @@ export class CreateRegistrationDto {
   ticketType!: string;
 
   @ApiPropertyOptional({ description: 'Additional information', example: 'Vegetarian meal preference' })
+  @IsString()
+  @IsOptional()
+  additionalInfo?: string;
+
+  @ApiPropertyOptional({ description: 'Join the waitlist when the event is full' })
+  @IsBoolean()
+  @IsOptional()
+  joinWaitlist?: boolean;
+}
+
+export class CancelRegistrationDto {
+  @ApiProperty({ description: 'Cancellation reason' })
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
+}
+
+export class UpdateRegistrationDetailsDto {
+  @ApiPropertyOptional({ description: 'Corrected attendee-provided registration information' })
   @IsString()
   @IsOptional()
   additionalInfo?: string;

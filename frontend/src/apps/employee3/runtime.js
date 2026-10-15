@@ -1522,10 +1522,10 @@ window.EventFlowModules['shared'] = true;
         { id: 'usr-admin-001', name: 'Alex Johnson', email: 'superadmin@example.com', password: 'Admin@123', role: 'superuser', phone: '+91 9876543201', avatar: 'AJ', avatarImage: '/images/avatars/user-alex-johnson.jpg', status: 'active', joined: '2024-01-15', bio: 'Platform administrator with full system access.' },
         { id: 'usr-org-001', name: 'Sarah Chen', email: 'organizer@example.com', password: 'Organizer@123', role: 'organizer', phone: '+91 9876543202', avatar: 'SC', avatarImage: '/images/avatars/organizer-sarah-chen.jpg', status: 'active', joined: '2024-02-01', bio: 'Senior event organizer specializing in corporate events.', service: 'Corporate Events & Conferences', city: 'Bangalore', rating: 4.8, color: '#7c6ff7' },
         { id: 'usr-emp-001', userId: 'usr-emp-001', name: 'Marcus Vance', email: 'employee@example.com', password: 'Employee@123', role: 'staff', employeeType: 'EVENT_OPERATIONS', phone: '+91 9876543220', avatar: 'MV', avatarImage: '/images/avatars/staff-marcus-vance.jpg', status: 'active', joined: '2024-01-18', bio: 'Senior event operations employee managing event information and live execution.', service: 'Corporate Conferences & Tech Summits', city: 'Bangalore', rating: 4.9, color: '#3b82f6' },
-        { id: 'usr-emp-001c', userId: 'usr-emp-001', name: 'Marcus Vance', email: 'marcus.ops@eventflow.com', password: 'Employee@123', role: 'staff', employeeType: 'SUPPORT_FINANCE', phone: '+91 9876543220', avatar: 'MV', avatarImage: '/images/avatars/staff-marcus-vance.jpg', status: 'active', joined: '2024-01-18', bio: 'Customer support and finance operations executive.', service: 'Support & Finance', city: 'Bangalore', rating: 4.9, color: '#3b82f6' },
+        { id: 'usr-emp-001c', userId: 'usr-emp-001', name: 'Marcus Vance', email: 'marcus.ops@eventflow.com', password: 'Employee@123', role: 'staff', employeeType: 'SUPPORT_FINANCE', phone: '+91 9876543220', avatar: 'MV', avatarImage: '/images/avatars/staff-marcus-vance.jpg', status: 'active', joined: '2024-01-18', bio: 'Finance operations executive.', service: 'Finance', city: 'Bangalore', rating: 4.9, color: '#3b82f6' },
         { id: 'usr-emp-002', userId: 'usr-emp-002', name: 'Elena Rostova', email: 'elena.coordinator@eventflow.com', password: 'Employee@123', role: 'staff', employeeType: 'EVENT_OPERATIONS', phone: '+91 9876543221', avatar: 'ER', avatarImage: '/images/avatars/staff-elena-rostova.jpg', status: 'active', joined: '2024-02-12', bio: 'Event operations executive.', service: 'Event Operations', city: 'Mumbai', rating: 4.8, color: '#ec4899' },
         { id: 'usr-emp-003', userId: 'usr-emp-003', name: 'Arjun Kapoor', email: 'arjun.events@eventflow.com', password: 'Employee@123', role: 'staff', employeeType: 'REGISTRATION_VERIFICATION', phone: '+91 9876543222', avatar: 'AK', avatarImage: '/images/avatars/staff-arjun-kapoor.jpg', status: 'active', joined: '2024-03-08', bio: 'Registration and attendee verification executive.', service: 'Registration & Verification', city: 'Delhi NCR', rating: 4.9, color: '#8b5cf6' },
-        { id: 'usr-emp-004', userId: 'usr-emp-004', name: 'Maya Lin', email: 'maya.ops@eventflow.com', password: 'Employee@123', role: 'staff', employeeType: 'SUPPORT_FINANCE', phone: '+91 9876543223', avatar: 'ML', avatarImage: '/images/avatars/staff-maya-lin.jpg', status: 'active', joined: '2024-03-22', bio: 'Customer support and finance operations executive.', service: 'Support & Finance', city: 'Hyderabad', rating: 4.7, color: '#10b981' },
+        { id: 'usr-emp-004', userId: 'usr-emp-004', name: 'Maya Lin', email: 'maya.ops@eventflow.com', password: 'Employee@123', role: 'staff', employeeType: 'SUPPORT_FINANCE', phone: '+91 9876543223', avatar: 'ML', avatarImage: '/images/avatars/staff-maya-lin.jpg', status: 'active', joined: '2024-03-22', bio: 'Finance operations executive.', service: 'Finance', city: 'Hyderabad', rating: 4.7, color: '#10b981' },
         { id: 'usr-client-001', name: 'Michael Torres', email: 'client@example.com', password: 'Client@123', role: 'client', phone: '+91 9876543203', avatar: 'MT', avatarImage: '/images/avatars/user-michael-torres.jpg', status: 'active', joined: '2024-03-10', bio: 'Head of Events at TechCorp Ltd.', company: 'TechCorp Ltd' },
         { id: 'usr-staff-001', name: 'James Wilson', email: 'staff@example.com', password: 'Staff@123', role: 'staff', phone: '+91 9876543204', avatar: 'JW', avatarImage: '/images/avatars/staff-james-wilson.jpg', status: 'active', joined: '2024-02-15', bio: 'Professional photographer and event videographer.', service: 'Photography & Videography', rate: 800 },
         { id: 'usr-attendee-001', name: 'Priya Patel', email: 'attendee@example.com', password: 'Attendee@123', role: 'attendee', phone: '+91 9876543205', avatar: 'PP', avatarImage: '/images/avatars/user-priya-patel.jpg', status: 'active', joined: '2024-04-01', bio: 'Tech enthusiast and frequent conference attendee.' },
@@ -1635,7 +1635,7 @@ window.EventFlowModules['shared'] = true;
         { id: 7, title: 'New Assignment', msg: 'Sarah Johnson assigned you as Photographer & Videographer for Corporate Annual Gala 2026 — ?1,100 fee', time: '1 hr ago', read: false, type: 'warning', icon: '📸' },
         { id: 8, title: 'New Assignment', msg: 'Sarah Johnson assigned you as Stage Photographer for Spring Music Festival — ?750 fee', time: '3 hrs ago', read: false, type: 'warning', icon: '🎵' },
         { id: 9, title: 'New Assignment', msg: 'Assigned as Event Documentarian for Startup Pitch Night — ?500 fee', time: '5 hrs ago', read: false, type: 'warning', icon: '🚀' },
-        { id: 'sf-notif-001', employeeType: 'SUPPORT_FINANCE', title: 'New Support Request', msg: 'Michael Torres requested a payment receipt for Global AI & Cloud Summit 2026.', time: '12 mins ago', read: false, type: 'info', icon: '📩' },
+        { id: 'sf-notif-001', employeeType: 'SUPPORT_FINANCE', title: 'Payment Reconciliation', msg: '₹2,500 registration settlement completed for Tech Innovation Summit.', time: '12 mins ago', read: false, type: 'info', icon: '💳' },
         { id: 'sf-notif-002', employeeType: 'SUPPORT_FINANCE', title: 'Refund Awaiting Review', msg: 'Refund REF-2026-001 for ₹350 is ready for finance review.', time: '28 mins ago', read: false, type: 'warning', icon: '↩️' },
         { id: 'sf-notif-003', employeeType: 'SUPPORT_FINANCE', title: 'Transaction Completed', msg: 'Transaction TXN-2026-005 was completed successfully for Michael Torres.', time: '1 hr ago', read: true, type: 'success', icon: '💳' },
         { id: 'sf-notif-004', employeeType: 'SUPPORT_FINANCE', title: 'Report Reviewed', msg: 'August service operations was reviewed by Super Admin.', time: 'Yesterday', read: true, type: 'success', icon: '📊' },
@@ -1941,15 +1941,19 @@ window.EventFlowModules['shared'] = true;
     const EMPLOYEE_TYPE_LABELS = {
       REGISTRATION_VERIFICATION: 'Registration & Verification',
       EVENT_OPERATIONS: 'Event Operations',
-      SUPPORT_FINANCE: 'Support & Finance',
+      SUPPORT_FINANCE: 'Finance Executive',
+      FINANCE_EXECUTIVE: 'Finance Executive',
+      SUPPORT_EXECUTIVE: 'Support Executive',
       registration_verification: 'Registration & Verification',
       event_operations: 'Event Operations',
-      support_finance: 'Support & Finance',
+      support_finance: 'Finance Executive',
+      finance_executive: 'Finance Executive',
+      support_executive: 'Support Executive',
     };
     const DEMO_CREDS = {
       employee: { email: 'employee@example.com', pw: 'Employee@123' },
       employee1: { email: 'arjun.events@eventflow.com', pw: 'Employee@123' },
-      employee2: { email: 'employee@example.com', pw: 'Employee@123' },
+      employee2: { email: 'marcus.ops@eventflow.com', pw: 'Employee@123' },
       employee3: { email: 'marcus.ops@eventflow.com', pw: 'Employee@123' },
       organizer: { email: 'organizer@example.com', pw: 'Organizer@123' },
       client: { email: 'client@example.com', pw: 'Client@123' },
@@ -2358,8 +2362,14 @@ window.EventFlowModules['shared'] = true;
           { ic: '⚙️', lbl: 'Event Operations', pg: 'event-requests' }, { ic: '📄', lbl: 'Reports', pg: 'reports' },
         ],
         SUPPORT_FINANCE: [
-          { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' }, { ic: '📩', lbl: 'Support Center', pg: 'support-center' },
-          { ic: '💳', lbl: 'Finance', pg: 'finance' }, { ic: '📋', lbl: 'Reports', pg: 'reports' },
+          { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
+          { ic: '💳', lbl: 'Finance', pg: 'finance' },
+          { ic: '📋', lbl: 'Reports', pg: 'reports' },
+        ],
+        FINANCE_EXECUTIVE: [
+          { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
+          { ic: '💳', lbl: 'Finance', pg: 'finance' },
+          { ic: '📋', lbl: 'Reports', pg: 'reports' },
         ],
       }[employeeType] || [];
       const unread = visibleNotifications().filter(n => !n.read).length;
@@ -2485,7 +2495,8 @@ window.EventFlowModules['shared'] = true;
         const allowed = {
           REGISTRATION_VERIFICATION: ['dashboard', 'registrations', 'attendees', 'attendeeVerification', 'reports', 'profile', 'settings', 'notifications'],
           EVENT_OPERATIONS: ['dashboard', 'events', 'event-requests', 'staff-event-requests', 'reports', 'profile', 'settings', 'notifications'],
-          SUPPORT_FINANCE: ['dashboard', 'support-center', 'finance', 'reports', 'profile', 'settings', 'notifications'],
+          SUPPORT_FINANCE: ['dashboard', 'finance', 'reports', 'profile', 'settings', 'notifications'],
+          FINANCE_EXECUTIVE: ['dashboard', 'finance', 'reports', 'profile', 'settings', 'notifications'],
         }[CU.employeeType] || [];
         if (!allowed.includes(pg)) { el.innerHTML = `<div class="empty"><div class="empty-title">Access restricted</div><p class="empty-desc">This department does not have access to this area.</p></div>`; return; }
       }
@@ -2523,10 +2534,14 @@ window.EventFlowModules['shared'] = true;
           el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOperationsWorkspace() : pageEventRequests();
           break;
         case 'support-center':
-          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageSupportCenter() : pageEventRequests();
+          if (isDepartmentEmployee() && (CU.employeeType === 'SUPPORT_FINANCE' || CU.employeeType === 'FINANCE_EXECUTIVE')) {
+            goNav('finance');
+            return;
+          }
+          el.innerHTML = pageEventRequests();
           break;
         case 'finance':
-          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageFinanceCenter() : pageRevenueReports();
+          el.innerHTML = isDepartmentEmployee() && (CU.employeeType === 'SUPPORT_FINANCE' || CU.employeeType === 'FINANCE_EXECUTIVE') ? pageFinanceCenter() : pageRevenueReports();
           break;
         case 'request-status':
           el.innerHTML = pageRequestStatus();
@@ -2542,7 +2557,7 @@ window.EventFlowModules['shared'] = true;
           el.innerHTML = pageAttendeeVerification();
           break;
         case 'reports':
-          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'REGISTRATION_VERIFICATION' ? pageRegVerificationReports() : (isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOpsReports() : (isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageOperationalReports() : pageReports()));
+          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'REGISTRATION_VERIFICATION' ? pageRegVerificationReports() : (isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOpsReports() : (isDepartmentEmployee() && (CU.employeeType === 'SUPPORT_FINANCE' || CU.employeeType === 'FINANCE_EXECUTIVE') ? pageOperationalReports() : pageReports()));
           break;
         case 'staff-reports':
           el.innerHTML = pageStaffReports();
@@ -2736,7 +2751,7 @@ window.EventFlowModules['shared'] = true;
 
     function dashDepartmentEmployee() {
       const type = CU.employeeType;
-      if (type === 'SUPPORT_FINANCE') return dashSupportFinance();
+      if (type === 'SUPPORT_FINANCE' || type === 'FINANCE_EXECUTIVE') return dashSupportFinance();
       if (type === 'EVENT_OPERATIONS') return dashEventOperations();
       if (type === 'REGISTRATION_VERIFICATION') return dashRegistrationVerification();
       return `<div class="page-hd"><div class="page-hd-left"><div class="page-title">Employee Dashboard</div></div></div>`;
@@ -3463,397 +3478,140 @@ window.EventFlowModules['shared'] = true;
     function supportEvent(request) { return DB.events.find(event => String(event.id) === String(request.eventId)) || { title: 'Unknown Event', date: '—' }; }
     function supportStatusBadge(status) { return { Pending: 'yellow', 'In Progress': 'purple', Resolved: 'green', Closed: 'gray' }[status] || 'gray'; }
     function dashSupportFinance() {
-      const requests = DB.supportRequests || [], transactions = DB.financeTransactions || [], refunds = DB.financeRefunds || [], reports = DB.operationalReports || [];
-      const todayStr = today();
-      const todayTransactions = transactions.filter(item => item.date === todayStr).length;
-      const totalTransactions = transactions.length;
-      const displayTxnCount = todayTransactions > 0 ? todayTransactions : totalTransactions;
-      const txnLabel = todayTransactions > 0 ? "Today's Transactions" : 'Total Transactions';
+      const transactions = Array.isArray(DB.financeTransactions) ? DB.financeTransactions : [];
+      const refunds = Array.isArray(DB.financeRefunds) ? DB.financeRefunds : [];
+      const reports = Array.isArray(DB.operationalReports) ? DB.operationalReports : [];
+      const paidRegistrations = (DB.registrations || []).filter(reg => String(reg.payment || '').toLowerCase() === 'paid' && ['confirmed', 'verified'].includes(String(reg.status || '').toLowerCase()));
+      const successfulTransactions = paidRegistrations.length ? paidRegistrations : transactions.filter(tx => String(tx.status || '').toLowerCase() === 'successful' && Number(tx.amount || 0) > 0);
+      const commissionRate = 0.15;
+      const totalRevenue = successfulTransactions.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const platformCommission = totalRevenue * commissionRate;
+      const organizerPayout = totalRevenue - platformCommission;
+      const pendingRefunds = refunds.filter(item => item.status === 'Requested' || item.status === 'Processing');
 
-      // Build balanced activity feed: 1 item per category first, then fill from remaining
-      const reqActivities = requests.map(item => ({
-        label: item.subject,
-        detail: `Support Request (${item.id}) · ${item.status} · ${item.updated || item.created}`,
-        icon: '📩',
-        sortKey: 0
+      const todayStr = today();
+      const todayTxns = transactions.filter(item => item.date === todayStr);
+
+      // Financial activity feed only (Transactions, Refunds, Reports)
+      const txnActivities = transactions.map(item => ({
+        label: `Payment Transaction ${item.id}`,
+        detail: `Amount: ₹${Number(item.amount || 0).toLocaleString('en-IN')} · Status: ${item.status} · Date: ${item.date}`,
+        icon: '💳',
+        date: item.date
       }));
       const refActivities = refunds.map(item => ({
-        label: `Refund ${item.id}`,
-        detail: `Refund · ${item.status} · ₹${item.amount.toLocaleString('en-IN')} · ${item.reason}`,
+        label: `Refund Request ${item.id}`,
+        detail: `Amount: ₹${Number(item.amount || 0).toLocaleString('en-IN')} · Status: ${item.status} · Reason: ${item.reason}`,
         icon: '↩️',
-        sortKey: 1
+        date: item.date
       }));
-      const txnActivities = transactions.map(item => ({
-        label: `Transaction ${item.id}`,
-        detail: `Payment · ${item.status} · ₹${item.amount.toLocaleString('en-IN')} · ${item.date === todayStr ? 'Today' : item.date}`,
-        icon: '💳',
-        sortKey: 2
-      }));
-      const rptActivities = reports.map(item => ({
+      const rptActivities = reports.filter(r => r.type && (r.type.includes('Finance') || r.type.includes('Revenue') || r.type.includes('Reconciliation'))).map(item => ({
         label: `Report: ${item.title}`,
-        detail: `${item.type} · ${item.status} · ${item.updated}`,
+        detail: `${item.type} · ${item.status} · Updated: ${item.updated}`,
         icon: '📊',
-        sortKey: 3
+        date: item.updated
       }));
 
-      // Take 1 from each category first (balanced), then fill up to 6 with remaining
-      const activity = [
-        reqActivities[0], refActivities[0], txnActivities[0], rptActivities[0],
-        reqActivities[1], refActivities[1]
-      ].filter(Boolean).slice(0, 6);
-
-      return `<div class="page-hd"><div class="page-hd-left"><div class="page-title">Customer Support &amp; Finance Dashboard</div><div class="page-sub">Operational overview for ${CU.name}.</div></div></div><div class="grid-4 mb-20">${[
-        ['📩', requests.filter(item => !['Resolved', 'Closed'].includes(item.status)).length, 'Open Support Requests', 'var(--accent)'],
-        ['⚠️', requests.filter(item => item.status === 'Pending').length, 'Pending Issues', 'var(--yellow)'],
-        ['💳', displayTxnCount, txnLabel, 'var(--green)'],
-        ['↩️', refunds.filter(item => item.status === 'Requested' || item.status === 'Processing').length, 'Pending Refunds', 'var(--blue)']
-      ].map(card => `<div class="stat-card"><div class="stat-icon">${card[0]}</div><div class="stat-value" style="color:${card[3]}">${card[1]}</div><div class="stat-label">${card[2]}</div></div>`).join('')}</div><div class="card"><div class="h4 mb-12">Recent Support &amp; Finance Activity</div><div style="display:flex;flex-direction:column;gap:10px">${activity.map(item => `<div class="flex items-center gap-10" style="padding:10px 0;border-bottom:1px solid var(--border)"><span style="font-size:20px">${item.icon}</span><div><div style="font-weight:600;font-size:13px">${item.label}</div><div class="small">${item.detail}</div></div></div>`).join('') || '<div class="empty">No recent activity</div>'}</div></div>`;
-    }
-
-    function pageSupportCenter() {
-      const query = (sessionStorage.getItem('support_query') || '').toLowerCase();
-      const status = sessionStorage.getItem('support_status') || '';
-      const requests = (DB.supportRequests || []).filter(item => {
-        const user = supportUser(item), event = supportEvent(item);
-        return (!status || item.status === status) && (!query || `${item.id} ${item.subject} ${item.message} ${user.name} ${user.email} ${event.title}`.toLowerCase().includes(query));
-      });
+      const financialActivities = [
+        ...txnActivities.slice(0, 3),
+        ...refActivities.slice(0, 3),
+        ...rptActivities.slice(0, 2)
+      ].slice(0, 6);
 
       return `
         <div class="page-hd">
           <div class="page-hd-left">
-            <div class="page-title">Support Center</div>
-            <div class="page-sub">Manage user support requests with event and payment context. Route unresolvable issues to the appropriate department.</div>
+            <div class="page-title">Finance Executive Dashboard</div>
+            <div class="page-sub">Financial operations, registration revenue monitoring, platform commissions, organizer payouts, and refund reconciliations for ${CU.name}.</div>
           </div>
-          <div class="page-hd-right">
-            <button class="btn btn-primary" onclick="openRouteRequestModal()">🔀 Route Request</button>
+          <div class="page-hd-right" style="display:flex;gap:10px">
+            <button class="btn btn-ghost" onclick="goNav('reports')">📋 View Reports</button>
+            <button class="btn btn-primary" onclick="goNav('finance')">💳 Open Finance Center</button>
           </div>
         </div>
 
-        <div class="filter-row">
-          <div class="search-box input-group">
-            <span class="input-icon">🔍</span>
-            <input class="form-control" id="support-query" placeholder="Search requests, users, or events..." value="${query}" oninput="refreshSupportCenter()">
+        <div class="grid-4 mb-20">
+          <div class="stat-card" style="cursor:pointer;border-left:4px solid var(--green)" onclick="goNav('finance')">
+            <div class="stat-icon" style="background:var(--green-dim);color:var(--green)">💰</div>
+            <div class="stat-value" style="color:var(--green)">₹${totalRevenue.toLocaleString('en-IN')}</div>
+            <div class="stat-label">Total Registration Revenue</div>
+            <div class="stat-sub neutral">${successfulTransactions.length} successful payments</div>
           </div>
-          <select class="form-control filter-select" id="support-status" onchange="refreshSupportCenter()">
-            <option value="">All Statuses</option>
-            ${['Pending', 'In Progress', 'Resolved', 'Closed'].map(item => `<option ${status === item ? 'selected' : ''}>${item}</option>`).join('')}
-          </select>
+          <div class="stat-card" style="cursor:pointer;border-left:4px solid var(--accent)" onclick="switchFinanceTab('transactions')">
+            <div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">💳</div>
+            <div class="stat-value" style="color:var(--accent)">${transactions.length}</div>
+            <div class="stat-label">Total Transactions</div>
+            <div class="stat-sub neutral">${todayTxns.length} processed today</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer;border-left:4px solid var(--yellow)" onclick="switchFinanceTab('refunds')">
+            <div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">↩️</div>
+            <div class="stat-value" style="color:var(--yellow)">${pendingRefunds.length}</div>
+            <div class="stat-label">Refunds Awaiting Review</div>
+            <div class="stat-sub neutral">${refunds.length} total refund records</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer;border-left:4px solid var(--purple)" onclick="goNav('finance')">
+            <div class="stat-icon" style="background:var(--purple-dim);color:var(--purple)">📈</div>
+            <div class="stat-value" style="color:var(--purple)">₹${platformCommission.toLocaleString('en-IN')}</div>
+            <div class="stat-label">Platform Commission (15%)</div>
+            <div class="stat-sub neutral">₹${organizerPayout.toLocaleString('en-IN')} net organizer payouts</div>
+          </div>
         </div>
 
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Request</th>
-                  <th>User</th>
-                  <th>Event / Payment</th>
-                  <th>Status</th>
-                  <th>Updated</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${requests.map(item => {
-        const user = supportUser(item), event = supportEvent(item);
-        return `
-                    <tr>
-                      <td>
-                        <div style="font-weight:700;font-size:13.5px;color:var(--text)">${item.subject}</div>
-                        <div class="small muted">${item.message}</div>
-                      </td>
-                      <td>
-                        <div style="font-weight:600">${user.name}</div>
-                        <div class="small muted">${user.email}</div>
-                      </td>
-                      <td>
-                        <div style="font-weight:600">${event.title}</div>
-                        <div class="small muted">${event.date} · Related transaction available</div>
-                      </td>
-                      <td><span class="badge badge-${supportStatusBadge(item.status)}">${item.status}</span></td>
-                      <td class="small muted">${item.updated}</td>
-                      <td>
-                        <div class="flex gap-6">
-                          <button class="btn btn-ghost btn-xs" onclick="openSupportRequest('${item.id}')">View / Respond</button>
-                          <button class="btn btn-ghost btn-xs" style="border-color:var(--purple);color:var(--purple)" onclick="openRouteRequestModal('${item.id}')">🔀 Route</button>
-                        </div>
-                      </td>
-                    </tr>
-                  `;
-      }).join('') || '<tr><td colspan="6" class="text-center py-20 muted">No support requests found.</td></tr>'}
-              </tbody>
-            </table>
+        <div class="grid-2 gap-20">
+          <div class="card">
+            <div class="flex justify-between items-center mb-14">
+              <div class="h4">Quick Finance Navigation</div>
+              <span class="badge badge-purple">Finance Only</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+              <div style="padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);cursor:pointer;transition:transform .2s" onclick="switchFinanceTab('transactions')">
+                <div style="font-size:24px;margin-bottom:8px">💳</div>
+                <div style="font-weight:700;font-size:14px;color:var(--text)">Transactions Monitor</div>
+                <div class="small muted mt-4">Review all incoming registrations & attendee charges</div>
+              </div>
+              <div style="padding:16px;border:1px solid var(--border);border-radius:10px;background:var(--surface2);cursor:pointer;transition:transform .2s" onclick="switchFinanceTab('refunds')">
+                <div style="font-size:24px;margin-bottom:8px">↩️</div>
+                <div style="font-weight:700;font-size:14px;color:var(--text)">Refunds & Approvals</div>
+                <div class="small muted mt-4">Audit attendee refund requests and payment chargebacks</div>
+              </div>
+            </div>
+            <div class="mt-16" style="padding:14px;border-radius:8px;background:rgba(34,211,165,0.08);border:1px solid rgba(34,211,165,0.2)">
+              <div class="flex justify-between items-center">
+                <div>
+                  <div style="font-weight:600;font-size:13px;color:var(--green)">✓ Super Admin Financial Audit Sync</div>
+                  <div class="small muted">Ledgers automatically reconciled with platform banking services.</div>
+                </div>
+                <button class="btn btn-ghost btn-xs" onclick="goNav('reports')">Audit Reports →</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="flex justify-between items-center mb-14">
+              <div class="h4">Recent Financial Activity</div>
+              <button class="btn btn-ghost btn-xs" onclick="goNav('finance')">View All →</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:10px">
+              ${financialActivities.map(item => `
+                <div class="flex items-center gap-10" style="padding:10px 0;border-bottom:1px solid var(--border)">
+                  <span style="font-size:20px">${item.icon}</span>
+                  <div style="flex:1">
+                    <div style="font-weight:600;font-size:13px">${item.label}</div>
+                    <div class="small muted">${item.detail}</div>
+                  </div>
+                </div>
+              `).join('') || '<div class="empty">No recent financial activity</div>'}
+            </div>
           </div>
         </div>
       `;
     }
 
-    function openRouteRequestModal(prefillId) {
-      const supportReqs = DB.supportRequests || [];
-      const reqOptions = supportReqs.map(r => {
-        const u = supportUser(r);
-        return `<option value="${r.id}" ${prefillId === r.id ? 'selected' : ''}>${r.id} — ${r.subject} (${u.name})</option>`;
-      }).join('');
-
-      // Determine prefill values if a request ID was passed
-      let prefillUser = '', prefillEmail = '', prefillDesc = '', prefillEvent = '';
-      let autoRouteTo = '';
-      if (prefillId) {
-        const item = supportReqs.find(r => r.id === prefillId);
-        if (item) {
-          const u = supportUser(item);
-          const e = supportEvent(item);
-          prefillUser = u.name || '';
-          prefillEmail = u.email || '';
-          prefillDesc = item.message || '';
-          prefillEvent = e.title && e.title !== 'Unknown Event' ? e.title : '';
-          // Auto-suggest route based on subject keywords
-          const subjectLow = (item.subject || '').toLowerCase() + ' ' + (item.message || '').toLowerCase();
-          const emp1Keywords = ['registration', 'account', 'duplicate', 'verification', 'user', 'profile', 'email', 'login', 'password', 'access'];
-          const emp2Keywords = ['event', 'venue', 'schedule', 'location', 'capacity', 'slot', 'cancel', 'speaker', 'av', 'equipment'];
-          if (emp2Keywords.some(k => subjectLow.includes(k))) autoRouteTo = 'Employee 2 – Event Operations Executive';
-          else if (emp1Keywords.some(k => subjectLow.includes(k))) autoRouteTo = 'Employee 1 – Registration & Verification Executive';
-        }
-      }
-
-      openModal('🔀 Route Support Request', `
-        <div style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:16px;font-size:13px;color:var(--text2);border-left:3px solid var(--purple)">
-          <strong style="color:var(--purple)">Routing Policy:</strong> Route <strong>user/account/registration/verification</strong> issues to Employee 1. Route <strong>event/venue/schedule/operational</strong> issues to Employee 2. Finance/payment issues are handled directly by you.
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Select Request ID (optional)</label>
-          <select class="form-control" id="route-req-id" onchange="prefillRouteForm(this.value)">
-            <option value="">— New / Manual Route —</option>
-            ${reqOptions}
-          </select>
-        </div>
-
-        <div class="grid-2 gap-12">
-          <div class="form-group">
-            <label class="form-label">User Name *</label>
-            <input class="form-control" id="route-user-name" placeholder="Full name" value="${prefillUser}">
-          </div>
-          <div class="form-group">
-            <label class="form-label">User Email *</label>
-            <input class="form-control" id="route-user-email" placeholder="user@email.com" value="${prefillEmail}">
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Request Category *</label>
-          <select class="form-control" id="route-category">
-            <option>User Account Issue</option>
-            <option>Duplicate Account / Merge</option>
-            <option>Registration Problem</option>
-            <option>Identity Verification Issue</option>
-            <option>Event Information Query</option>
-            <option>Venue / Location Issue</option>
-            <option>Schedule Conflict / Change</option>
-            <option>Event Capacity / Slot Issue</option>
-            <option>Event Cancellation / Update Request</option>
-            <option>Operational Issue</option>
-            <option>Other</option>
-          </select>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Request Description *</label>
-          <textarea class="form-control" id="route-description" rows="3" placeholder="Describe the issue in detail...">${prefillDesc}</textarea>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Related Event (if applicable)</label>
-          <input class="form-control" id="route-event" placeholder="Event name or ID" value="${prefillEvent}">
-        </div>
-
-        <div class="grid-2 gap-12">
-          <div class="form-group">
-            <label class="form-label">Priority *</label>
-            <select class="form-control" id="route-priority">
-              <option value="Low">🟢 Low</option>
-              <option value="Medium" selected>🟡 Medium</option>
-              <option value="High">🔴 High</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label class="form-label">Route To *</label>
-            <select class="form-control" id="route-to">
-              <option value="Employee 1 – Registration &amp; Verification Executive" ${autoRouteTo === 'Employee 1 – Registration & Verification Executive' ? 'selected' : ''}>Employee 1 – Registration &amp; Verification Executive</option>
-              <option value="Employee 2 – Event Operations Executive" ${autoRouteTo === 'Employee 2 – Event Operations Executive' ? 'selected' : ''}>Employee 2 – Event Operations Executive</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="form-group">
-          <label class="form-label">Internal Note (visible to recipient)</label>
-          <textarea class="form-control" id="route-note" rows="2" placeholder="Add context for the receiving department..."></textarea>
-        </div>
-      `, [
-        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
-        { lbl: '🔀 Route Request', cls: 'btn-primary', fn: 'saveRouteRequest()' }
-      ]);
+    function pageSupportCenter() {
+      setTimeout(() => goNav('finance'), 0);
+      return `<div class="card p-24 text-center"><div class="h4 mb-8">Redirecting to Finance Center…</div><p class="muted">Customer support is handled by Support Executive.</p></div>`;
     }
 
-    window.prefillRouteForm = function (reqId) {
-      if (!reqId) return;
-      const item = (DB.supportRequests || []).find(r => r.id === reqId);
-      if (!item) return;
-      const u = supportUser(item);
-      const e = supportEvent(item);
-      const nameEl = document.getElementById('route-user-name');
-      const emailEl = document.getElementById('route-user-email');
-      const descEl = document.getElementById('route-description');
-      const eventEl = document.getElementById('route-event');
-      const routeToEl = document.getElementById('route-to');
-      if (nameEl) nameEl.value = u.name || '';
-      if (emailEl) emailEl.value = u.email || '';
-      if (descEl) descEl.value = item.message || '';
-      if (eventEl && e.title && e.title !== 'Unknown Event') eventEl.value = e.title;
-      // Auto-suggest routing
-      if (routeToEl) {
-        const subjectLow = (item.subject || '').toLowerCase() + ' ' + (item.message || '').toLowerCase();
-        const emp2Keywords = ['event', 'venue', 'schedule', 'location', 'capacity', 'slot', 'cancel', 'speaker', 'av', 'equipment'];
-        const emp1Keywords = ['registration', 'account', 'duplicate', 'verification', 'user', 'profile', 'email', 'login', 'password'];
-        if (emp2Keywords.some(k => subjectLow.includes(k))) routeToEl.value = 'Employee 2 – Event Operations Executive';
-        else if (emp1Keywords.some(k => subjectLow.includes(k))) routeToEl.value = 'Employee 1 – Registration & Verification Executive';
-      }
-    };
-
-    function saveRouteRequest() {
-      const userName = v('route-user-name');
-      const userEmail = v('route-user-email');
-      const category = v('route-category');
-      const description = v('route-description');
-      const priority = v('route-priority');
-      const routeTo = v('route-to');
-      const note = v('route-note');
-      const relatedEvent = v('route-event');
-      const reqId = v('route-req-id');
-
-      if (!userName) { toast('Please enter the user name', 'error'); return; }
-      if (!description) { toast('Please enter a request description', 'error'); return; }
-
-      const routedId = 'RT-' + Date.now().toString().slice(-6);
-      const isEmp2 = routeTo.includes('Employee 2');
-      const isEmp1 = routeTo.includes('Employee 1');
-
-      // Build the routed request record
-      const routedReq = {
-        id: routedId,
-        linkedRequestId: reqId || null,
-        userName: userName,
-        userEmail: userEmail,
-        category: category,
-        description: description,
-        relatedEvent: relatedEvent || null,
-        priority: priority,
-        routeTo: routeTo,
-        note: note,
-        source: 'Escalated by Emp 3',
-        raisedBy: 'Customer Support (Emp 3)',
-        status: 'Pending',
-        date: new Date().toLocaleDateString('en-IN', { year: 'numeric', month: 'short', day: '2-digit' }) + ' · ' + new Date().toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' }),
-        routedAt: 'Just now'
-      };
-
-      if (!DB.routedRequests) DB.routedRequests = [];
-      DB.routedRequests.unshift(routedReq);
-
-      // Make visible to Employee 1 (userQueries) if routed to Emp 1
-      if (isEmp1) {
-        if (!DB.userQueries) DB.userQueries = [];
-        DB.userQueries.unshift({
-          id: routedId,
-          userId: null,
-          userName: userName,
-          userEmail: userEmail,
-          type: category,
-          subject: `[Routed by Emp 3] ${category}`,
-          detail: description + (note ? '\n\nInternal Note: ' + note : '') + (relatedEvent ? '\nRelated Event: ' + relatedEvent : ''),
-          source: 'Employee 3 Escalation',
-          status: 'Pending',
-          priority: priority,
-          date: routedReq.date
-        });
-      }
-
-      // Make visible to Employee 2 (eventOpsRequests) if routed to Emp 2
-      if (isEmp2) {
-        if (!DB.eventOpsRequests) DB.eventOpsRequests = [];
-        // find matching eventId if possible
-        const matchedEvent = relatedEvent ? (DB.events || []).find(e => (e.title || e.name || '').toLowerCase().includes(relatedEvent.toLowerCase())) : null;
-        DB.eventOpsRequests.unshift({
-          id: routedId,
-          eventId: matchedEvent ? matchedEvent.id : null,
-          eventTitle: relatedEvent || 'N/A',
-          issue: description + (note ? '\n\nInternal Note: ' + note : ''),
-          source: 'Escalated by Emp 3',
-          raisedBy: `${userName} (via Customer Support)`,
-          priority: priority,
-          status: 'Pending',
-          date: routedReq.date,
-          notes: note || ''
-        });
-      }
-
-      // Mark linked support request as In Progress if selected
-      if (reqId) {
-        const linked = (DB.supportRequests || []).find(r => r.id === reqId);
-        if (linked && linked.status === 'Pending') {
-          linked.status = 'In Progress';
-          linked.response = `Routed to ${routeTo} on ${routedReq.date}. Awaiting resolution.`;
-          linked.updated = 'Just now';
-        }
-      }
-
-      saveDB();
-      closeModal();
-      renderPage('support-center');
-      toast(`Request routed to ${isEmp2 ? 'Employee 2 (Event Operations)' : 'Employee 1 (Registration & Verification)'} successfully!`, 'success');
-    }
-
-    function refreshSupportCenter() {
-      sessionStorage.setItem('support_query', v('support-query'));
-      sessionStorage.setItem('support_status', v('support-status'));
-      renderPage('support-center');
-    }
-    function openSupportRequest(id) {
-      const item = DB.supportRequests.find(request => request.id === id);
-      if (!item) return;
-      const user = supportUser(item), event = supportEvent(item), transaction = (DB.financeTransactions || []).find(record => String(record.userId) === String(item.userId) && String(record.eventId) === String(item.eventId));
-      openModal(`Support Request ${item.id}`, `
-        <div class="info-row"><span class="info-label">User</span><span class="info-value">${user.name} · ${user.email}</span></div>
-        <div class="info-row"><span class="info-label">Event</span><span class="info-value">${event.title} · ${event.date}</span></div>
-        <div class="info-row"><span class="info-label">Payment</span><span class="info-value">${transaction ? `${transaction.id} · ₹${transaction.amount} · ${transaction.status}` : 'No matching transaction'}</span></div>
-        <div class="info-row"><span class="info-label">Request</span><span class="info-value">${item.subject}</span></div>
-        <p class="muted" style="line-height:1.6;margin:16px 0">${item.message}</p>
-        <div class="form-group">
-          <label class="form-label">Status</label>
-          <select class="form-control" id="support-edit-status">
-            ${['Pending', 'In Progress', 'Resolved', 'Closed'].map(value => `<option ${value === item.status ? 'selected' : ''}>${value}</option>`).join('')}
-          </select>
-        </div>
-        <div class="form-group">
-          <label class="form-label">Response</label>
-          <textarea class="form-control" id="support-response" rows="4">${item.response || ''}</textarea>
-        </div>
-      `, [
-        { lbl: '🔀 Route This Request', cls: 'btn-ghost', fn: `closeModal();openRouteRequestModal('${id}')` },
-        { lbl: 'Save Response', cls: 'btn-primary', fn: `saveSupportRequest('${id}')` }
-      ]);
-    }
-    function saveSupportRequest(id) {
-      const item = DB.supportRequests.find(request => request.id === id);
-      if (!item) return;
-      item.status = v('support-edit-status');
-      item.response = v('support-response');
-      item.updated = 'Just now';
-      saveDB();
-      closeModal();
-      renderPage('support-center');
-      toast('Support request updated', 'success');
-    }
 
     function financeStatusBadge(status) { return { Successful: 'green', Pending: 'yellow', Failed: 'red', Requested: 'yellow', Processing: 'purple', Completed: 'green', Rejected: 'red' }[status] || 'gray'; }
     function pageFinanceCenter() {
@@ -7681,11 +7439,63 @@ window.EventFlowModules['shared'] = true;
     //  REPORTS
     // ════════════════════════════════════════════════
     function operationalReportBadge(status) { return { Draft: 'yellow', Submitted: 'purple', Reviewed: 'green' }[status] || 'gray'; }
-    function pageOperationalReports() { const reports = DB.operationalReports || []; return `<div class="page-hd"><div class="page-hd-left"><div class="page-title">Reports</div><div class="page-sub">Submit support, finance, and combined operational reports to Super Admin.</div></div><div class="page-hd-right"><button class="btn btn-primary" onclick="openSubmitOperationalReportModal()">📤 Submit Report</button></div></div><div class="grid-3 mb-20">${['Support Report', 'Finance Report', 'Combined Operational Report'].map(type => `<div class="stat-card"><div class="stat-icon">${type === 'Support Report' ? '📩' : type === 'Finance Report' ? '💳' : '📊'}</div><div class="stat-value">${reports.filter(item => item.type === type).length}</div><div class="stat-label">${type}s</div></div>`).join('')}</div><div class="card"><div class="h4 mb-12">Operational Reports</div><div class="table-wrap"><table><thead><tr><th>Report</th><th>Type</th><th>Owner</th><th>Status</th><th>Updated</th><th>Action</th></tr></thead><tbody>${reports.map(item => `<tr><td><strong>${item.title}</strong></td><td>${item.type}</td><td>${item.owner}</td><td><span class="badge badge-${operationalReportBadge(item.status)}">${item.status}</span></td><td>${item.updated}</td><td>${item.status === 'Draft' ? `<button class="btn btn-primary btn-xs" onclick="submitOperationalReport('${item.id}')">Submit</button>` : '<span class="small">Tracked</span>'}</td></tr>`).join('')}</tbody></table></div></div>`; }
-    function openOperationalReportModal() { openModal('Prepare Operational Report', `<div class="form-group"><label class="form-label">Report Type</label><select class="form-control" id="op-report-type"><option>Support Report</option><option>Finance Report</option><option>Combined Operational Report</option></select></div><div class="form-group"><label class="form-label">Report Title</label><input class="form-control" id="op-report-title" placeholder="e.g. September support review"></div>`, [{ lbl: 'Save Draft', cls: 'btn-primary', fn: 'saveOperationalReport()' }]); }
-    function saveOperationalReport() { const title = v('op-report-title'); if (!title) { toast('Enter a report title', 'error'); return; } DB.operationalReports.push({ id: `OPR-${Date.now()}`, type: v('op-report-type'), title, owner: CU.name, status: 'Draft', updated: 'Just now' }); saveDB(); closeModal(); renderPage('reports'); toast('Report saved as draft', 'success'); }
-    function openSubmitOperationalReportModal() { openModal('Submit Operational Report', `<div class="form-group"><label class="form-label">Report Type</label><select class="form-control" id="op-submit-type"><option>Support Report</option><option>Finance Report</option><option>Combined Operational Report</option></select></div><div class="form-group"><label class="form-label">Report Title</label><input class="form-control" id="op-submit-title" placeholder="e.g. September support review"></div>`, [{ lbl: 'Submit Report', cls: 'btn-primary', fn: 'submitNewOperationalReport()' }]); }
-    function submitNewOperationalReport() { const title = v('op-submit-title'); if (!title) { toast('Enter a report title', 'error'); return; } DB.operationalReports.push({ id: `OPR-${Date.now()}`, type: v('op-submit-type'), title, owner: CU.name, status: 'Submitted', updated: 'Just now' }); saveDB(); closeModal(); renderPage('reports'); toast('Report submitted to Super Admin', 'success'); }
+    function pageOperationalReports() {
+      const allReports = DB.operationalReports || [];
+      const reports = allReports.filter(r => !r.type || !r.type.includes('Support'));
+      return `
+        <div class="page-hd">
+          <div class="page-hd-left">
+            <div class="page-title">Finance Reports &amp; Analytics</div>
+            <div class="page-sub">Submit finance, commission, and revenue reconciliation reports to Super Admin.</div>
+          </div>
+          <div class="page-hd-right">
+            <button class="btn btn-primary" onclick="openSubmitOperationalReportModal()">📤 Submit Finance Report</button>
+          </div>
+        </div>
+        <div class="grid-3 mb-20">
+          ${['Finance & Revenue Report', 'Commission & Payout Report', 'Refunds & Reconciliation Report'].map(type => `
+            <div class="stat-card">
+              <div class="stat-icon">${type.includes('Commission') ? '📈' : type.includes('Refund') ? '↩️' : '💳'}</div>
+              <div class="stat-value">${reports.filter(item => item.type === type || (type === 'Finance & Revenue Report' && item.type === 'Finance Report')).length}</div>
+              <div class="stat-label">${type}</div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="card">
+          <div class="h4 mb-12">Finance Operational Reports</div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Report Title</th>
+                  <th>Category</th>
+                  <th>Owner</th>
+                  <th>Status</th>
+                  <th>Last Updated</th>
+                  <th>Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${reports.map(item => `
+                  <tr>
+                    <td><strong>${item.title}</strong></td>
+                    <td><span class="badge badge-purple">${item.type}</span></td>
+                    <td>${item.owner}</td>
+                    <td><span class="badge badge-${operationalReportBadge(item.status)}">${item.status}</span></td>
+                    <td>${item.updated}</td>
+                    <td>${item.status === 'Draft' ? `<button class="btn btn-primary btn-xs" onclick="submitOperationalReport('${item.id}')">Submit</button>` : '<span class="small" style="color:var(--green)">✓ Synchronized</span>'}</td>
+                  </tr>
+                `).join('') || '<tr><td colspan="6" class="text-center py-20 muted">No finance reports submitted yet.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+    function openOperationalReportModal() { openModal('Prepare Finance Report', `<div class="form-group"><label class="form-label">Report Type</label><select class="form-control" id="op-report-type"><option>Finance & Revenue Report</option><option>Commission & Payout Report</option><option>Refunds & Reconciliation Report</option><option>Financial Audit Report</option></select></div><div class="form-group"><label class="form-label">Report Title</label><input class="form-control" id="op-report-title" placeholder="e.g. Q2 revenue reconciliation"></div>`, [{ lbl: 'Save Draft', cls: 'btn-primary', fn: 'saveOperationalReport()' }]); }
+    function saveOperationalReport() { const title = v('op-report-title'); if (!title) { toast('Enter a report title', 'error'); return; } DB.operationalReports.push({ id: `FIN-RPT-${Date.now()}`, type: v('op-report-type'), title, owner: CU.name, status: 'Draft', updated: 'Just now' }); saveDB(); closeModal(); renderPage('reports'); toast('Report saved as draft', 'success'); }
+    function openSubmitOperationalReportModal() { openModal('Submit Finance Report to Super Admin', `<div class="form-group"><label class="form-label">Report Type</label><select class="form-control" id="op-submit-type"><option>Finance & Revenue Report</option><option>Commission & Payout Report</option><option>Refunds & Reconciliation Report</option><option>Financial Audit Report</option></select></div><div class="form-group"><label class="form-label">Report Title</label><input class="form-control" id="op-submit-title" placeholder="e.g. Monthly platform revenue review"></div>`, [{ lbl: 'Submit Report', cls: 'btn-primary', fn: 'submitNewOperationalReport()' }]); }
+    function submitNewOperationalReport() { const title = v('op-submit-title'); if (!title) { toast('Enter a report title', 'error'); return; } DB.operationalReports.push({ id: `FIN-RPT-${Date.now()}`, type: v('op-submit-type'), title, owner: CU.name, status: 'Submitted', updated: 'Just now' }); saveDB(); closeModal(); renderPage('reports'); toast('Report submitted to Super Admin', 'success'); }
     function submitOperationalReport(id) { const report = DB.operationalReports.find(item => item.id === id); if (!report) return; report.status = 'Submitted'; report.updated = 'Just now'; saveDB(); renderPage('reports'); toast('Report submitted to Super Admin', 'success'); }
     function eventOpsReportBadge(status) {
       if (status === 'Submitted') return 'purple';
@@ -8722,13 +8532,22 @@ window.EventFlowModules['shared'] = true;
           secondaryLabel: 'Open Operations',
         },
         SUPPORT_FINANCE: {
-          title: 'Customer Support & Finance Executive',
-          purpose: 'Resolve customer requests and maintain accurate payment, refund, and service-operation records.',
-          focus: ['Respond to customer support requests', 'Review transactions and refund cases', 'Maintain service and finance operational reports'],
-          primaryAction: "goNav('support-center')",
-          primaryLabel: 'Open Support Center',
-          secondaryAction: "goNav('finance')",
-          secondaryLabel: 'Open Finance',
+          title: 'Finance Executive',
+          purpose: 'Manage financial operations, monitor registration revenue, audit transactions, and process attendee refunds.',
+          focus: ['Monitor attendee registration revenue and platform commissions', 'Review transactions and process refund cases', 'Maintain finance and revenue reconciliation reports'],
+          primaryAction: "goNav('finance')",
+          primaryLabel: 'Open Finance Center',
+          secondaryAction: "goNav('reports')",
+          secondaryLabel: 'Open Finance Reports',
+        },
+        FINANCE_EXECUTIVE: {
+          title: 'Finance Executive',
+          purpose: 'Manage financial operations, monitor registration revenue, audit transactions, and process attendee refunds.',
+          focus: ['Monitor attendee registration revenue and platform commissions', 'Review transactions and process refund cases', 'Maintain finance and revenue reconciliation reports'],
+          primaryAction: "goNav('finance')",
+          primaryLabel: 'Open Finance Center',
+          secondaryAction: "goNav('reports')",
+          secondaryLabel: 'Open Finance Reports',
         },
       }[type];
 
@@ -8744,11 +8563,12 @@ window.EventFlowModules['shared'] = true;
       const operationalTasks = (DB.eventOperationsTasks || []).filter(task => !task.status || !['completed', 'done'].includes(String(task.status).toLowerCase())).length;
       const openSupport = supportRequests.filter(r => !['Resolved', 'Closed'].includes(r.status)).length;
       const refundsToReview = (DB.financeRefunds || []).filter(r => !['Approved', 'Completed', 'Rejected'].includes(r.status)).length;
+      const totalRev = (DB.financeTransactions || []).reduce((s, t) => s + (Number(t.amount) || 0), 0);
       const metrics = type === 'REGISTRATION_VERIFICATION'
         ? [['Pending reviews', verificationPending, 'var(--yellow)'], ['Verified attendees', verified, 'var(--green)'], ['Registration records', registrations.length, 'var(--accent)']]
         : type === 'EVENT_OPERATIONS'
           ? [['Active events', activeEvents, 'var(--accent)'], ['Open operations tasks', operationalTasks, 'var(--yellow)'], ['Event requests', (DB.eventRequests || []).length, 'var(--green)']]
-          : [['Open support requests', openSupport, 'var(--yellow)'], ['Transactions reviewed', transactions.length, 'var(--blue)'], ['Refunds awaiting review', refundsToReview, 'var(--red)']];
+          : [['Total Revenue Tracked', '₹' + totalRev.toLocaleString('en-IN'), 'var(--green)'], ['Transactions monitored', transactions.length, 'var(--blue)'], ['Refunds awaiting review', refundsToReview, 'var(--yellow)']];
 
       return `
   <div class="page-hd"><div class="page-hd-left"><div class="page-title">My Employee Profile</div><div class="page-sub">Your department responsibilities and work overview.</div></div><div class="page-hd-right"><button class="btn btn-ghost" onclick="goNav('settings')">Edit Profile</button></div></div>
@@ -8797,9 +8617,9 @@ window.EventFlowModules['shared'] = true;
       const assigns = CU.role === 'staff' ? DB.staffAssignments.filter(a => a.staffId === CU.id) : [];
       const regs = CU.role === 'attendee' ? DB.registrations.filter(r => r.attendeeId === CU.id) : [];
       const myEvs = CU.role === 'organizer' ? DB.events.filter(e => e.organizer === CU.id) : [];
-      const isSF = CU.role === 'staff' && CU.employeeType === 'SUPPORT_FINANCE';
-      const sfSupportHandled = (DB.supportRequests || []).length;
-      const sfResolved = (DB.supportRequests || []).filter(r => r.status === 'Resolved' || r.status === 'Closed').length;
+      const isSF = CU.role === 'staff' && (CU.employeeType === 'SUPPORT_FINANCE' || CU.employeeType === 'FINANCE_EXECUTIVE');
+      const sfTotalRev = (DB.financeTransactions || []).reduce((s, t) => s + (Number(t.amount) || 0), 0);
+      const sfRefunds = (DB.financeRefunds || []).length;
       const sfTxnsReviewed = (DB.financeTransactions || []).length;
       const sfReportsSubmitted = (DB.operationalReports || []).filter(r => r.status === 'Submitted' || r.status === 'Reviewed').length;
       return `
@@ -8808,7 +8628,7 @@ window.EventFlowModules['shared'] = true;
     ${CU.avatarImage ? `<div class="av av-xl"><img src="${CU.avatarImage}" alt="${CU.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none">${CU.avatar || CU.name[0]}</span></div>` : `<div class="av av-xl">${CU.avatar || CU.name[0]}</div>`}
     <div class="profile-info">
       <div class="profile-name">${CU.name}</div>
-      <div class="profile-role-tag">${isSF ? 'Customer Support &amp; Finance Executive' : ROLE_LABELS[CU.role]}</div>
+      <div class="profile-role-tag">${isSF ? 'Finance Executive' : ROLE_LABELS[CU.role]}</div>
       ${CU.company ? `<div class="small mt-4">${CU.company}</div>` : ''}
       ${CU.specialization ? `<div class="small mt-4">Specialization: ${CU.specialization}</div>` : ''}
       ${CU.service ? `<div class="small mt-4">Service: ${CU.service}</div>` : ''}
@@ -8821,15 +8641,15 @@ window.EventFlowModules['shared'] = true;
       <div class="info-row"><span class="info-label">Email</span><span class="info-value">${CU.email}</span></div>
       <div class="info-row"><span class="info-label">Phone</span><span class="info-value">${CU.phone || 'Not set'}</span></div>
       <div class="info-row"><span class="info-label">Member Since</span><span class="info-value">${CU.joined || '—'}</span></div>
-      <div class="info-row"><span class="info-label">Role</span><span class="info-value"><span class="badge badge-${ROLE_COLORS[CU.role]}">${isSF ? 'Customer Support &amp; Finance Executive' : CU.role}</span></span></div>
+      <div class="info-row"><span class="info-label">Role</span><span class="info-value"><span class="badge badge-${ROLE_COLORS[CU.role]}">${isSF ? 'Finance Executive' : CU.role}</span></span></div>
       ${CU.bio ? `<div class="mt-14"><div class="label mb-8">Bio</div><p style="font-size:13.5px;color:var(--text2);line-height:1.7">${CU.bio}</p></div>` : ''}
     </div>
     <div>
       ${isSF ? `<div class="card mb-16">
         <div class="h4 mb-14">Work Summary</div>
-        <div class="info-row"><span class="info-label">Support Requests Handled</span><span class="info-value" style="color:var(--accent);font-weight:700">${sfSupportHandled}</span></div>
-        <div class="info-row"><span class="info-label">Issues Resolved</span><span class="info-value" style="color:var(--green);font-weight:700">${sfResolved}</span></div>
-        <div class="info-row"><span class="info-label">Transactions Reviewed</span><span class="info-value" style="color:var(--blue);font-weight:700">${sfTxnsReviewed}</span></div>
+        <div class="info-row"><span class="info-label">Total Revenue Tracked</span><span class="info-value" style="color:var(--green);font-weight:700">₹${sfTotalRev.toLocaleString('en-IN')}</span></div>
+        <div class="info-row"><span class="info-label">Transactions Monitored</span><span class="info-value" style="color:var(--blue);font-weight:700">${sfTxnsReviewed}</span></div>
+        <div class="info-row"><span class="info-label">Refund Requests Handled</span><span class="info-value" style="color:var(--yellow);font-weight:700">${sfRefunds}</span></div>
         <div class="info-row"><span class="info-label">Reports Submitted</span><span class="info-value" style="color:var(--purple);font-weight:700">${sfReportsSubmitted}</span></div>
       </div>` : CU.role === 'staff' ? `<div class="card mb-16">
         <div class="h4 mb-14">Assignment Summary</div>
@@ -9818,9 +9638,11 @@ window.EventFlowModules['shared'] = true;
 
       if ((role === 'staff' || role === 'employee') && empType) {
         const employeePages = {
+          SUPPORT_EXECUTIVE: { key: 'employee1' },
           REGISTRATION_VERIFICATION: { key: 'employee1' },
-          EVENT_OPERATIONS: { key: 'employee2' },
-          SUPPORT_FINANCE: { key: 'employee3' },
+          EVENT_OPERATIONS: { key: 'employee1' },
+          SUPPORT_FINANCE: { key: 'employee2' },
+          FINANCE_EXECUTIVE: { key: 'employee2' },
         };
         if (employeePages[empType]) return employeePages[empType];
       }
@@ -9836,7 +9658,7 @@ window.EventFlowModules['shared'] = true;
         attendee: { key: 'attendee' },
         employee1: { key: 'employee1' },
         employee2: { key: 'employee2' },
-        employee3: { key: 'employee3' },
+        employee3: { key: 'employee2' },
       };
       return rolePages[role] || null;
     }
@@ -10034,6 +9856,6 @@ window.EventFlowModules['shared'] = true;
 
 /* ===== Role-owned frontend configuration ===== */
 window.EventFlowRole = {
-  key: 'employee3',
-  label: 'Employee 3 — Support & Finance'
+  key: 'employee2',
+  label: 'Finance Executive'
 };

@@ -383,7 +383,7 @@ export default function Attendee() {
           margin-top: auto;
         {'}'}
       </style>
-<div className="fe-grid">
+<div className="fe-grid" id="public-events-grid">
 
 <div className="fe-card">
 <div className="fe-card-img">

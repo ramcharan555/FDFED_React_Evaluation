@@ -5736,16 +5736,7 @@ window.EventFlowModules['shared'] = true;
           closeModal(); renderPage(_currentPage); toast('Event created!', 'success');
         })
         .catch(function (err) {
-          // Fallback: save locally
-          const evId = DB._nextId ? DB._nextId.events++ : Date.now();
-          DB.events.push({
-            id: evId, title, category: v('ne-cat'), date, time: v('ne-time'),
-            venue, city: v('ne-city'), capacity: parseInt(cap), registered: 0,
-            price: parseInt(v('ne-price')) || 0, status: v('ne-status') || 'upcoming',
-            organizer: CU.id, description: v('ne-desc'), emoji: '📅', color: '#7c6ff7',
-          });
-          saveDB();
-          closeModal(); renderPage(_currentPage); toast('Event created (local)!', 'success');
+          toast(err.message || 'Event creation failed.', 'error');
         });
     }
     function openEditEventModal(id) {
@@ -5782,9 +5773,8 @@ window.EventFlowModules['shared'] = true;
         .then(function () {
           e.title = newTitle; e.date = newDate; e.time = newTime; e.venue = newVenue; e.capacity = newCap; e.price = newPrice; e.status = newStatus; e.description = newDesc;
           closeModal(); renderPage('events'); toast('Event updated successfully', 'success');
-        }).catch(function () {
-          e.title = newTitle; e.date = newDate; e.time = newTime; e.venue = newVenue; e.capacity = newCap; e.price = newPrice; e.status = newStatus; e.description = newDesc;
-          saveDB(); closeModal(); renderPage('events'); toast('Event updated (local)', 'success');
+        }).catch(function (err) {
+          toast(err.message || 'Event update failed.', 'error');
         });
     }
     function deleteEvent(id) {
@@ -5798,11 +5788,8 @@ window.EventFlowModules['shared'] = true;
             if (idx > -1) { DB.events.splice(idx, 1); }
             DB.registrations = DB.registrations.filter(r => String(r.eventId) !== String(id));
             renderPage(_currentPage); toast('Event deleted', 'info');
-          }).catch(function () {
-            const idx = DB.events.findIndex(ev => String(ev.id) === String(id));
-            if (idx > -1) { DB.events.splice(idx, 1); saveDB(); }
-            DB.registrations = DB.registrations.filter(r => String(r.eventId) !== String(id));
-            renderPage(_currentPage); toast('Event deleted (local)', 'info');
+          }).catch(function (err) {
+            toast(err.message || 'Event deletion failed.', 'error');
           });
       });
     }
@@ -6052,7 +6039,7 @@ window.EventFlowModules['shared'] = true;
         .then(function (regData) {
           // If paid event, also create payment
           if (e.price > 0) {
-            apiMakePayment({ registrationId: regData.registrationId, amount: e.price, paymentMethod: 'CARD', paymentDate: new Date().toISOString().split('T')[0] })
+            apiMakePayment({ registrationId: regData.registrationId, amount: e.price, paymentMethod: 'DEMO_PROVIDER', paymentDate: new Date().toISOString().split('T')[0] })
               .catch(function () { }); // payment fire-and-forget
           }
           // Update local DB
@@ -7437,94 +7424,914 @@ window.EventFlowModules['shared'] = true;
     }
 
     // ════════════════════════════════════════════════
-    //  EVENT REQUESTS
+    //  ORGANIZER EVENT REQUESTS: LIFECYCLE & WORKFLOWS
     // ════════════════════════════════════════════════
+
+    function normalizeEventRequest(r) {
+      if (!r) return null;
+      if (!r.status) r.status = 'submitted';
+      if (r.status === 'pending') r.status = 'submitted';
+      if (r.status === 'approved') r.status = 'confirmed';
+      if (!r.agreementStatus) r.agreementStatus = r.status === 'confirmed' ? 'agreed' : 'not_sent';
+      if (!r.paymentStatus) r.paymentStatus = r.status === 'confirmed' ? 'deposit_paid' : 'unpaid';
+      if (!Array.isArray(r.proposals)) r.proposals = [];
+      if (!Array.isArray(r.clarifications)) r.clarifications = [];
+      if (!Array.isArray(r.auditHistory)) {
+        r.auditHistory = [
+          { id: 'aud-init-' + r.id, action: 'Request Submitted', performedBy: 'Client', role: 'client', timestamp: r.created || today(), details: { budget: r.budget, guests: r.guests } }
+        ];
+      }
+      // Check proposal expiry
+      if ((r.status === 'proposal_sent' || r.status === 'awaiting_client') && r.proposals.length > 0) {
+        const lastProp = r.proposals[r.proposals.length - 1];
+        if (lastProp && lastProp.status === 'pending_client' && lastProp.validUntil) {
+          const exp = new Date(lastProp.validUntil + 'T23:59:59');
+          if (exp < new Date()) {
+            lastProp.status = 'expired';
+            r.status = 'expired';
+            r.auditHistory.push({
+              id: 'aud-exp-' + Date.now(),
+              action: `Proposal (v${lastProp.version}) Expired`,
+              performedBy: 'System',
+              role: 'system',
+              timestamp: today(),
+              details: { validUntil: lastProp.validUntil }
+            });
+            saveDB();
+          }
+        }
+      }
+      return r;
+    }
+
+    function checkOrganizerDateAvailability(organizerId, dateStr, excludeReqId) {
+      if (!dateStr) return { available: false, reason: 'Date not provided' };
+      const todayDate = new Date();
+      todayDate.setHours(0, 0, 0, 0);
+      const targetDate = new Date(dateStr);
+      if (targetDate < todayDate) {
+        return { available: false, past: true, reason: 'Date has already passed' };
+      }
+      const myOrgId = organizerId || CU.id;
+      // Check active events
+      const conflictEv = DB.events.find(e => 
+        (String(e.organizer) === String(myOrgId) || String(e.organizerId) === String(myOrgId)) &&
+        e.date === dateStr &&
+        e.status !== 'cancelled'
+      );
+      if (conflictEv) {
+        return {
+          available: false,
+          conflict: true,
+          reason: `Organizer already has event "${conflictEv.title}" scheduled on this date`,
+          conflictTitle: conflictEv.title
+        };
+      }
+      // Check other confirmed requests
+      const conflictReq = DB.eventRequests.find(req => 
+        String(req.id) !== String(excludeReqId) &&
+        (String(req.organizer) === String(myOrgId) || String(req.organizerId) === String(myOrgId)) &&
+        req.date === dateStr &&
+        req.status === 'confirmed'
+      );
+      if (conflictReq) {
+        return {
+          available: false,
+          conflict: true,
+          reason: `Confirmed booking "${conflictReq.title}" already occupies this date`,
+          conflictTitle: conflictReq.title
+        };
+      }
+      return { available: true, reason: 'Date is available for booking' };
+    }
+
+    function reqBadgeColor(s) {
+      return {
+        submitted: 'yellow',
+        pending: 'yellow',
+        under_review: 'purple',
+        in_review: 'purple',
+        info_requested: 'yellow',
+        proposal_sent: 'blue',
+        awaiting_client: 'blue',
+        confirmed: 'green',
+        approved: 'green',
+        rejected: 'red',
+        withdrawn: 'gray',
+        cancelled: 'gray',
+        expired: 'red'
+      }[s] || 'gray';
+    }
+
+    function agreementBadgeInfo(s) {
+      const map = {
+        not_sent: { lbl: 'Not Sent', cls: 'gray' },
+        pending_signature: { lbl: 'Pending Signature', cls: 'yellow' },
+        agreed: { lbl: 'Agreed / Signed', cls: 'green' },
+        declined: { lbl: 'Agreement Declined', cls: 'red' }
+      };
+      return map[s] || { lbl: s || 'Not Sent', cls: 'gray' };
+    }
+
+    function paymentBadgeInfo(s) {
+      const map = {
+        unpaid: { lbl: 'Unpaid', cls: 'gray' },
+        deposit_pending: { lbl: 'Deposit Pending', cls: 'yellow' },
+        deposit_paid: { lbl: 'Deposit Paid', cls: 'blue' },
+        fully_paid: { lbl: 'Fully Paid', cls: 'green' },
+        refunded: { lbl: 'Refunded', cls: 'red' }
+      };
+      return map[s] || { lbl: s || 'Unpaid', cls: 'gray' };
+    }
+
     function pageEventRequests() {
+      // Normalize all requests
+      DB.eventRequests.forEach(normalizeEventRequest);
+
+      const filterTab = sessionStorage.getItem('org_reqs_tab') || 'all';
+      const search = (sessionStorage.getItem('org_reqs_search') || '').toLowerCase().trim();
+
+      // Show requests relevant to this organizer (or all for superuser)
+      const myReqs = DB.eventRequests.filter(r => {
+        if (CU.role === 'superuser') return true;
+        return String(r.organizer) === String(CU.id) || String(r.organizerId) === String(CU.id) || !r.organizer;
+      });
+
+      const needsReviewCount = myReqs.filter(r => ['submitted', 'pending', 'under_review', 'info_requested'].includes(r.status)).length;
+      const proposalsCount = myReqs.filter(r => ['proposal_sent', 'awaiting_client'].includes(r.status)).length;
+      const confirmedCount = myReqs.filter(r => r.status === 'confirmed').length;
+      const closedCount = myReqs.filter(r => ['rejected', 'withdrawn', 'cancelled', 'expired'].includes(r.status)).length;
+
+      let filtered = myReqs.filter(r => {
+        if (filterTab === 'needs_review') return ['submitted', 'pending', 'under_review', 'info_requested'].includes(r.status);
+        if (filterTab === 'proposals') return ['proposal_sent', 'awaiting_client'].includes(r.status);
+        if (filterTab === 'confirmed') return r.status === 'confirmed';
+        if (filterTab === 'closed') return ['rejected', 'withdrawn', 'cancelled', 'expired'].includes(r.status);
+        return true;
+      });
+
+      if (search) {
+        filtered = filtered.filter(r => {
+          const cl = DB.users.find(u => String(u.id) === String(r.clientId)) || {};
+          return (r.title && r.title.toLowerCase().includes(search)) ||
+                 (r.type && r.type.toLowerCase().includes(search)) ||
+                 (cl.name && cl.name.toLowerCase().includes(search));
+        });
+      }
+
       return `
-  <div class="page-hd"><div class="page-hd-left"><div class="page-title">Event Requests</div><div class="page-sub">Review and manage client event requests.</div></div></div>
+  <div class="page-hd">
+    <div class="page-hd-left">
+      <div class="page-title">Event Requests</div>
+      <div class="page-sub">Review incoming requests, check date availability, send proposals, and track client agreements.</div>
+    </div>
+    <div class="page-hd-right" style="display:flex;gap:10px;align-items:center">
+      <div class="input-group" style="width:240px">
+        <span class="input-icon">🔍</span>
+        <input class="form-control" placeholder="Search requests..." value="${search}" oninput="sessionStorage.setItem('org_reqs_search', this.value);renderPage('event-requests')">
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap">
+    <button onclick="sessionStorage.setItem('org_reqs_tab','all');renderPage('event-requests')" class="btn btn-sm ${filterTab === 'all' ? 'btn-primary' : 'btn-ghost'}">All Requests (${myReqs.length})</button>
+    <button onclick="sessionStorage.setItem('org_reqs_tab','needs_review');renderPage('event-requests')" class="btn btn-sm ${filterTab === 'needs_review' ? 'btn-primary' : 'btn-ghost'}">Needs Review (${needsReviewCount})</button>
+    <button onclick="sessionStorage.setItem('org_reqs_tab','proposals');renderPage('event-requests')" class="btn btn-sm ${filterTab === 'proposals' ? 'btn-primary' : 'btn-ghost'}">Proposals & Client (${proposalsCount})</button>
+    <button onclick="sessionStorage.setItem('org_reqs_tab','confirmed');renderPage('event-requests')" class="btn btn-sm ${filterTab === 'confirmed' ? 'btn-primary' : 'btn-ghost'}">Confirmed (${confirmedCount})</button>
+    <button onclick="sessionStorage.setItem('org_reqs_tab','closed');renderPage('event-requests')" class="btn btn-sm ${filterTab === 'closed' ? 'btn-primary' : 'btn-ghost'}">Closed / Declined (${closedCount})</button>
+  </div>
+
   <div class="table-wrap">
-    <table><thead><tr><th>Client</th><th>Event</th><th>Type</th><th>Date</th><th>Guests</th><th>Budget</th><th>Status</th><th>Actions</th></tr></thead>
-    <tbody>${DB.eventRequests.map(r => {
-        const cl = DB.users.find(u => String(u.id) === String(r.clientId)) || DB.users.find(u => u.role === 'client') || { name: 'Michael Torres', avatar: 'MT', avatarImage: '/images/avatars/user-michael-torres.jpg' };
-        const clientAv = cl.avatarImage ? `
-          <div class="av av-xs">
-            <img src="${cl.avatarImage}" alt="${cl.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
-            <span style="display:none">${cl.avatar || cl.name?.[0] || 'C'}</span>
-          </div>
-        ` : `<div class="av av-xs">${cl.avatar || cl.name?.[0] || 'C'}</div>`;
-        return `<tr>
-        <td><div class="flex items-center gap-8">${clientAv}<strong>${cl.name}</strong></div></td>
-        <td><strong>${r.title}</strong></td><td>${r.type}</td><td>${r.date}</td><td>${r.guests}</td>
-        <td style="color:var(--green);font-weight:600">₹${r.budget.toLocaleString()}</td>
-        <td><span class="badge badge-${reqBadge(r.status)}">${r.status}</span></td>
-        <td><div class="actions">
-          <button class="btn btn-ghost btn-xs" onclick="viewRequestDrawer('${r.id}')">View</button>
-          ${r.status === 'pending' ? `<button class="btn btn-success btn-xs" onclick="approveReq('${r.id}')">Accept</button><button class="btn btn-xs btn-danger" onclick="rejectReq('${r.id}')">Decline</button>` : ''}
-        </div></td>
-      </tr>`;
-      }).join('')}
-    </tbody></table>
+    <table>
+      <thead>
+        <tr>
+          <th>Client</th>
+          <th>Event Details</th>
+          <th>Requested Date & Availability</th>
+          <th>Budget</th>
+          <th>Lifecycle Status</th>
+          <th>Agreement</th>
+          <th>Deposit / Payment</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        ${filtered.length === 0 ? `<tr><td colspan="8" style="text-align:center;padding:36px;color:var(--text3)">No event requests match the selected view.</td></tr>` : ''}
+        ${filtered.map(r => {
+          const cl = DB.users.find(u => String(u.id) === String(r.clientId)) || DB.users.find(u => u.role === 'client') || { name: 'Michael Torres', avatar: 'MT', avatarImage: '/images/avatars/user-michael-torres.jpg' };
+          const clientAv = cl.avatarImage ? `
+            <div class="av av-xs">
+              <img src="${cl.avatarImage}" alt="${cl.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'">
+              <span style="display:none">${cl.avatar || cl.name?.[0] || 'C'}</span>
+            </div>
+          ` : `<div class="av av-xs">${cl.avatar || cl.name?.[0] || 'C'}</div>`;
+
+          const avail = checkOrganizerDateAvailability(r.organizer, r.date, r.id);
+          const availBadge = avail.past
+            ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--red);background:rgba(239,68,68,0.12);padding:2px 8px;border-radius:6px;font-weight:600">❌ Past Date</span>`
+            : avail.conflict
+            ? `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--yellow);background:rgba(245,158,11,0.12);padding:2px 8px;border-radius:6px;font-weight:600" title="${avail.reason}">⚠️ Conflict</span>`
+            : `<span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:var(--green);background:rgba(34,197,94,0.12);padding:2px 8px;border-radius:6px;font-weight:600">✅ Available</span>`;
+
+          const ag = agreementBadgeInfo(r.agreementStatus);
+          const pay = paymentBadgeInfo(r.paymentStatus);
+
+          return `<tr>
+            <td>
+              <div class="flex items-center gap-8">
+                ${clientAv}
+                <div>
+                  <div style="font-weight:600;font-size:13.5px">${cl.name}</div>
+                  <div class="small text-muted">${cl.company || cl.email || ''}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <div style="font-weight:700;font-size:14px;color:var(--text)">${r.title}</div>
+              <div class="small text-muted">${r.type || 'Corporate'} &middot; ${r.guests || 100} guests</div>
+            </td>
+            <td>
+              <div style="font-weight:600;font-size:13px;margin-bottom:3px">${r.date}</div>
+              <div>${availBadge}</div>
+            </td>
+            <td>
+              <span style="color:var(--green);font-weight:700;font-size:14px">₹${(r.budget || 0).toLocaleString()}</span>
+            </td>
+            <td>
+              <span class="badge badge-${reqBadgeColor(r.status)}" style="text-transform:capitalize">${(r.status || 'submitted').replace('_', ' ')}</span>
+            </td>
+            <td>
+              <span class="badge badge-${ag.cls}">${ag.lbl}</span>
+            </td>
+            <td>
+              <span class="badge badge-${pay.cls}">${pay.lbl}</span>
+            </td>
+            <td>
+              <button class="btn btn-primary btn-xs" onclick="viewRequestDrawer('${r.id}')" style="white-space:nowrap">Review & Manage</button>
+            </td>
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table>
   </div>`;
     }
+
     function viewRequestDrawer(id) {
-      const r = DB.eventRequests.find(r => String(r.id) === String(id)); if (!r) return;
-      const org = DB.users.find(u => u.id === r.organizer) || { name: 'Pending Assignment' };
-      openDrawer(`Request: ${r.title}`, `
-    <span class="badge badge-${reqBadge(r.status)} mb-16">${r.status}</span>
-    <div style="display:flex;flex-direction:column;gap:2px;margin-bottom:20px">
-      <div class="info-row"><span class="info-label">Organizer</span><span class="info-value">${org.name}</span></div>
-      <div class="info-row"><span class="info-label">Type</span><span class="info-value">${r.type}</span></div>
-      <div class="info-row"><span class="info-label">Preferred Date</span><span class="info-value">${r.date}</span></div>
-      <div class="info-row"><span class="info-label">Expected Guests</span><span class="info-value">${r.guests}</span></div>
-      <div class="info-row"><span class="info-label">Budget</span><span class="info-value" style="color:var(--green);font-weight:700">₹${r.budget.toLocaleString()}</span></div>
-      <div class="info-row"><span class="info-label">Preferred Venue</span><span class="info-value">${r.venue || '—'}</span></div>
-      <div class="info-row"><span class="info-label">Submitted</span><span class="info-value">${r.created}</span></div>
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+
+      const cl = DB.users.find(u => String(u.id) === String(r.clientId)) || DB.users.find(u => u.role === 'client') || { name: 'Michael Torres', email: 'client@example.com', phone: '+91 9876543203' };
+      const avail = checkOrganizerDateAvailability(r.organizer, r.date, r.id);
+      const ag = agreementBadgeInfo(r.agreementStatus);
+      const pay = paymentBadgeInfo(r.paymentStatus);
+
+      // Conditions check for booking confirmation
+      const isAgreementSatisfied = r.agreementStatus === 'agreed';
+      const isDepositSatisfied = r.paymentStatus === 'deposit_paid' || r.paymentStatus === 'fully_paid';
+      const canConfirmBooking = isAgreementSatisfied && isDepositSatisfied && !avail.conflict && !avail.past && r.status !== 'confirmed';
+
+      // Lifecycle step indices
+      const steps = [
+        { key: 'submitted', lbl: '1. Submitted' },
+        { key: 'under_review', lbl: '2. Under Review' },
+        { key: 'proposal_sent', lbl: '3. Proposal Sent' },
+        { key: 'awaiting_client', lbl: '4. Agreement & Deposit' },
+        { key: 'confirmed', lbl: '5. Confirmed' }
+      ];
+
+      function isStepActive(sKey) {
+        if (r.status === 'confirmed') return true;
+        if (sKey === 'submitted') return true;
+        if (sKey === 'under_review' && ['under_review', 'info_requested', 'proposal_sent', 'awaiting_client'].includes(r.status)) return true;
+        if (sKey === 'proposal_sent' && ['proposal_sent', 'awaiting_client'].includes(r.status)) return true;
+        if (sKey === 'awaiting_client' && (r.status === 'awaiting_client' || (r.agreementStatus === 'agreed' || r.paymentStatus === 'deposit_paid'))) return true;
+        return false;
+      }
+
+      const activeProposal = r.proposals && r.proposals.length > 0 ? r.proposals[r.proposals.length - 1] : null;
+
+      openDrawer(`Request #${r.id}: ${r.title}`, `
+    <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap">
+      <span class="badge badge-${reqBadgeColor(r.status)}" style="font-size:12px;padding:4px 10px;text-transform:capitalize">Lifecycle: ${(r.status || 'submitted').replace('_', ' ')}</span>
+      <span class="badge badge-${ag.cls}" style="font-size:12px;padding:4px 10px">Agreement: ${ag.lbl}</span>
+      <span class="badge badge-${pay.cls}" style="font-size:12px;padding:4px 10px">Deposit: ${pay.lbl}</span>
     </div>
-    <div class="label mb-8">Description</div>
-    <p style="font-size:13.5px;color:var(--text2);line-height:1.7">${r.desc}</p>
-    ${r.status === 'pending' ? `<div class="flex gap-8 mt-20"><button class="btn btn-success w-full" onclick="closeDrawer();approveReq(${r.id})">✓ Accept Event</button><button class="btn btn-danger w-full" onclick="closeDrawer();rejectReq(${r.id})">✕ Decline</button></div>` : ''}
+
+    <!-- LIFECYCLE STEPPER -->
+    <div style="background:var(--surface2);border-radius:10px;padding:12px 16px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;font-size:11px;font-weight:600;gap:4px;overflow-x:auto">
+      ${steps.map(st => `
+        <div style="display:flex;align-items:center;gap:4px;color:${isStepActive(st.key) ? 'var(--accent)' : 'var(--text3)'};white-space:nowrap">
+          <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${isStepActive(st.key) ? 'var(--accent)' : 'var(--border2)'}"></span>
+          ${st.lbl}
+        </div>
+      `).join('<span style="color:var(--border2)">→</span>')}
+    </div>
+
+    <!-- DATE AVAILABILITY CHECKER -->
+    <div style="background:${avail.past ? 'rgba(239,68,68,0.08)' : avail.conflict ? 'rgba(245,158,11,0.08)' : 'rgba(34,197,94,0.08)'};border:1px solid ${avail.past ? 'rgba(239,68,68,0.3)' : avail.conflict ? 'rgba(245,158,11,0.3)' : 'rgba(34,197,94,0.3)'};border-radius:12px;padding:14px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:0.04em;color:${avail.past ? 'var(--red)' : avail.conflict ? 'var(--yellow)' : 'var(--green)'}">📅 Date Availability Check</span>
+        <span style="font-size:12px;font-weight:700">${avail.past ? '❌ Past Date' : avail.conflict ? '⚠️ Booking Conflict' : '✅ Date Available'}</span>
+      </div>
+      <div style="font-size:13px;color:var(--text);line-height:1.5">${avail.reason}</div>
+      ${avail.conflict ? `<div style="font-size:12px;color:var(--yellow);margin-top:6px;font-weight:600">Note: You must revise the proposed event date before confirming this booking.</div>` : ''}
+    </div>
+
+    <!-- REJECTION REASON DISPLAY -->
+    ${r.status === 'rejected' && r.rejectionReason ? `
+      <div style="background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);border-radius:10px;padding:14px;margin-bottom:20px">
+        <div style="font-size:12px;font-weight:700;color:var(--red);margin-bottom:4px">❌ Decline Reason Provided:</div>
+        <div style="font-size:13px;color:var(--text);line-height:1.5">${r.rejectionReason}</div>
+      </div>
+    ` : ''}
+
+    <!-- EVENT & CLIENT DETAILS -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div class="h4 mb-12">👤 Client & Event Information</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px">
+        <div><span style="color:var(--text3);display:block;font-size:11px">CLIENT NAME</span><strong>${cl.name}</strong></div>
+        <div><span style="color:var(--text3);display:block;font-size:11px">CONTACT</span>${cl.email || '—'} &middot; ${cl.phone || ''}</div>
+        <div><span style="color:var(--text3);display:block;font-size:11px">EVENT DATE</span><strong>${r.date}</strong></div>
+        <div><span style="color:var(--text3);display:block;font-size:11px">EXPECTED GUESTS</span><strong>${r.guests} attendees</strong></div>
+        <div><span style="color:var(--text3);display:block;font-size:11px">TARGET BUDGET</span><strong style="color:var(--green)">₹${(r.budget || 0).toLocaleString()}</strong></div>
+        <div><span style="color:var(--text3);display:block;font-size:11px">PREFERRED VENUE</span>${r.venue || 'To be decided'}</div>
+      </div>
+      <div style="margin-top:14px">
+        <span style="color:var(--text3);display:block;font-size:11px;margin-bottom:4px">SPECIAL REQUIREMENTS</span>
+        <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;font-size:12.5px;color:var(--text);line-height:1.6">${r.desc || 'No special requirements noted.'}</div>
+      </div>
+    </div>
+
+    <!-- CLARIFICATIONS & MISSING INFO SECTION -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="h4" style="margin:0">💬 Clarifications & Missing Info (${(r.clarifications || []).length})</div>
+        <button class="btn btn-ghost btn-xs" onclick="openRequestInfoModal('${r.id}')">+ Request Info</button>
+      </div>
+      ${(!r.clarifications || r.clarifications.length === 0) ? `
+        <div style="font-size:12.5px;color:var(--text3);font-style:italic">No missing information queries recorded yet.</div>
+      ` : `
+        <div style="display:flex;flex-direction:column;gap:8px">
+          ${r.clarifications.map(c => `
+            <div style="background:var(--surface2);border-radius:8px;padding:10px 12px;border-left:3px solid ${c.senderRole === 'organizer' ? 'var(--accent)' : 'var(--green)'}">
+              <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text3);margin-bottom:3px">
+                <span style="font-weight:700;color:${c.senderRole === 'organizer' ? 'var(--accent)' : 'var(--green)'}">${c.senderName || (c.senderRole === 'organizer' ? 'Organizer' : 'Client')}</span>
+                <span>${c.timestamp || 'Today'}</span>
+              </div>
+              <div style="font-size:13px;line-height:1.5">${c.message}</div>
+            </div>
+          `).join('')}
+        </div>
+      `}
+      ${r.status === 'info_requested' ? `
+        <div style="margin-top:12px;display:flex;gap:8px">
+          <button class="btn btn-ghost btn-xs" onclick="simulateClientReply('${r.id}')">⚡ Simulate Client Response</button>
+        </div>
+      ` : ''}
+    </div>
+
+    <!-- PROPOSALS & REVISION SECTION -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+        <div class="h4" style="margin:0">📋 Proposals (${(r.proposals || []).length})</div>
+        <button class="btn btn-primary btn-xs" onclick="openSendProposalModal('${r.id}', ${r.proposals && r.proposals.length > 0})">${r.proposals && r.proposals.length > 0 ? '🔄 Revise Proposal' : '📝 Send Proposal'}</button>
+      </div>
+
+      ${!activeProposal ? `
+        <div style="font-size:12.5px;color:var(--text3);font-style:italic">No proposal sent yet. Organizers can send structured pricing and terms before booking.</div>
+      ` : `
+        <div style="background:var(--surface2);border-radius:10px;padding:14px;border:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div>
+              <span style="font-weight:700;font-size:14px">Proposal Version ${activeProposal.version}</span>
+              <span class="badge badge-${activeProposal.status === 'accepted' ? 'green' : activeProposal.status === 'rejected' || activeProposal.status === 'expired' ? 'red' : 'blue'}" style="margin-left:8px;font-size:10.5px">${(activeProposal.status || 'pending_client').replace('_', ' ')}</span>
+            </div>
+            <span style="font-size:11px;color:var(--text3)">Sent: ${activeProposal.sentAt ? String(activeProposal.sentAt).split('T')[0] : 'Recently'}</span>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:12.5px;margin-bottom:10px">
+            <div><span style="color:var(--text3);display:block;font-size:10.5px">PROPOSED BUDGET</span><strong style="color:var(--green)">₹${(activeProposal.amount || 0).toLocaleString()}</strong></div>
+            <div><span style="color:var(--text3);display:block;font-size:10.5px">REQUIRED DEPOSIT</span><strong style="color:var(--accent)">₹${(activeProposal.depositRequired || 0).toLocaleString()}</strong></div>
+            <div><span style="color:var(--text3);display:block;font-size:10.5px">PROPOSED DATE</span><strong>${activeProposal.proposedDate || r.date}</strong></div>
+            <div><span style="color:var(--text3);display:block;font-size:10.5px">VALID UNTIL</span><strong>${activeProposal.validUntil}</strong></div>
+          </div>
+          <div style="font-size:12px;color:var(--text2);margin-bottom:10px"><strong>Terms:</strong> ${activeProposal.terms || 'Standard deliverables apply.'}</div>
+
+          ${activeProposal.status === 'pending_client' ? `
+            <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
+              <span style="font-size:11px;color:var(--text3);align-self:center">Test Client Decision:</span>
+              <button class="btn btn-success btn-xs" onclick="simulateClientDecision('${r.id}', 'accept')">✓ Client Accepts</button>
+              <button class="btn btn-ghost btn-xs" onclick="simulateClientDecision('${r.id}', 'request_revision')">🔄 Client Requests Revision</button>
+              <button class="btn btn-danger btn-xs" onclick="simulateClientDecision('${r.id}', 'reject')">✕ Client Declines</button>
+            </div>
+          ` : ''}
+        </div>
+
+        ${r.proposals.length > 1 ? `
+          <details style="margin-top:10px;font-size:12px;color:var(--text3)">
+            <summary style="cursor:pointer;font-weight:600">View Proposal Version History (${r.proposals.length - 1} older)</summary>
+            <div style="display:flex;flex-direction:column;gap:8px;margin-top:8px">
+              ${r.proposals.slice(0, -1).map(p => `
+                <div style="background:var(--surface2);border-radius:6px;padding:8px 10px;display:flex;justify-content:space-between;align-items:center">
+                  <span><strong>v${p.version}</strong>: ₹${(p.amount || 0).toLocaleString()} (Deposit ₹${(p.depositRequired || 0).toLocaleString()})</span>
+                  <span class="badge badge-gray">${p.status}</span>
+                </div>
+              `).join('')}
+            </div>
+          </details>
+        ` : ''}
+      `}
+    </div>
+
+    <!-- AGREEMENT & PAYMENT CONDITIONS CHECKLIST -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:20px">
+      <div class="h4 mb-12">⚖️ Confirmation Conditions Checklist</div>
+      <div style="font-size:12.5px;color:var(--text2);margin-bottom:12px">Both signed agreement and deposit conditions must be satisfied before booking can be confirmed.</div>
+      
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:8px;padding:10px 14px">
+          <div>
+            <div style="font-weight:600;font-size:13px">${isAgreementSatisfied ? '✅' : '⭕'} 1. Service Agreement Signed</div>
+            <div style="font-size:11.5px;color:var(--text3)">Status: <strong class="badge badge-${ag.cls}" style="padding:1px 6px">${ag.lbl}</strong></div>
+          </div>
+          ${!isAgreementSatisfied && r.status !== 'confirmed' ? `
+            <button class="btn btn-ghost btn-xs" onclick="markAgreementSigned('${r.id}')">✍️ Mark Agreement Signed</button>
+          ` : '<span style="color:var(--green);font-size:12px;font-weight:700">Satisfied</span>'}
+        </div>
+
+        <div style="display:flex;justify-content:space-between;align-items:center;background:var(--surface2);border-radius:8px;padding:10px 14px">
+          <div>
+            <div style="font-weight:600;font-size:13px">${isDepositSatisfied ? '✅' : '⭕'} 2. Booking Deposit / Payment</div>
+            <div style="font-size:11.5px;color:var(--text3)">Status: <strong class="badge badge-${pay.cls}" style="padding:1px 6px">${pay.lbl}</strong></div>
+          </div>
+          ${!isDepositSatisfied && r.status !== 'confirmed' ? `
+            <button class="btn btn-ghost btn-xs" onclick="recordDepositReceived('${r.id}')">💳 Record Deposit Received</button>
+          ` : '<span style="color:var(--green);font-size:12px;font-weight:700">Satisfied</span>'}
+        </div>
+      </div>
+    </div>
+
+    <!-- ACTIONS BAR -->
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px">
+      ${r.status === 'submitted' || r.status === 'pending' ? `
+        <button class="btn btn-primary w-full" onclick="startReviewReq('${r.id}')">🔍 Start Review</button>
+      ` : ''}
+
+      ${r.status !== 'confirmed' ? `
+        <button class="btn btn-success w-full" style="padding:12px;font-size:14px;font-weight:700" ${canConfirmBooking ? `onclick="confirmBookingReq('${r.id}')"` : 'disabled'} title="${canConfirmBooking ? 'Confirm booking and schedule event' : 'Both agreement and deposit conditions must be met'}">
+          ${canConfirmBooking ? '✓ Confirm Booking & Schedule Event' : '🔒 Confirm Booking (Agreement & Deposit Required)'}
+        </button>
+        ${!canConfirmBooking ? `
+          <div style="font-size:11.5px;color:var(--yellow);text-align:center;line-height:1.4">
+            Confirmation requires: ${!isAgreementSatisfied ? '• Signed agreement ' : ''} ${!isDepositSatisfied ? '• Paid deposit ' : ''} ${avail.conflict ? '• Non-conflicting date ' : ''}
+          </div>
+        ` : ''}
+      ` : `
+        <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:12px;text-align:center;color:var(--green);font-weight:700">
+          ✅ Booking Confirmed — Event Scheduled in System
+        </div>
+      `}
+
+      ${r.status !== 'rejected' && r.status !== 'confirmed' ? `
+        <button class="btn btn-danger btn-sm w-full" onclick="openRejectModal('${r.id}')">✕ Decline Request with Reason</button>
+      ` : ''}
+    </div>
+
+    <!-- AUDIT TRAIL LOG -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px">
+      <div class="h4 mb-10">📜 Request Audit Trail (${(r.auditHistory || []).length})</div>
+      <div style="display:flex;flex-direction:column;gap:8px">
+        ${(r.auditHistory || []).slice().reverse().map(a => `
+          <div style="font-size:12px;display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--border2)">
+            <div>
+              <strong style="color:var(--text)">${a.action}</strong>
+              <span style="color:var(--text3);margin-left:6px">by ${a.performedBy || 'User'} (${a.role || 'system'})</span>
+            </div>
+            <div style="color:var(--text3);font-size:11px">${a.timestamp || 'Today'}</div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
   `);
     }
-    function approveReq(id) {
-      const r = DB.eventRequests.find(r => String(r.id) === String(id));
-      if (r) {
-        r.status = 'approved';
-        r.organizer = CU.id;
 
-        // Create new event from request
-        const newEvent = {
-          id: DB._nextId.events++,
-          title: r.title,
-          category: r.type,
-          date: r.date,
-          time: '10:00',
-          endTime: '18:00',
-          venue: r.venue || 'TBD',
-          city: r.city || 'India',
-          capacity: r.guests || 100,
-          registered: 0,
-          price: 0,
-          status: 'ongoing',
-          organizer: CU.id,
-          clientId: r.clientId,
-          description: r.desc,
-          color: '#7c6ff7',
-          emoji: r.type === 'Wedding' ? '💒' : (r.type === 'Corporate' ? '🥂' : '📅'),
-          tags: [r.type]
-        };
-        DB.events.push(newEvent);
+    // ─── ACTION HANDLERS FOR ORGANIZER WORKFLOWS ───
 
-        saveDB();
-        renderPage(_currentPage);
-        toast('Event request accepted — event created!', 'success');
+    function startReviewReq(id) {
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+      r.status = 'under_review';
+      r.auditHistory.push({
+        id: 'aud-' + Date.now(),
+        action: 'Review Started',
+        performedBy: CU.name || 'Sarah Chen',
+        role: 'organizer',
+        timestamp: today()
+      });
+      saveDB();
+      toast('Request moved to Under Review', 'info');
+      viewRequestDrawer(id);
+      renderPage('event-requests');
+    }
+
+    function openRequestInfoModal(id) {
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      openModal('Request Missing Information', `
+        <div class="form-group mb-16">
+          <label class="form-label">Message / Questions for the Client</label>
+          <textarea class="form-control" id="req-info-msg" rows="4" placeholder="e.g. Please specify the required audiovisual setup, speaker schedule, and dietary requirements..."></textarea>
+          <span class="form-error" id="req-info-err">Please enter the missing information query.</span>
+        </div>
+      `, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: 'Send to Client', cls: 'btn-primary', fn: `submitRequestInfo('${id}')` }
+      ]);
+    }
+
+    function submitRequestInfo(id) {
+      const msg = v('req-info-msg');
+      if (!msg) {
+        showErr('req-info-err');
+        return;
       }
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+
+      r.clarifications.push({
+        id: 'clr-' + Date.now(),
+        senderId: CU.id,
+        senderRole: 'organizer',
+        senderName: CU.name || 'Sarah Chen',
+        message: msg,
+        timestamp: today()
+      });
+      r.status = 'info_requested';
+      r.auditHistory.push({
+        id: 'aud-' + Date.now(),
+        action: 'Missing Information Requested',
+        performedBy: CU.name || 'Sarah Chen',
+        role: 'organizer',
+        timestamp: today(),
+        details: { query: msg }
+      });
+      saveDB();
+      closeModal();
+      toast('Information request sent to client', 'success');
+      viewRequestDrawer(id);
+      renderPage('event-requests');
+    }
+
+    function simulateClientReply(id) {
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+
+      r.clarifications.push({
+        id: 'clr-' + Date.now(),
+        senderId: r.clientId,
+        senderRole: 'client',
+        senderName: 'Michael Torres',
+        message: 'We have updated our requirements: 4K projector, 2 handheld mics, and 30 vegetarian meal preferences.',
+        timestamp: today()
+      });
+      r.status = 'under_review';
+      r.auditHistory.push({
+        id: 'aud-' + Date.now(),
+        action: 'Information Provided by Client',
+        performedBy: 'Michael Torres',
+        role: 'client',
+        timestamp: today()
+      });
+      saveDB();
+      toast('Simulated client reply received!', 'info');
+      viewRequestDrawer(id);
+      renderPage('event-requests');
+    }
+
+    function openSendProposalModal(id, isRevision) {
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+
+      const defaultAmount = r.budget || 25000;
+      const defaultDeposit = Math.round(defaultAmount * 0.3);
+      const defaultDate = r.date || '2026-09-01';
+
+      // Default valid until 14 days from now
+      const expDate = new Date();
+      expDate.setDate(expDate.getDate() + 14);
+      const defaultValidUntil = expDate.toISOString().split('T')[0];
+
+      openModal(isRevision ? 'Revise Event Proposal' : 'Send Event Proposal', `
+        <div class="form-group mb-12">
+          <label class="form-label">Total Proposed Amount (₹)</label>
+          <input type="number" class="form-control" id="prop-amount" value="${defaultAmount}" min="1">
+        </div>
+        <div class="form-group mb-12">
+          <label class="form-label">Required Deposit Amount (₹)</label>
+          <input type="number" class="form-control" id="prop-deposit" value="${defaultDeposit}" min="0">
+        </div>
+        <div class="form-group mb-12">
+          <label class="form-label">Proposed Event Date</label>
+          <input type="date" class="form-control" id="prop-date" value="${defaultDate}">
+        </div>
+        <div class="form-group mb-12">
+          <label class="form-label">Proposal Expiration Date (Valid Until)</label>
+          <input type="date" class="form-control" id="prop-expiry" value="${defaultValidUntil}">
+        </div>
+        <div class="form-group mb-12">
+          <label class="form-label">Terms, Deliverables & Notes</label>
+          <textarea class="form-control" id="prop-terms" rows="3">Includes complete venue setup, audio/visual coordination, catering supervision, and on-site staff.</textarea>
+        </div>
+        <div id="prop-err-msg" style="color:var(--red);font-size:12px;display:none;margin-top:6px"></div>
+      `, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: isRevision ? 'Send Revision' : 'Submit Proposal', cls: 'btn-primary', fn: `submitSendProposal('${id}', ${isRevision})` }
+      ]);
+    }
+
+    function submitSendProposal(id, isRevision) {
+      const amount = parseFloat(v('prop-amount'));
+      const deposit = parseFloat(v('prop-deposit'));
+      const proposedDate = v('prop-date');
+      const validUntil = v('prop-expiry');
+      const terms = v('prop-terms');
+      const errEl = g('prop-err-msg');
+
+      function showError(msg) {
+        if (errEl) { errEl.textContent = msg; errEl.style.display = 'block'; }
+      }
+
+      if (!amount || amount <= 0) { showError('Please enter a valid proposal amount greater than zero.'); return; }
+      if (isNaN(deposit) || deposit < 0 || deposit > amount) { showError('Deposit must be between 0 and total amount.'); return; }
+      if (!proposedDate) { showError('Proposed event date is required.'); return; }
+      if (!validUntil) { showError('Proposal expiration date is required.'); return; }
+
+      const todayStr = today();
+      if (proposedDate < todayStr) { showError('Proposed event date cannot be in the past.'); return; }
+      if (validUntil < todayStr) { showError('Proposal expiry date cannot be in the past.'); return; }
+
+      // Check date availability
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+
+      const avail = checkOrganizerDateAvailability(r.organizer, proposedDate, r.id);
+      if (!avail.available) {
+        showError('Date unavailable: ' + avail.reason);
+        return;
+      }
+
+      // Mark any pending proposal superseded
+      r.proposals.forEach(p => {
+        if (p.status === 'pending_client') p.status = 'revision_requested';
+      });
+
+      const nextVersion = r.proposals.length + 1;
+      r.proposals.push({
+        version: nextVersion,
+        amount,
+        depositRequired: deposit,
+        proposedDate,
+        validUntil,
+        terms,
+        status: 'pending_client',
+        sentAt: todayStr
+      });
+
+      r.date = proposedDate;
+      r.status = 'proposal_sent';
+      r.agreementStatus = 'not_sent';
+      r.paymentStatus = 'unpaid';
+      r.auditHistory.push({
+        id: 'aud-' + Date.now(),
+        action: `Proposal Sent (v${nextVersion})`,
+        performedBy: CU.name || 'Sarah Chen',
+        role: 'organizer',
+        timestamp: todayStr,
+        details: { version: nextVersion, amount, deposit, validUntil, proposedDate }
+      });
+
+      saveDB();
+      closeModal();
+      toast(`Proposal v${nextVersion} sent to client!`, 'success');
+      viewRequestDrawer(id);
+      renderPage('event-requests');
+    }
+
+    function simulateClientDecision(id, decision) {
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+
+      const activeProp = r.proposals[r.proposals.length - 1];
+      if (!activeProp) return;
+
+      if (decision === 'accept') {
+        activeProp.status = 'accepted';
+        r.status = 'awaiting_client';
+        r.agreementStatus = 'pending_signature';
+        r.paymentStatus = 'deposit_pending';
+        r.auditHistory.push({
+          id: 'aud-' + Date.now(),
+          action: `Proposal Accepted by Client (v${activeProp.version})`,
+          performedBy: 'Michael Torres',
+          role: 'client',
+          timestamp: today()
+        });
+        toast('Client accepted proposal! Ready for Agreement & Deposit.', 'success');
+      } else if (decision === 'request_revision') {
+        activeProp.status = 'revision_requested';
+        r.status = 'under_review';
+        r.auditHistory.push({
+          id: 'aud-' + Date.now(),
+          action: `Revision Requested by Client (v${activeProp.version})`,
+          performedBy: 'Michael Torres',
+          role: 'client',
+          timestamp: today(),
+          details: { note: 'Client requested budget reduction.' }
+        });
+        toast('Client requested revision on proposal v' + activeProp.version, 'info');
+      } else if (decision === 'reject') {
+        activeProp.status = 'rejected';
+        r.status = 'rejected';
+        r.rejectionReason = 'Client declined proposal terms.';
+        r.auditHistory.push({
+          id: 'aud-' + Date.now(),
+          action: `Proposal Declined by Client (v${activeProp.version})`,
+          performedBy: 'Michael Torres',
+          role: 'client',
+          timestamp: today()
+        });
+        toast('Client declined proposal', 'warning');
+      }
+
+      saveDB();
+      viewRequestDrawer(id);
+      renderPage('event-requests');
+    }
+
+    function markAgreementSigned(id) {
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+      r.agreementStatus = 'agreed';
+      r.auditHistory.push({
+        id: 'aud-' + Date.now(),
+        action: 'Agreement Signed by Client',
+        performedBy: 'Client',
+        role: 'client',
+        timestamp: today()
+      });
+      saveDB();
+      toast('Service Agreement marked as Signed!', 'success');
+      viewRequestDrawer(id);
+      renderPage('event-requests');
+    }
+
+    function recordDepositReceived(id) {
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+      r.paymentStatus = 'deposit_paid';
+      r.auditHistory.push({
+        id: 'aud-' + Date.now(),
+        action: 'Deposit Payment Received & Verified',
+        performedBy: CU.name || 'Sarah Chen',
+        role: 'organizer',
+        timestamp: today()
+      });
+      saveDB();
+      toast('Deposit payment recorded successfully!', 'success');
+      viewRequestDrawer(id);
+      renderPage('event-requests');
+    }
+
+    function confirmBookingReq(id) {
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+
+      if (r.status === 'confirmed') {
+        toast('This request is already confirmed', 'info');
+        return;
+      }
+
+      // STRICT VALIDATION
+      if (r.agreementStatus !== 'agreed') {
+        toast('Cannot confirm: Signed agreement is required', 'danger');
+        return;
+      }
+      if (r.paymentStatus !== 'deposit_paid' && r.paymentStatus !== 'fully_paid') {
+        toast('Cannot confirm: Deposit/payment must be satisfied first', 'danger');
+        return;
+      }
+
+      const avail = checkOrganizerDateAvailability(r.organizer, r.date, r.id);
+      if (!avail.available) {
+        toast('Cannot confirm: ' + avail.reason, 'danger');
+        return;
+      }
+
+      // Create confirmed event in DB.events
+      const newEventId = DB._nextId.events++;
+      const newEvent = {
+        id: newEventId,
+        title: r.title,
+        category: r.type || 'Corporate',
+        date: r.date,
+        time: '10:00',
+        endTime: '18:00',
+        venue: r.venue || 'TBD Convention Hall',
+        city: r.city || 'Bangalore',
+        capacity: r.guests || 100,
+        registered: 0,
+        price: 0,
+        status: 'upcoming',
+        organizer: CU.id,
+        clientId: r.clientId,
+        description: r.desc || '',
+        color: '#7c6ff7',
+        emoji: r.type === 'Wedding' ? '💒' : (r.type === 'Corporate' ? '🥂' : '📅'),
+        tags: [r.type || 'Event'],
+        createdFromRequest: r.id
+      };
+      DB.events.push(newEvent);
+
+      r.status = 'confirmed';
+      r.eventId = newEventId;
+      r.auditHistory.push({
+        id: 'aud-' + Date.now(),
+        action: 'Booking Confirmed & Event Scheduled',
+        performedBy: CU.name || 'Sarah Chen',
+        role: 'organizer',
+        timestamp: today(),
+        details: { eventId: newEventId, date: r.date }
+      });
+
+      saveDB();
+      toast('Booking confirmed! Event #' + newEventId + ' created on your calendar.', 'success');
+      viewRequestDrawer(id);
+      renderPage('event-requests');
+    }
+
+    function openRejectModal(id) {
+      openModal('Decline Event Request', `
+        <div class="form-group mb-16">
+          <label class="form-label" style="font-weight:700">Reason for Declining (Mandatory)</label>
+          <textarea class="form-control" id="reject-reason-txt" rows="4" placeholder="Explain why this request is declined (e.g. Schedule unavailable, capacity constraints, budget misalignment)..."></textarea>
+          <div id="reject-err" style="color:var(--red);font-size:12px;display:none;margin-top:6px">Please provide a valid rejection reason.</div>
+        </div>
+      `, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: 'Confirm Decline', cls: 'btn-danger', fn: `submitRejectReq('${id}')` }
+      ]);
+    }
+
+    function submitRejectReq(id) {
+      const reason = v('reject-reason-txt');
+      if (!reason) {
+        const el = g('reject-err');
+        if (el) el.style.display = 'block';
+        return;
+      }
+      const r = DB.eventRequests.find(x => String(x.id) === String(id));
+      if (!r) return;
+      normalizeEventRequest(r);
+
+      r.status = 'rejected';
+      r.rejectionReason = reason;
+      if (r.proposals && r.proposals.length > 0) {
+        const lastP = r.proposals[r.proposals.length - 1];
+        if (lastP.status === 'pending_client') lastP.status = 'rejected';
+      }
+      r.auditHistory.push({
+        id: 'aud-' + Date.now(),
+        action: 'Request Declined by Organizer',
+        performedBy: CU.name || 'Sarah Chen',
+        role: 'organizer',
+        timestamp: today(),
+        details: { reason }
+      });
+
+      saveDB();
+      closeModal();
+      toast('Request declined with reason recorded', 'info');
+      viewRequestDrawer(id);
+      renderPage('event-requests');
+    }
+
+    // Legacy wrappers
+    function approveReq(id) {
+      viewRequestDrawer(id);
     }
     function rejectReq(id) {
-      confirm2('Decline Request', 'Mark this event request as declined?', () => {
-        const r = DB.eventRequests.find(r => String(r.id) === String(id));
-        if (r) { r.status = 'rejected'; renderPage(_currentPage); toast('Request declined', 'info'); }
-      });
+      openRejectModal(id);
     }
+
 
     // ════════════════════════════════════════════════
     //  UNIFIED REQUEST STATUS (CLIENT & ORGANIZER)
@@ -7533,8 +8340,7 @@ window.EventFlowModules['shared'] = true;
       const isOrganizer = CU.role === 'organizer';
       if (isOrganizer) {
         const tab = sessionStorage.getItem('reqstat_tab') || 'pending';
-        const myOrgId = CU.id;
-        const pendingReqs = DB.eventRequests.filter(r => r.status === 'pending' || r.status === 'in_review');
+        const pendingReqs = DB.eventRequests.filter(r => ['submitted', 'pending', 'under_review', 'in_review', 'info_requested', 'proposal_sent', 'awaiting_client'].includes(r.status));
         const myEvents = DB.events.filter(e => e.organizer === myOrgId && (e.status === 'upcoming' || e.status === 'ongoing' || e.status === 'confirmed'));
 
         const pendingHtml = pendingReqs.length === 0
@@ -7694,8 +8500,7 @@ window.EventFlowModules['shared'] = true;
       </div>
 
       <div style="display:flex;justify-content:flex-end;gap:12px;padding-top:8px">
-        <button class="btn btn-danger" onclick="rejectReq('${r.id}');renderPage('request-status')" style="border-radius:8px;padding:10px 24px">&#x2715; Decline</button>
-        <button class="btn btn-success" onclick="approveReq('${r.id}');renderPage('request-status')" style="border-radius:8px;padding:10px 24px;background:var(--green);border-color:var(--green)">&#x2713; Accept Event</button>
+        <button class="btn btn-primary" onclick="viewRequestDrawer('${r.id}')" style="border-radius:8px;padding:10px 24px">📋 Open Lifecycle & Manage Request</button>
       </div>
     </div>
   </div>`;
@@ -9176,13 +9981,48 @@ window.EventFlowModules['shared'] = true;
     }
 
     function submitEventRequest(organizerId) {
-      const title = v('req-title'), type = v('req-type'), date = v('req-date'), guests = v('req-guests') || 0, budget = parseInt(v('req-budget')) || 0, desc = v('req-desc');
-      if (!title || !date || budget < 1000) { toast('Please fill required fields', 'error'); return; }
-      DB.eventRequests.push({ id: DB._nextId.reqs++, clientId: CU.id, organizer: organizerId, title, type, date, guests, budget, desc, status: 'pending', created: today() });
+      const title = v('req-title'), type = v('req-type'), date = v('req-date'), guests = parseInt(v('req-guests')) || 1, budget = parseInt(v('req-budget')) || 0, desc = v('req-desc');
+      if (!title || !date || budget <= 0) { toast('Please provide a title, valid date, and budget greater than 0', 'error'); return; }
+      if (date < today()) { toast('Event date cannot be in the past', 'danger'); return; }
+
+      // Check for duplicate active request
+      const isDup = DB.eventRequests.some(r => 
+        String(r.clientId) === String(CU.id) &&
+        r.title && r.title.toLowerCase().trim() === title.toLowerCase().trim() &&
+        r.date === date &&
+        ['submitted', 'pending', 'under_review', 'info_requested', 'proposal_sent', 'awaiting_client', 'confirmed'].includes(r.status)
+      );
+      if (isDup) {
+        toast(`An active request for "${title}" on ${date} already exists.`, 'warning');
+        return;
+      }
+
+      const reqId = DB._nextId.reqs++;
+      const newReq = {
+        id: reqId,
+        clientId: CU.id,
+        organizer: organizerId,
+        title,
+        type: type || 'Corporate',
+        date,
+        guests,
+        budget,
+        desc: desc || '',
+        status: 'submitted',
+        agreementStatus: 'not_sent',
+        paymentStatus: 'unpaid',
+        proposals: [],
+        clarifications: [],
+        auditHistory: [
+          { id: 'aud-' + Date.now(), action: 'Request Submitted', performedBy: CU.name || 'Client', role: 'client', timestamp: today(), details: { budget, guests, date } }
+        ],
+        created: today()
+      };
+      DB.eventRequests.push(newReq);
       saveDB();
       closeModal();
       renderPage(_currentPage);
-      toast('Request sent to organizer!', 'success');
+      toast('Request submitted to organizer!', 'success');
     }
 
     function pageFindStaff() {

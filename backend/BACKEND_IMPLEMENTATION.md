@@ -239,7 +239,7 @@ Body:
 {
   "registrationId": "reg-001",
   "amount": 50,
-  "paymentMethod": "Credit Card",
+  "paymentMethod": "DEMO_PROVIDER",
   "paymentDate": "2024-05-15"
 }
 ```
@@ -309,12 +309,12 @@ Returns: Registered events, tickets, attendance status
 
 ---
 
-## 🎯 What Still Needs Implementation (5%)
+## 🎯 Remaining Production/Integration Work
 
-### 1. **Database Persistence** (Not needed for dev/testing)
+### 1. **Production Database**
 
-- Currently uses in-memory DataStore (resets on server restart)
-- For production, replace with:
+- Development uses a persistent local JSON snapshot at `backend/data/eventflow-store.json` by default. Set `EVENTFLOW_DATA_FILE` to override the path.
+- For production, replace the local DataStore with:
   - TypeORM with PostgreSQL/MySQL
   - Database migrations
   - Connection pooling

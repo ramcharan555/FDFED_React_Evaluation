@@ -136,21 +136,15 @@ export default function Landing() {
         </div>
         <div className="role-card" onClick={event => legacyEvent("gotoLogin('employee1')", event)}>
           <div className="role-card-emoji">👔</div>
-          <div className="role-card-title">Employee 1</div>
-          <p className="role-card-desc">Registration verification &amp; user management operations.</p>
-          <span className="badge badge-purple">User Executive</span>
+          <div className="role-card-title">Support Executive</div>
+          <p className="role-card-desc">Unified workspace for user &amp; event management, registrations, and support operations.</p>
+          <span className="badge badge-purple">Support Executive</span>
         </div>
         <div className="role-card" onClick={event => legacyEvent("gotoLogin('employee2')", event)}>
-          <div className="role-card-emoji">📋</div>
-          <div className="role-card-title">Employee 2</div>
-          <p className="role-card-desc">Event operations, scheduling &amp; requests management.</p>
-          <span className="badge badge-purple">Event Executive</span>
-        </div>
-        <div className="role-card" onClick={event => legacyEvent("gotoLogin('employee3')", event)}>
-          <div className="role-card-emoji">💼</div>
-          <div className="role-card-title">Employee 3</div>
-          <p className="role-card-desc">Customer support, transactions &amp; financial operations.</p>
-          <span className="badge badge-purple">Support &amp; Finance</span>
+          <div className="role-card-emoji">💳</div>
+          <div className="role-card-title">Finance Executive</div>
+          <p className="role-card-desc">Financial operations, transaction monitoring, platform commission, organizer payouts, and refund management.</p>
+          <span className="badge badge-purple">Finance Executive</span>
         </div>
       </div>
     </section>
@@ -232,18 +226,13 @@ export default function Landing() {
       <div className="divider">Demo Credentials (Click to Auto-Fill)</div>
       <div style={{"background": "var(--surface2)", "borderRadius": "10px", "padding": "14px", "marginBottom": "16px", "fontSize": "12.5px", "display": "flex", "flexDirection": "column", "gap": "8px", "maxHeight": "210px", "overflowY": "auto"}}>
         <div onClick={event => legacyEvent("fillLogin('arjun.events@eventflow.com', 'Employee@123')", event)} style={{"cursor": "pointer", "display": "flex", "justifyContent": "space-between", "alignItems": "center", "padding": "4px 6px", "borderRadius": "6px", "background": "var(--surface)"}}>
-          <span><span className="badge badge-purple" style={{"marginRight": "4px"}}>Employee</span> <strong>User
+          <span><span className="badge badge-purple" style={{"marginRight": "4px"}}>Employee</span> <strong>Support
               Executive:</strong> arjun.events@eventflow.com</span>
           <span style={{"color": "var(--accent)", "fontFamily": "monospace", "fontSize": "11px"}}>Employee@123</span>
         </div>
-        <div onClick={event => legacyEvent("fillLogin('employee@example.com', 'Employee@123')", event)} style={{"cursor": "pointer", "display": "flex", "justifyContent": "space-between", "alignItems": "center", "padding": "4px 6px", "borderRadius": "6px", "background": "var(--surface)"}}>
-          <span><span className="badge badge-purple" style={{"marginRight": "4px"}}>Employee</span> <strong>Event
-              Executive:</strong> employee@example.com</span>
-          <span style={{"color": "var(--accent)", "fontFamily": "monospace", "fontSize": "11px"}}>Employee@123</span>
-        </div>
         <div onClick={event => legacyEvent("fillLogin('marcus.ops@eventflow.com', 'Employee@123')", event)} style={{"cursor": "pointer", "display": "flex", "justifyContent": "space-between", "alignItems": "center", "padding": "4px 6px", "borderRadius": "6px", "background": "var(--surface)"}}>
-          <span><span className="badge badge-purple" style={{"marginRight": "4px"}}>Employee</span> <strong>Support &amp;
-              Finance:</strong> marcus.ops@eventflow.com</span>
+          <span><span className="badge badge-purple" style={{"marginRight": "4px"}}>Employee</span> <strong>Finance
+              Executive:</strong> marcus.ops@eventflow.com</span>
           <span style={{"color": "var(--accent)", "fontFamily": "monospace", "fontSize": "11px"}}>Employee@123</span>
         </div>
         <div onClick={event => legacyEvent("fillLogin('organizer@example.com', 'Organizer@123')", event)} style={{"cursor": "pointer", "display": "flex", "justifyContent": "space-between", "alignItems": "center", "padding": "4px 6px", "borderRadius": "6px", "background": "var(--surface)"}}>

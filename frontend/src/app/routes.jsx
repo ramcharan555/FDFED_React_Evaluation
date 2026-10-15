@@ -18,6 +18,7 @@ export const routes = [
   { path: '/admin', element: <Admin /> },
   { path: '/attendee', element: <Attendee /> },
   { path: '/client', element: <Client /> },
+  { path: '/employee', element: <Employee1 /> },
   { path: '/employee1', element: <Employee1 /> },
   { path: '/employee2', element: <Employee2 /> },
   { path: '/employee3', element: <Employee3 /> },

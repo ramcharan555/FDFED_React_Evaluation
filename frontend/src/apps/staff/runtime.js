@@ -6000,7 +6000,7 @@ window.EventFlowModules['shared'] = true;
         .then(function (regData) {
           // If paid event, also create payment
           if (e.price > 0) {
-            apiMakePayment({ registrationId: regData.registrationId, amount: e.price, paymentMethod: 'CARD', paymentDate: new Date().toISOString().split('T')[0] })
+            apiMakePayment({ registrationId: regData.registrationId, amount: e.price, paymentMethod: 'DEMO_PROVIDER', paymentDate: new Date().toISOString().split('T')[0] })
               .catch(function () { }); // payment fire-and-forget
           }
           // Update local DB

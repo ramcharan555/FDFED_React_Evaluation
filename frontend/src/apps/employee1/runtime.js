@@ -186,6 +186,10 @@ async function apiGetOrganizerDashboard(organizerId) {
   return apiRequest('/analytics/organizer-dashboard');
 }
 
+async function apiGetStaffDashboard() {
+  return apiRequest('/analytics/staff-dashboard');
+}
+
 // ─── EVENT REQUESTS ──────────────────────────────────────────────
 async function apiGetEventRequests() {
   return apiRequest('/event-requests');
@@ -352,6 +356,7 @@ window.apiUpdateEvent = apiUpdateEvent;
 window.apiDeleteEvent = apiDeleteEvent;
 window.apiGetDashboard = apiGetDashboard;
 window.apiGetOrganizerDashboard = apiGetOrganizerDashboard;
+window.apiGetStaffDashboard = apiGetStaffDashboard;
 window.apiGetEventRequests = apiGetEventRequests;
 window.apiGetClientRequests = apiGetClientRequests;
 window.apiGetOrganizerRequests = apiGetOrganizerRequests;
@@ -1939,15 +1944,19 @@ window.EventFlowModules['shared'] = true;
     const ROLE_LABELS = { superuser: 'Super Administrator', organizer: 'Event Organizer', client: 'Client', staff: 'Event Staff', attendee: 'Attendee' };
     const ROLE_COLORS = { superuser: 'red', organizer: 'purple', client: 'yellow', staff: 'green', attendee: 'blue' };
     const EMPLOYEE_TYPE_LABELS = {
-      REGISTRATION_VERIFICATION: 'Registration & Verification',
-      EVENT_OPERATIONS: 'Event Operations',
+      SUPPORT_EXECUTIVE: 'Support Executive',
+      support_executive: 'Support Executive',
+      REGISTRATION_VERIFICATION: 'Support Executive',
+      EVENT_OPERATIONS: 'Support Executive',
       SUPPORT_FINANCE: 'Support & Finance',
-      registration_verification: 'Registration & Verification',
-      event_operations: 'Event Operations',
+      registration_verification: 'Support Executive',
+      event_operations: 'Support Executive',
       support_finance: 'Support & Finance',
     };
     const DEMO_CREDS = {
-      employee: { email: 'employee@example.com', pw: 'Employee@123' },
+      employee: { email: 'arjun.events@eventflow.com', pw: 'Employee@123' },
+      employee1: { email: 'arjun.events@eventflow.com', pw: 'Employee@123' },
+      employee2: { email: 'employee@example.com', pw: 'Employee@123' },
       organizer: { email: 'organizer@example.com', pw: 'Organizer@123' },
       client: { email: 'client@example.com', pw: 'Client@123' },
       staff: { email: 'staff@example.com', pw: 'Staff@123' },
@@ -1956,12 +1965,19 @@ window.EventFlowModules['shared'] = true;
     };
 
     function isEmployeeAccount() {
-      return (CU?.email || '').toLowerCase() === DEMO_CREDS.employee.email;
+      const em = (CU?.email || '').toLowerCase();
+      return em === 'arjun.events@eventflow.com' || em === 'employee@example.com' || em === 'employee@eventflow.com';
     }
 
     // New department-based Employee 1/2/3 accounts. Legacy staff accounts have no employeeType.
     function isDepartmentEmployee() {
-      return CU?.role === 'staff' && !!CU?.employeeType;
+      return (CU?.role === 'staff' || CU?.role === 'employee') && !!CU?.employeeType;
+    }
+
+    function isSupportExecutive() {
+      if (!CU) return false;
+      const type = (CU.employeeType || '').toUpperCase();
+      return type === 'SUPPORT_EXECUTIVE' || type === 'REGISTRATION_VERIFICATION' || type === 'EVENT_OPERATIONS' || isEmployeeAccount();
     }
 
     // ════════════════════════════════════════════════
@@ -2340,22 +2356,26 @@ window.EventFlowModules['shared'] = true;
     }
 
     function buildEmployeeNav(employeeType) {
-      const nav = {
-        REGISTRATION_VERIFICATION: [
-          { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
-          { ic: '📝', lbl: 'Registrations', pg: 'registrations' },
-          { ic: '👥', lbl: 'User Management', pg: 'attendees' },
-          { ic: '📄', lbl: 'Reports', pg: 'reports' },
-        ],
-        EVENT_OPERATIONS: [
-          { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' }, { ic: '📅', lbl: 'Events', pg: 'events' },
-          { ic: '⚙️', lbl: 'Event Operations', pg: 'event-requests' }, { ic: '📄', lbl: 'Reports', pg: 'reports' },
-        ],
-        SUPPORT_FINANCE: [
-          { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' }, { ic: '📩', lbl: 'Support Center', pg: 'support-center' },
-          { ic: '💳', lbl: 'Finance', pg: 'finance' }, { ic: '📋', lbl: 'Reports', pg: 'reports' },
-        ],
-      }[employeeType] || [];
+      const isSupportExec = employeeType === 'SUPPORT_EXECUTIVE' ||
+        employeeType === 'REGISTRATION_VERIFICATION' ||
+        employeeType === 'EVENT_OPERATIONS' ||
+        isEmployeeAccount();
+
+      const supportExecNav = [
+        { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
+        { ic: '👥', lbl: 'User & Event Management', pg: 'user-event-mgmt' },
+        { ic: '🎧', lbl: 'Support & Issue Management', pg: 'support-issue-mgmt' },
+        { ic: '📈', lbl: 'Reports & Analytics', pg: 'reports-analytics' },
+      ];
+
+      const nav = isSupportExec
+        ? supportExecNav
+        : ({
+            SUPPORT_FINANCE: [
+              { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' }, { ic: '📩', lbl: 'Support Center', pg: 'support-center' },
+              { ic: '💳', lbl: 'Finance', pg: 'finance' }, { ic: '📋', lbl: 'Reports', pg: 'reports' },
+            ],
+          }[employeeType] || supportExecNav);
       const unread = visibleNotifications().filter(n => !n.read).length;
       g('sb-nav').innerHTML = `<div class="sb-section-lbl">Menu</div>` + nav.map(i => `<div class="sb-item" data-pg="${i.pg}" onclick="goNav('${i.pg}')"><span class="ic">${i.ic}</span><span>${i.lbl}</span>${i.badge && unread > 0 ? '<span class="badge-dot"></span>' : ''}</div>`).join('');
     }
@@ -2406,6 +2426,9 @@ window.EventFlowModules['shared'] = true;
       attendees: 'Attendee Management', 'reports': 'Reports & Analytics', 'notifications': 'Notifications', 'attendeeVerification': 'Attendee Verification',
       'employee-stats': 'Employee Statistics',
       registrations: 'Registrations',
+      'user-event-mgmt': 'User & Event Management',
+      'support-issue-mgmt': 'Support & Issue Management',
+      'reports-analytics': 'Reports & Analytics',
       'find-organizers': 'Find Event Organisers', 'upcoming-events': 'Upcoming Events', 'completed-events': 'Completed Events', 'ongoing-events': 'Ongoing Events',
       settings: 'Account Settings', 'pending-plans': 'Pending Plans', 'request-status': 'Request Status',
       'new-request': 'New Event Request', 'profile': 'My Profile', 'event-requests': 'Event Requests',
@@ -2414,7 +2437,7 @@ window.EventFlowModules['shared'] = true;
     function updateHeaderUser() {
       if (!CU) return;
       const displayRole = isDepartmentEmployee()
-        ? EMPLOYEE_TYPE_LABELS[CU.employeeType]
+        ? (EMPLOYEE_TYPE_LABELS[CU.employeeType] || 'Support Executive')
         : (ROLE_LABELS[CU.role] || CU.role || 'User');
       const header = g('topbar-title');
       if (!header) return;
@@ -2425,16 +2448,23 @@ window.EventFlowModules['shared'] = true;
     function goNav(pg) {
       _currentPage = pg;
       // Keep event-request tabs associated with their parent sidebar section.
-      const sidebarPage = pg === 'staff-event-requests'
-        ? (isDepartmentEmployee() ? 'event-requests' : 'assignments')
-        : pg;
+      let sidebarPage = pg;
+      if (isSupportExecutive()) {
+        if (['registrations', 'attendees', 'events', 'browse-events'].includes(pg)) {
+          sidebarPage = 'user-event-mgmt';
+        } else if (['event-requests', 'staff-event-requests', 'support-center'].includes(pg)) {
+          sidebarPage = 'support-issue-mgmt';
+        } else if (['reports', 'user-reports', 'event-reports'].includes(pg)) {
+          sidebarPage = 'reports-analytics';
+        }
+      } else {
+        sidebarPage = pg === 'staff-event-requests'
+          ? (isDepartmentEmployee() ? 'event-requests' : 'assignments')
+          : pg;
+      }
       document.querySelectorAll('.sb-item').forEach(el => el.classList.toggle('active', el.dataset.pg === sidebarPage));
       updateHeaderUser();
-      // Read the latest shared data without writing it back. Writing during
-      // navigation broadcasts a storage event and forces other open tabs to
-      // rebuild their current page.
       loadDB(false);
-      // renderPage may be async for pages that fetch backend data
       renderPage(pg).catch(err => console.error('Render error', err));
     }
 
@@ -2476,11 +2506,16 @@ window.EventFlowModules['shared'] = true;
       }
 
       if (isDepartmentEmployee()) {
-        const allowed = {
-          REGISTRATION_VERIFICATION: ['dashboard', 'registrations', 'attendees', 'attendeeVerification', 'reports', 'profile', 'settings', 'notifications'],
-          EVENT_OPERATIONS: ['dashboard', 'events', 'event-requests', 'staff-event-requests', 'reports', 'profile', 'settings', 'notifications'],
-          SUPPORT_FINANCE: ['dashboard', 'support-center', 'finance', 'reports', 'profile', 'settings', 'notifications'],
-        }[CU.employeeType] || [];
+        const supportExecPages = [
+          'dashboard', 'user-event-mgmt', 'support-issue-mgmt', 'reports-analytics',
+          'registrations', 'attendees', 'events', 'event-requests', 'reports',
+          'profile', 'settings', 'notifications'
+        ];
+        const allowed = isSupportExecutive()
+          ? supportExecPages
+          : ({
+              SUPPORT_FINANCE: ['dashboard', 'support-center', 'finance', 'reports', 'profile', 'settings', 'notifications'],
+            }[CU.employeeType] || supportExecPages);
         if (!allowed.includes(pg)) { el.innerHTML = `<div class="empty"><div class="empty-title">Access restricted</div><p class="empty-desc">This department does not have access to this area.</p></div>`; return; }
       }
 
@@ -2507,17 +2542,49 @@ window.EventFlowModules['shared'] = true;
             ? dashDepartmentEmployee()
             : ({ organizer: dashOrganizer, client: dashClient, staff: dashStaff, attendee: dashAttendee }[r] || dashAttendee)();
           break;
+        case 'user-event-mgmt':
+          el.innerHTML = pageUserAndEventManagement();
+          break;
+        case 'support-issue-mgmt':
+          el.innerHTML = pageSupportAndIssueManagement();
+          break;
+        case 'reports-analytics':
+          el.innerHTML = pageReportsAndAnalytics();
+          break;
         case 'registrations':
-          el.innerHTML = pageRegistrationsForEmployee();
+          if (isSupportExecutive()) {
+            sessionStorage.setItem('uem_active_tab', 'events');
+            el.innerHTML = pageUserAndEventManagement();
+          } else {
+            el.innerHTML = pageRegistrationsForEmployee();
+          }
           break;
         case 'events':
-          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOpsEvents() : pageEvents();
+          if (isSupportExecutive()) {
+            sessionStorage.setItem('uem_active_tab', 'events');
+            el.innerHTML = pageUserAndEventManagement();
+          } else {
+            el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOpsEvents() : pageEvents();
+          }
+          break;
+        case 'attendees':
+          if (isSupportExecutive()) {
+            sessionStorage.setItem('uem_active_tab', 'users');
+            el.innerHTML = pageUserAndEventManagement();
+          } else {
+            el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'REGISTRATION_VERIFICATION' ? pageUserManagement() : pageAttendees();
+          }
           break;
         case 'event-requests':
-          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOperationsWorkspace() : pageEventRequests();
+          if (isSupportExecutive()) {
+            sessionStorage.setItem('sim_active_tab', 'operations');
+            el.innerHTML = pageSupportAndIssueManagement();
+          } else {
+            el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOperationsWorkspace() : pageEventRequests();
+          }
           break;
         case 'support-center':
-          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageSupportCenter() : pageEventRequests();
+          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageSupportCenter() : (isSupportExecutive() ? pageSupportAndIssueManagement() : pageEventRequests());
           break;
         case 'finance':
           el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageFinanceCenter() : pageRevenueReports();
@@ -2529,14 +2596,15 @@ window.EventFlowModules['shared'] = true;
         case 'find-staff':
           el.innerHTML = pageStaffCombined();
           break;
-        case 'attendees':
-          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'REGISTRATION_VERIFICATION' ? pageUserManagement() : pageAttendees();
-          break;
         case 'attendeeVerification':
           el.innerHTML = pageAttendeeVerification();
           break;
         case 'reports':
-          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'REGISTRATION_VERIFICATION' ? pageRegVerificationReports() : (isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOpsReports() : (isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageOperationalReports() : pageReports()));
+          if (isSupportExecutive()) {
+            el.innerHTML = pageReportsAndAnalytics();
+          } else {
+            el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'REGISTRATION_VERIFICATION' ? pageRegVerificationReports() : (isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOpsReports() : (isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageOperationalReports() : pageReports()));
+          }
           break;
         case 'staff-reports':
           el.innerHTML = pageStaffReports();
@@ -2729,12 +2797,1495 @@ window.EventFlowModules['shared'] = true;
     }
 
     function dashDepartmentEmployee() {
+      if (isSupportExecutive()) return dashSupportExecutive();
       const type = CU.employeeType;
       if (type === 'SUPPORT_FINANCE') return dashSupportFinance();
-      if (type === 'EVENT_OPERATIONS') return dashEventOperations();
-      if (type === 'REGISTRATION_VERIFICATION') return dashRegistrationVerification();
-      return `<div class="page-hd"><div class="page-hd-left"><div class="page-title">Employee Dashboard</div></div></div>`;
+      if (type === 'EVENT_OPERATIONS') return dashSupportExecutive();
+      if (type === 'REGISTRATION_VERIFICATION') return dashSupportExecutive();
+      return dashSupportExecutive();
     }
+
+    // ═══════════════════════════════════════════════════════════════
+    //  UNIFIED WORKSPACE: SUPPORT EXECUTIVE
+    // ═══════════════════════════════════════════════════════════════
+
+    function switchTabAndNav(pg, tab, filter) {
+      if (pg === 'user-event-mgmt') {
+        sessionStorage.setItem('uem_active_tab', tab || 'users');
+        if (filter === 'pending_regs') {
+          sessionStorage.setItem('uem_reg_st', 'Pending Review');
+        }
+      } else if (pg === 'support-issue-mgmt') {
+        sessionStorage.setItem('sim_active_tab', tab || 'support');
+      }
+      goNav(pg);
+    }
+    window.switchTabAndNav = switchTabAndNav;
+
+    function setUemTab(tab) {
+      sessionStorage.setItem('uem_active_tab', tab);
+      renderPage('user-event-mgmt');
+    }
+    window.setUemTab = setUemTab;
+
+    function setSimTab(tab) {
+      sessionStorage.setItem('sim_active_tab', tab);
+      renderPage('support-issue-mgmt');
+    }
+    window.setSimTab = setSimTab;
+
+    function refreshUemUsers() {
+      sessionStorage.setItem('uem_user_q', v('uem-user-q'));
+      sessionStorage.setItem('uem_user_role', v('uem-user-role'));
+      sessionStorage.setItem('uem_user_st', v('uem-user-st'));
+      renderPage('user-event-mgmt');
+    }
+    window.refreshUemUsers = refreshUemUsers;
+
+    function refreshUemEvents() {
+      sessionStorage.setItem('uem_event_q', v('uem-event-q'));
+      sessionStorage.setItem('uem_event_st', v('uem-event-st'));
+      sessionStorage.setItem('uem_event_cat', v('uem-event-cat'));
+      renderPage('user-event-mgmt');
+    }
+    window.refreshUemEvents = refreshUemEvents;
+
+    function refreshUemRegistrations() {
+      sessionStorage.setItem('uem_reg_q', v('uem-reg-q'));
+      sessionStorage.setItem('uem_reg_st', v('uem-reg-st'));
+      renderPage('user-event-mgmt');
+    }
+    window.refreshUemRegistrations = refreshUemRegistrations;
+
+    function refreshSimSupport() {
+      sessionStorage.setItem('sim_sup_q', v('sim-sup-q'));
+      sessionStorage.setItem('sim_sup_st', v('sim-sup-st'));
+      sessionStorage.setItem('sim_sup_pr', v('sim-sup-pr'));
+      renderPage('support-issue-mgmt');
+    }
+    window.refreshSimSupport = refreshSimSupport;
+
+    function refreshSimOperations() {
+      sessionStorage.setItem('sim_ops_q', v('sim-ops-q'));
+      sessionStorage.setItem('sim_ops_st', v('sim-ops-st'));
+      sessionStorage.setItem('sim_ops_pr', v('sim-ops-pr'));
+      renderPage('support-issue-mgmt');
+    }
+    window.refreshSimOperations = refreshSimOperations;
+
+    function refreshReportsAnalytics() {
+      sessionStorage.setItem('rep_q', v('rep-q'));
+      sessionStorage.setItem('rep_type', v('rep-type'));
+      sessionStorage.setItem('rep_st', v('rep-st'));
+      renderPage('reports-analytics');
+    }
+    window.refreshReportsAnalytics = refreshReportsAnalytics;
+
+    // ─── PAGE 1: DASHBOARD ──────────────────────────────────────────
+    function dashSupportExecutive() {
+      const users = DB.users || [];
+      const events = DB.events || [];
+      const regs = DB.registrations || [];
+      const tasks = DB.eventOperationsTasks || [];
+      const queries = DB.userQueries || [];
+      const supportReqs = DB.supportRequests || [];
+
+      const totalUsers = users.length;
+      const totalEvents = events.length;
+
+      const pendingRegs = regs.filter(r => {
+        const st = (r.status || '').toLowerCase();
+        const vst = (r.verificationStatus || '').toLowerCase();
+        return st === 'pending' || st === 'registered' || vst === 'pending review' || vst === 'pending' || !r.verified;
+      }).length;
+
+      const openTickets = supportReqs.filter(s => s.status !== 'Resolved' && s.status !== 'Closed').length +
+        queries.filter(q => q.status !== 'Resolved').length;
+
+      const operationalIssues = tasks.filter(t => t.status !== 'Resolved').length;
+      const activeEventsCount = events.filter(e => ['published', 'active', 'ongoing', 'upcoming'].includes((e.status || '').toLowerCase())).length;
+
+      // Upcoming events list sorted by date
+      const upcomingEventsList = events.filter(e => {
+        const st = (e.status || '').toLowerCase();
+        return ['upcoming', 'published', 'active', 'ongoing'].includes(st);
+      }).sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
+
+      // Pending actions list
+      const pendingActionsList = [];
+      regs.filter(r => {
+        const st = (r.status || '').toLowerCase();
+        const vst = (r.verificationStatus || '').toLowerCase();
+        return st === 'pending' || vst === 'pending review' || vst === 'pending' || !r.verified;
+      }).slice(0, 3).forEach(r => {
+        const u = users.find(user => String(user.id) === String(r.attendeeId)) || { name: 'Attendee' };
+        const e = events.find(ev => String(ev.id) === String(r.eventId)) || { title: 'Event' };
+        pendingActionsList.push({
+          type: 'Registration Review',
+          title: `${u.name} · ${e.title}`,
+          badge: 'Pending Review',
+          badgeCls: 'yellow',
+          actionLbl: 'Review',
+          actionFn: `openReviewRegistrationModal('${r.id}')`,
+          icon: '📝'
+        });
+      });
+
+      supportReqs.filter(s => s.status !== 'Resolved' && s.status !== 'Closed').slice(0, 2).forEach(s => {
+        pendingActionsList.push({
+          type: 'Customer Support',
+          title: `${s.subject}`,
+          badge: s.priority || 'Medium',
+          badgeCls: s.priority === 'High' ? 'red' : 'yellow',
+          actionLbl: 'Manage',
+          actionFn: `openSupportTicketModal('${s.id}')`,
+          icon: '🎧'
+        });
+      });
+
+      tasks.filter(t => t.status !== 'Resolved').slice(0, 2).forEach(t => {
+        pendingActionsList.push({
+          type: 'Operational Issue',
+          title: `${t.eventTitle} · ${t.type}`,
+          badge: t.priority || 'Medium',
+          badgeCls: t.priority === 'High' ? 'red' : 'yellow',
+          actionLbl: 'Update',
+          actionFn: `openEventOpTaskModal('${t.id}')`,
+          icon: '⚙️'
+        });
+      });
+
+      // Recent Activity
+      const recentActivities = [
+        ...regs.slice(0, 2).map(r => {
+          const u = users.find(user => String(user.id) === String(r.attendeeId)) || { name: 'Attendee' };
+          const e = events.find(ev => String(ev.id) === String(r.eventId)) || { title: 'Event' };
+          return {
+            icon: '📝',
+            title: `Registration: ${u.name}`,
+            detail: `${e.title} · Status: ${r.verificationStatus || r.status || 'Verified'}`,
+            time: r.date || 'Today'
+          };
+        }),
+        ...tasks.slice(0, 2).map(t => ({
+          icon: '⚙️',
+          title: `Operational Task: ${t.type}`,
+          detail: `${t.eventTitle} · Status: ${t.status} · Priority: ${t.priority}`,
+          time: t.updated || 'Recently'
+        })),
+        ...queries.slice(0, 2).map(q => ({
+          icon: '🎧',
+          title: `Support Ticket: ${q.subject}`,
+          detail: `${q.userName} · Status: ${q.status}`,
+          time: q.date || 'Recently'
+        }))
+      ];
+
+      // Async backend stats sync
+      if (typeof apiGetStaffDashboard === 'function') {
+        apiGetStaffDashboard().then(res => {
+          const d = (res && res.data) ? res.data : res;
+          if (d) {
+            if (d.totalUsers !== undefined) {
+              const el = document.getElementById('se-stat-users');
+              if (el) el.textContent = d.totalUsers;
+            }
+            if (d.totalEvents !== undefined) {
+              const el = document.getElementById('se-stat-events');
+              if (el) el.textContent = d.totalEvents;
+            }
+            if (d.registrationsAwaitingReview !== undefined) {
+              const el = document.getElementById('se-stat-regs');
+              if (el) el.textContent = d.registrationsAwaitingReview;
+            }
+            if (d.openSupportTickets !== undefined) {
+              const el = document.getElementById('se-stat-tickets');
+              if (el) el.textContent = d.openSupportTickets;
+            }
+            if (d.operationalIssues !== undefined) {
+              const el = document.getElementById('se-stat-issues');
+              if (el) el.textContent = d.operationalIssues;
+            }
+          }
+        }).catch(() => {});
+      }
+
+      return `
+        <div class="page-hd">
+          <div class="page-hd-left">
+            <div class="page-title">Support Executive Dashboard</div>
+            <div class="page-sub">Welcome back, ${CU.name}. Overview of users, events, registrations awaiting review, customer support, and operational issues.</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:repeat(auto-fit, minmax(200px, 1fr));gap:16px;margin-bottom:20px">
+          <div class="stat-card" style="cursor:pointer" onclick="switchTabAndNav('user-event-mgmt', 'users')" title="Click to view Users">
+            <div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">👥</div>
+            <div class="stat-value" id="se-stat-users" style="color:var(--accent)">${totalUsers}</div>
+            <div class="stat-label">Total Users</div>
+            <div class="stat-sub neutral">Click to manage users →</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer" onclick="switchTabAndNav('user-event-mgmt', 'events')" title="Click to view Events">
+            <div class="stat-icon" style="background:var(--green-dim);color:var(--green)">🗓️</div>
+            <div class="stat-value" id="se-stat-events" style="color:var(--green)">${totalEvents}</div>
+            <div class="stat-label">Total Events</div>
+            <div class="stat-sub neutral">${activeEventsCount} active · Click to view →</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer" onclick="switchTabAndNav('user-event-mgmt', 'events', 'pending_regs')" title="Click to review Registrations">
+            <div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">⏳</div>
+            <div class="stat-value" id="se-stat-regs" style="color:var(--yellow)">${pendingRegs}</div>
+            <div class="stat-label">Registrations Awaiting Review</div>
+            <div class="stat-sub up">Needs verification →</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer" onclick="switchTabAndNav('support-issue-mgmt', 'support')" title="Click to view Support Tickets">
+            <div class="stat-icon" style="background:var(--purple-dim);color:var(--purple)">🎧</div>
+            <div class="stat-value" id="se-stat-tickets" style="color:var(--purple)">${openTickets}</div>
+            <div class="stat-label">Open Support Tickets</div>
+            <div class="stat-sub up">Customer inquiries →</div>
+          </div>
+          <div class="stat-card" style="cursor:pointer" onclick="switchTabAndNav('support-issue-mgmt', 'operations')" title="Click to view Operational Issues">
+            <div class="stat-icon" style="background:var(--red-dim);color:var(--red)">⚙️</div>
+            <div class="stat-value" id="se-stat-issues" style="color:var(--red)">${operationalIssues}</div>
+            <div class="stat-label">Operational Issues</div>
+            <div class="stat-sub up">Logistics &amp; tasks →</div>
+          </div>
+        </div>
+
+        <div class="grid-2 gap-20 mb-20">
+          <div class="card">
+            <div class="flex justify-between items-center mb-14">
+              <div class="h4">Upcoming Events (${upcomingEventsList.length})</div>
+              <button class="btn btn-ghost btn-xs" onclick="switchTabAndNav('user-event-mgmt', 'events')">View All Events →</button>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:12px;max-height:380px;overflow-y:auto;padding-right:4px">
+              ${upcomingEventsList.slice(0, 5).map(e => {
+                const isFull = (e.registered || 0) >= (e.capacity || 100);
+                return `
+                  <div style="padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2)">
+                    <div class="flex justify-between items-start mb-6">
+                      <div style="font-weight:700;font-size:14px;color:var(--text)">${e.title || e.name}</div>
+                      <span class="badge badge-${eventOpsStatusBadge(e.status)}">${formatEventStatus(e.status)}</span>
+                    </div>
+                    <div class="small muted mb-8">📍 ${e.venue || e.location || 'TBD'} (${e.city || 'India'}) · 📅 ${e.date} · 🏷️ ${e.category || 'General'}</div>
+                    <div class="flex justify-between items-center">
+                      <div class="small">Capacity: <strong>${e.registered || 0}/${e.capacity || 100}</strong> ${isFull ? '<span class="badge badge-yellow" style="font-size:10px;padding:2px 6px;margin-left:4px">Full</span>' : ''}</div>
+                      <button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')">View Details</button>
+                    </div>
+                  </div>
+                `;
+              }).join('') || '<div class="empty">No upcoming events found</div>'}
+            </div>
+          </div>
+
+          <div class="card">
+            <div class="h4 mb-14">Pending Actions &amp; Urgent Items</div>
+            <div style="display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;padding-right:4px">
+              ${pendingActionsList.map(item => `
+                <div style="padding:10px 12px;border:1px solid var(--border);border-radius:8px;background:var(--surface2)" class="flex justify-between items-center gap-10">
+                  <div class="flex items-center gap-10" style="flex:1;min-width:0">
+                    <span style="font-size:18px">${item.icon}</span>
+                    <div style="flex:1;min-width:0">
+                      <div class="flex items-center gap-6 mb-2">
+                        <span style="font-weight:700;font-size:13px;color:var(--text)" class="truncate">${item.title}</span>
+                        <span class="badge badge-${item.badgeCls}" style="font-size:10px;padding:1px 6px">${item.badge}</span>
+                      </div>
+                      <div class="small muted truncate">${item.type}</div>
+                    </div>
+                  </div>
+                  <button class="btn btn-ghost btn-xs" onclick="${item.actionFn}">${item.actionLbl}</button>
+                </div>
+              `).join('') || '<div class="empty">✓ No pending actions requiring immediate attention!</div>'}
+            </div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="h4 mb-14">Recent Platform Activity</div>
+          <div style="display:flex;flex-direction:column;gap:10px">
+            ${recentActivities.map(act => `
+              <div class="flex items-center gap-10" style="padding:8px 0;border-bottom:1px solid var(--border)">
+                <span style="font-size:20px">${act.icon}</span>
+                <div style="flex:1">
+                  <div style="font-weight:600;font-size:13px">${act.title}</div>
+                  <div class="small muted">${act.detail}</div>
+                </div>
+                <span class="small muted" style="white-space:nowrap">${act.time}</span>
+              </div>
+            `).join('') || '<div class="empty">No recent activity recorded</div>'}
+          </div>
+        </div>
+      `;
+    }
+
+    // ─── PAGE 2: USER & EVENT MANAGEMENT ───────────────────────────
+    function pageUserAndEventManagement() {
+      const activeTab = sessionStorage.getItem('uem_active_tab') || 'users';
+      const users = DB.users || [];
+      const events = DB.events || [];
+      const regs = DB.registrations || [];
+
+      // Tab 1: Users data filtering
+      const userQ = (sessionStorage.getItem('uem_user_q') || '').toLowerCase();
+      const userRole = sessionStorage.getItem('uem_user_role') || '';
+      const userSt = sessionStorage.getItem('uem_user_st') || '';
+
+      const emailCounts = {};
+      const phoneCounts = {};
+      users.forEach(u => {
+        if (u.email) {
+          const em = u.email.toLowerCase();
+          emailCounts[em] = (emailCounts[em] || 0) + 1;
+        }
+        if (u.phone && u.phone !== '—') {
+          phoneCounts[u.phone] = (phoneCounts[u.phone] || 0) + 1;
+        }
+      });
+      const duplicateUsers = users.filter(u => {
+        const em = (u.email || '').toLowerCase();
+        const ph = u.phone || '';
+        return (emailCounts[em] > 1) || (ph !== '—' && phoneCounts[ph] > 1);
+      });
+
+      const filteredUsers = users.filter(u => {
+        const matchesQuery = !userQ || `${u.name} ${u.email} ${u.phone} ${u.role} ${u.id}`.toLowerCase().includes(userQ);
+        const matchesRole = !userRole || u.role === userRole;
+        const isDeactivated = u.status === 'deactivated' || u.status === 'inactive';
+        const matchesStatus = !userSt || (userSt === 'active' ? !isDeactivated : isDeactivated);
+        return matchesQuery && matchesRole && matchesStatus;
+      });
+
+      // Tab 2: Events & Registrations filtering
+      const eventQ = (sessionStorage.getItem('uem_event_q') || '').toLowerCase();
+      const eventSt = sessionStorage.getItem('uem_event_st') || '';
+      const eventCat = sessionStorage.getItem('uem_event_cat') || '';
+
+      const filteredEvents = events.filter(e => {
+        const matchesQuery = !eventQ || `${e.id} ${e.title || e.name} ${e.category} ${e.venue} ${e.city}`.toLowerCase().includes(eventQ);
+        const currentSt = formatEventStatus(e.status);
+        const matchesStatus = !eventSt || currentSt === eventSt;
+        const matchesCat = !eventCat || e.category === eventCat;
+        return matchesQuery && matchesStatus && matchesCat;
+      });
+
+      const regQ = (sessionStorage.getItem('uem_reg_q') || '').toLowerCase();
+      const regSt = sessionStorage.getItem('uem_reg_st') || '';
+
+      const filteredRegs = regs.filter(r => {
+        const attendee = users.find(u => String(u.id) === String(r.attendeeId)) || { name: '', email: '' };
+        const event = events.find(e => String(e.id) === String(r.eventId)) || { title: '' };
+        const searchStr = `${r.id} ${r.ticketId || ''} ${attendee.name} ${attendee.email} ${event.title}`.toLowerCase();
+        const matchesQuery = !regQ || searchStr.includes(regQ);
+
+        const currentRegSt = r.verificationStatus || (r.status === 'confirmed' ? 'Verified' : 'Pending Review');
+        let matchesStatus = true;
+        if (regSt) {
+          if (regSt === 'Pending Review') {
+            matchesStatus = currentRegSt === 'Pending Review' || currentRegSt === 'Pending' || r.status === 'pending' || !r.verified;
+          } else if (regSt === 'Verified' || regSt === 'Confirmed') {
+            matchesStatus = currentRegSt === 'Verified' || r.status === 'confirmed';
+          } else if (regSt === 'Flagged') {
+            matchesStatus = currentRegSt === 'Flagged';
+          } else if (regSt === 'Rejected') {
+            matchesStatus = currentRegSt === 'Rejected' || r.status === 'rejected';
+          } else if (regSt === 'Cancelled') {
+            matchesStatus = r.status === 'cancelled';
+          }
+        }
+        return matchesQuery && matchesStatus;
+      });
+
+      return `
+        <div class="page-hd">
+          <div class="page-hd-left">
+            <div class="page-title">User &amp; Event Management</div>
+            <div class="page-sub">Authorized account administration, event review &amp; status management, and registration verification.</div>
+          </div>
+        </div>
+
+        <div class="tabs-nav flex gap-8 mb-20" style="border-bottom:1px solid var(--border);padding-bottom:12px">
+          <button class="btn ${activeTab === 'users' ? 'btn-primary' : 'btn-ghost'}" onclick="setUemTab('users')">👥 Users (${users.length})</button>
+          <button class="btn ${activeTab === 'events' ? 'btn-primary' : 'btn-ghost'}" onclick="setUemTab('events')">🗓️ Events &amp; Registrations (${events.length} Events · ${regs.length} Regs)</button>
+        </div>
+
+        ${activeTab === 'users' ? `
+          <!-- TAB 1: USERS -->
+          ${duplicateUsers.length > 0 ? `
+            <div style="padding:14px 18px;background:rgba(234,179,8,0.12);border:1px solid var(--yellow);border-radius:10px;margin-bottom:20px" class="flex justify-between items-center">
+              <div class="flex items-center gap-10">
+                <span style="font-size:22px">⚠️</span>
+                <div>
+                  <div style="font-weight:700;color:var(--yellow);font-size:14px">Duplicate Accounts Detected</div>
+                  <div class="small muted">${duplicateUsers.length} user records share matching email addresses or contact numbers.</div>
+                </div>
+              </div>
+              <button class="btn btn-warning btn-sm" onclick="openDuplicateUsersModal()">🔍 Review &amp; Resolve Duplicates</button>
+            </div>
+          ` : ''}
+
+          <div class="filter-row">
+            <div class="search-box input-group">
+              <span class="input-icon">🔍</span>
+              <input class="form-control" id="uem-user-q" placeholder="Search users by name, email, phone, role..." value="${userQ}" oninput="refreshUemUsers()">
+            </div>
+            <select class="form-control filter-select" id="uem-user-role" onchange="refreshUemUsers()">
+              <option value="">All Roles</option>
+              <option value="attendee" ${userRole === 'attendee' ? 'selected' : ''}>Attendee</option>
+              <option value="client" ${userRole === 'client' ? 'selected' : ''}>Client</option>
+              <option value="organizer" ${userRole === 'organizer' ? 'selected' : ''}>Organizer</option>
+              <option value="staff" ${userRole === 'staff' ? 'selected' : ''}>Staff</option>
+            </select>
+            <select class="form-control filter-select" id="uem-user-st" onchange="refreshUemUsers()">
+              <option value="">All Account Statuses</option>
+              <option value="active" ${userSt === 'active' ? 'selected' : ''}>Active</option>
+              <option value="inactive" ${userSt === 'inactive' ? 'selected' : ''}>Deactivated / Inactive</option>
+            </select>
+          </div>
+
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>User ID &amp; Name</th>
+                    <th>Contact Info</th>
+                    <th>Role</th>
+                    <th>Account Status</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filteredUsers.map(u => {
+                    const em = (u.email || '').toLowerCase();
+                    const isDup = emailCounts[em] > 1 || (u.phone && phoneCounts[u.phone] > 1);
+                    const isDeactivated = u.status === 'deactivated' || u.status === 'inactive';
+                    return `
+                      <tr style="${isDup ? 'background:rgba(234,179,8,0.04)' : ''}">
+                        <td>
+                          <div class="flex items-center gap-10">
+                            <div class="av av-xs">${u.avatar || u.name[0]}</div>
+                            <div>
+                              <div style="font-weight:700;font-size:14px;color:var(--text)">${u.name} ${isDup ? '<span class="badge badge-yellow" style="font-size:10px;padding:1px 5px">Duplicate</span>' : ''}</div>
+                              <div class="small muted">ID: ${u.id}</div>
+                            </div>
+                          </div>
+                        </td>
+                        <td>
+                          <div>${u.email}</div>
+                          <div class="small muted">📞 ${u.phone || '—'}</div>
+                        </td>
+                        <td><span class="badge badge-purple">${u.role}</span></td>
+                        <td>
+                          <span class="badge badge-${isDeactivated ? 'red' : 'green'}">${isDeactivated ? 'Deactivated' : 'Active'}</span>
+                        </td>
+                        <td>
+                          <div class="flex items-center gap-6">
+                            <button class="btn btn-ghost btn-xs" onclick="openEditUserModal('${u.id}')" title="Edit User">✏️ Edit</button>
+                            <button class="btn btn-xs ${isDeactivated ? 'btn-success' : 'btn-danger'}" onclick="toggleUserStatus('${u.id}')" title="Toggle Account Status">
+                              ${isDeactivated ? 'Activate' : 'Deactivate'}
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('') || '<tr><td colspan="5" class="text-center py-20">No matching user accounts found.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ` : `
+          <!-- TAB 2: EVENTS & REGISTRATIONS -->
+          <!-- SECTION A: EVENT MANAGEMENT -->
+          <div class="mb-24">
+            <div class="flex justify-between items-center mb-12">
+              <div>
+                <div class="h4">Event Management</div>
+                <div class="small muted">Manage event publication, venue capacity, dates, and approval workflow.</div>
+              </div>
+            </div>
+
+            <div class="filter-row">
+              <div class="search-box input-group">
+                <span class="input-icon">🔍</span>
+                <input class="form-control" id="uem-event-q" placeholder="Search events by title, venue, city..." value="${eventQ}" oninput="refreshUemEvents()">
+              </div>
+              <select class="form-control filter-select" id="uem-event-st" onchange="refreshUemEvents()">
+                <option value="">All Event Statuses</option>
+                <option value="Pending" ${eventSt === 'Pending' ? 'selected' : ''}>Pending Approval</option>
+                <option value="Active" ${eventSt === 'Active' ? 'selected' : ''}>Active / Published</option>
+                <option value="Completed" ${eventSt === 'Completed' ? 'selected' : ''}>Completed</option>
+                <option value="Cancelled" ${eventSt === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+              </select>
+              <select class="form-control filter-select" id="uem-event-cat" onchange="refreshUemEvents()">
+                <option value="">All Categories</option>
+                ${[...new Set(events.map(e => e.category).filter(Boolean))].map(cat => `<option value="${cat}" ${eventCat === cat ? 'selected' : ''}>${cat}</option>`).join('')}
+              </select>
+            </div>
+
+            <div class="card mb-20">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Event Title &amp; ID</th>
+                      <th>Category</th>
+                      <th>Date &amp; Venue</th>
+                      <th>Capacity &amp; Regs</th>
+                      <th>Status</th>
+                      <th>Update Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filteredEvents.map(e => {
+                      const currentStatus = formatEventStatus(e.status);
+                      const isPending = currentStatus === 'Pending';
+                      const isFull = (e.registered || 0) >= (e.capacity || 100);
+                      return `
+                        <tr>
+                          <td>
+                            <div style="font-weight:700;font-size:14px;color:var(--text)">${e.title || e.name}</div>
+                            <div class="small muted">ID: ${e.id}</div>
+                          </td>
+                          <td><span class="badge badge-purple">${e.category || 'General'}</span></td>
+                          <td>
+                            <div>📅 ${e.date || 'TBD'}</div>
+                            <div class="small muted">📍 ${e.venue || e.location || 'TBD'} (${e.city || 'India'})</div>
+                          </td>
+                          <td>
+                            <div><strong>${e.registered || 0}</strong> / ${e.capacity || 100}</div>
+                            <div class="small muted">${isFull ? '<span style="color:var(--yellow);font-weight:600">Full</span>' : (e.price ? '₹' + e.price : 'Free')}</div>
+                          </td>
+                          <td>
+                            <span class="badge badge-${eventOpsStatusBadge(e.status)}">${currentStatus}</span>
+                          </td>
+                          <td>
+                            <select class="form-control form-control-sm" style="padding:4px 8px;font-size:12px" onchange="setEventOpsStatus('${e.id}', this.value)">
+                              <option value="Pending" ${currentStatus === 'Pending' ? 'selected' : ''}>Pending</option>
+                              <option value="Active" ${currentStatus === 'Active' ? 'selected' : ''}>Active</option>
+                              <option value="Completed" ${currentStatus === 'Completed' ? 'selected' : ''}>Completed</option>
+                              <option value="Cancelled" ${currentStatus === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+                            </select>
+                          </td>
+                          <td>
+                            <div class="flex items-center gap-6">
+                              <button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')" title="View Details">👁️</button>
+                              <button class="btn btn-ghost btn-xs" onclick="openEditEventModal('${e.id}')" title="Edit Event">✏️</button>
+                              ${isPending ? `
+                                <button class="btn btn-success btn-xs" onclick="approveEventOpsDirect('${e.id}')" title="Approve">✓</button>
+                                <button class="btn btn-danger btn-xs" onclick="rejectEventOpsDirect('${e.id}')" title="Reject">✕</button>
+                              ` : ''}
+                            </div>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('') || '<tr><td colspan="7" class="text-center py-20">No matching events found.</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- SECTION B: REGISTRATIONS MANAGEMENT -->
+          <div>
+            <div class="flex justify-between items-center mb-12">
+              <div>
+                <div class="h4">Registrations &amp; Verification</div>
+                <div class="small muted">Review online ticket bookings, payment status, verification documents, and approve or reject with reasons.</div>
+              </div>
+            </div>
+
+            <div class="filter-row">
+              <div class="search-box input-group">
+                <span class="input-icon">🔍</span>
+                <input class="form-control" id="uem-reg-q" placeholder="Search by Ticket ID, Attendee, or Event..." value="${regQ}" oninput="refreshUemRegistrations()">
+              </div>
+              <select class="form-control filter-select" id="uem-reg-st" onchange="refreshUemRegistrations()">
+                <option value="">All Registration Statuses</option>
+                <option value="Pending Review" ${regSt === 'Pending Review' ? 'selected' : ''}>Pending Review</option>
+                <option value="Verified" ${regSt === 'Verified' ? 'selected' : ''}>Verified / Confirmed</option>
+                <option value="Flagged" ${regSt === 'Flagged' ? 'selected' : ''}>Flagged</option>
+                <option value="Rejected" ${regSt === 'Rejected' ? 'selected' : ''}>Rejected</option>
+                <option value="Cancelled" ${regSt === 'Cancelled' ? 'selected' : ''}>Cancelled</option>
+              </select>
+            </div>
+
+            <div class="card">
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Ticket / Reg ID</th>
+                      <th>Attendee</th>
+                      <th>Event</th>
+                      <th>Document</th>
+                      <th>Payment Status</th>
+                      <th>Verification Status</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${filteredRegs.map(reg => {
+                      const attendee = users.find(u => String(u.id) === String(reg.attendeeId)) || { name: 'Attendee', email: '—' };
+                      const event = events.find(e => String(e.id) === String(reg.eventId)) || { title: 'Event' };
+                      const isPending = reg.status === 'pending' || reg.verificationStatus === 'Pending Review' || !reg.verified;
+                      const paymentStatus = reg.payment === 'paid' ? 'Paid' : (reg.amount === 0 ? 'Free' : (reg.payment || 'Pending Payment'));
+                      const regStatus = reg.verificationStatus || (reg.status === 'confirmed' ? 'Verified' : 'Pending Review');
+
+                      return `
+                        <tr>
+                          <td class="mono"><strong>${reg.ticketId || reg.id}</strong></td>
+                          <td>
+                            <div style="font-weight:700;font-size:13.5px;color:var(--text)">${attendee.name}</div>
+                            <div class="small muted">${attendee.email}</div>
+                          </td>
+                          <td>
+                            <div>${event.title}</div>
+                            <div class="small muted">${reg.date || 'Today'}</div>
+                          </td>
+                          <td>
+                            <div class="small"><strong>${reg.docType || 'Govt ID'}</strong></div>
+                            <div class="small muted mono">${reg.docRef || 'REF-' + reg.id}</div>
+                          </td>
+                          <td>
+                            <span class="badge badge-${paymentStatus === 'Paid' ? 'green' : paymentStatus === 'Free' ? 'blue' : 'yellow'}">
+                              ${paymentStatus} ${reg.amount ? '(₹' + reg.amount + ')' : ''}
+                            </span>
+                          </td>
+                          <td>
+                            <span class="badge badge-${regStatus === 'Verified' ? 'green' : regStatus === 'Flagged' ? 'yellow' : regStatus === 'Rejected' ? 'red' : 'purple'}">
+                              ${regStatus}
+                            </span>
+                          </td>
+                          <td>
+                            <div class="flex items-center gap-6">
+                              <button class="btn btn-ghost btn-xs" onclick="openReviewRegistrationModal('${reg.id}')">Review</button>
+                              ${isPending ? `
+                                <button class="btn btn-success btn-xs" onclick="approveRegistrationDirect('${reg.id}')" title="Approve">✓</button>
+                                <button class="btn btn-danger btn-xs" onclick="openRejectRegistrationWithReasonModal('${reg.id}')" title="Reject with Reason">✕</button>
+                              ` : ''}
+                            </div>
+                          </td>
+                        </tr>
+                      `;
+                    }).join('') || '<tr><td colspan="7" class="text-center py-20">No matching registrations found.</td></tr>'}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        `}
+      `;
+    }
+
+    // ─── PAGE 3: SUPPORT & ISSUE MANAGEMENT ────────────────────────
+    function pageSupportAndIssueManagement() {
+      const activeTab = sessionStorage.getItem('sim_active_tab') || 'support';
+      const supportReqs = DB.supportRequests || [];
+      const userQueries = DB.userQueries || [];
+      const tasks = DB.eventOperationsTasks || [];
+
+      // Combine support requests and user queries into unified customer tickets list
+      const combinedTickets = [
+        ...supportReqs.map(s => ({
+          id: s.id,
+          source: 'Support Center',
+          userName: supportUser ? supportUser(s).name : 'User',
+          userEmail: supportUser ? supportUser(s).email : '—',
+          subject: s.subject || 'Support Request',
+          message: s.message || '',
+          eventTitle: supportEvent ? supportEvent(s).title : '',
+          priority: s.priority || 'Medium',
+          status: s.status || 'Pending',
+          assignedTo: s.assignedTo || 'Support Executive',
+          updated: s.updated || s.created || 'Today',
+          internalNotes: s.internalNotes || [],
+          history: s.history || []
+        })),
+        ...userQueries.map(q => ({
+          id: q.id,
+          source: q.source || 'Account Query',
+          userName: q.userName || 'User',
+          userEmail: q.userEmail || '—',
+          subject: `${q.type}: ${q.subject}`,
+          message: q.detail || '',
+          eventTitle: 'Account Management',
+          priority: q.type === 'Account Deletion' ? 'High' : 'Medium',
+          status: q.status || 'Pending',
+          assignedTo: q.assignedTo || 'Support Executive',
+          updated: q.date || 'Today',
+          internalNotes: q.internalNotes || [],
+          history: q.history || []
+        }))
+      ];
+
+      // Tab 1: Customer Support Filtering
+      const supQ = (sessionStorage.getItem('sim_sup_q') || '').toLowerCase();
+      const supSt = sessionStorage.getItem('sim_sup_st') || '';
+      const supPr = sessionStorage.getItem('sim_sup_pr') || '';
+
+      const filteredTickets = combinedTickets.filter(t => {
+        const matchesQuery = !supQ || `${t.id} ${t.userName} ${t.userEmail} ${t.subject} ${t.message} ${t.eventTitle}`.toLowerCase().includes(supQ);
+        const matchesStatus = !supSt || t.status === supSt;
+        const matchesPriority = !supPr || t.priority === supPr;
+        return matchesQuery && matchesStatus && matchesPriority;
+      });
+
+      // Tab 2: Event Operations Filtering
+      const opsQ = (sessionStorage.getItem('sim_ops_q') || '').toLowerCase();
+      const opsSt = sessionStorage.getItem('sim_ops_st') || '';
+      const opsPr = sessionStorage.getItem('sim_ops_pr') || '';
+
+      const filteredTasks = tasks.filter(t => {
+        const matchesQuery = !opsQ || `${t.id} ${t.eventTitle} ${t.type} ${t.description}`.toLowerCase().includes(opsQ);
+        const matchesStatus = !opsSt || t.status === opsSt;
+        const matchesPriority = !opsPr || t.priority === opsPr;
+        return matchesQuery && matchesStatus && matchesPriority;
+      });
+
+      return `
+        <div class="page-hd">
+          <div class="page-hd-left">
+            <div class="page-title">Support &amp; Issue Management</div>
+            <div class="page-sub">Central ticket assignment, escalation, customer inquiries, and event operations issue tracking.</div>
+          </div>
+        </div>
+
+        <div class="tabs-nav flex gap-8 mb-20" style="border-bottom:1px solid var(--border);padding-bottom:12px">
+          <button class="btn ${activeTab === 'support' ? 'btn-primary' : 'btn-ghost'}" onclick="setSimTab('support')">🎧 Customer Support (${combinedTickets.length})</button>
+          <button class="btn ${activeTab === 'operations' ? 'btn-primary' : 'btn-ghost'}" onclick="setSimTab('operations')">⚙️ Event Operations (${tasks.length})</button>
+        </div>
+
+        ${activeTab === 'support' ? `
+          <!-- TAB 1: CUSTOMER SUPPORT -->
+          <div class="filter-row">
+            <div class="search-box input-group">
+              <span class="input-icon">🔍</span>
+              <input class="form-control" id="sim-sup-q" placeholder="Search support tickets, users, issues..." value="${supQ}" oninput="refreshSimSupport()">
+            </div>
+            <select class="form-control filter-select" id="sim-sup-st" onchange="refreshSimSupport()">
+              <option value="">All Statuses</option>
+              <option value="Pending" ${supSt === 'Pending' ? 'selected' : ''}>Pending</option>
+              <option value="In Progress" ${supSt === 'In Progress' ? 'selected' : ''}>In Progress</option>
+              <option value="Resolved" ${supSt === 'Resolved' ? 'selected' : ''}>Resolved</option>
+              <option value="Closed" ${supSt === 'Closed' ? 'selected' : ''}>Closed</option>
+            </select>
+            <select class="form-control filter-select" id="sim-sup-pr" onchange="refreshSimSupport()">
+              <option value="">All Priorities</option>
+              <option value="High" ${supPr === 'High' ? 'selected' : ''}>High Priority</option>
+              <option value="Medium" ${supPr === 'Medium' ? 'selected' : ''}>Medium Priority</option>
+              <option value="Low" ${supPr === 'Low' ? 'selected' : ''}>Low Priority</option>
+            </select>
+          </div>
+
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Ticket</th>
+                    <th>User</th>
+                    <th>Context / Event</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Assignee</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filteredTickets.map(t => {
+                    const prBadge = t.priority === 'High' ? 'red' : t.priority === 'Medium' ? 'yellow' : 'blue';
+                    const stBadge = t.status === 'Resolved' ? 'green' : t.status === 'In Progress' ? 'purple' : t.status === 'Closed' ? 'gray' : 'yellow';
+                    return `
+                      <tr>
+                        <td>
+                          <div style="font-weight:700;font-size:13.5px;color:var(--text)">${t.subject}</div>
+                          <div class="small muted truncate" style="max-width:280px">${t.message}</div>
+                          <div class="small mono muted">ID: ${t.id} · ${t.source}</div>
+                        </td>
+                        <td>
+                          <div style="font-weight:600">${t.userName}</div>
+                          <div class="small muted">${t.userEmail}</div>
+                        </td>
+                        <td>
+                          <div class="small">${t.eventTitle || 'Platform Inquiry'}</div>
+                          <div class="small muted">${t.updated}</div>
+                        </td>
+                        <td><span class="badge badge-${prBadge}">${t.priority}</span></td>
+                        <td><span class="badge badge-${stBadge}">${t.status}</span></td>
+                        <td><div class="small">${t.assignedTo}</div></td>
+                        <td>
+                          <div class="flex items-center gap-6">
+                            <button class="btn btn-ghost btn-xs" onclick="openSupportTicketModal('${t.id}')">Manage</button>
+                            ${t.status !== 'Resolved' ? `
+                              <button class="btn btn-success btn-xs" onclick="resolveQueryDirect('${t.id}')" title="Resolve">✓</button>
+                              <button class="btn btn-danger btn-xs" onclick="rejectQueryDirect('${t.id}')" title="Reject / Close">✕</button>
+                            ` : ''}
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('') || '<tr><td colspan="7" class="text-center py-20">No matching customer support tickets found.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        ` : `
+          <!-- TAB 2: EVENT OPERATIONS -->
+          <div class="flex justify-between items-center mb-14">
+            <div>
+              <div class="h4">Operational Issue Tracking</div>
+              <div class="small muted">Track logistical, technical, schedule, and safety issues across events.</div>
+            </div>
+            <button class="btn btn-primary" onclick="openCreateEventOpTaskModal()">➕ Add Operational Issue</button>
+          </div>
+
+          <div class="filter-row">
+            <div class="search-box input-group">
+              <span class="input-icon">🔍</span>
+              <input class="form-control" id="sim-ops-q" placeholder="Search operational issues by title, type, details..." value="${opsQ}" oninput="refreshSimOperations()">
+            </div>
+            <select class="form-control filter-select" id="sim-ops-st" onchange="refreshSimOperations()">
+              <option value="">All Statuses</option>
+              <option value="Pending" ${opsSt === 'Pending' ? 'selected' : ''}>Pending</option>
+              <option value="In Progress" ${opsSt === 'In Progress' ? 'selected' : ''}>In Progress</option>
+              <option value="Resolved" ${opsSt === 'Resolved' ? 'selected' : ''}>Resolved</option>
+            </select>
+            <select class="form-control filter-select" id="sim-ops-pr" onchange="refreshSimOperations()">
+              <option value="">All Priorities</option>
+              <option value="High" ${opsPr === 'High' ? 'selected' : ''}>High Priority</option>
+              <option value="Medium" ${opsPr === 'Medium' ? 'selected' : ''}>Medium Priority</option>
+              <option value="Low" ${opsPr === 'Low' ? 'selected' : ''}>Low Priority</option>
+            </select>
+          </div>
+
+          <div class="card">
+            <div class="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Issue ID &amp; Event</th>
+                    <th>Issue Type</th>
+                    <th>Description</th>
+                    <th>Priority</th>
+                    <th>Status</th>
+                    <th>Last Updated</th>
+                    <th>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${filteredTasks.map(t => {
+                    const prBadge = t.priority === 'High' ? 'red' : t.priority === 'Medium' ? 'yellow' : 'blue';
+                    const stBadge = t.status === 'Resolved' ? 'green' : t.status === 'In Progress' ? 'purple' : 'yellow';
+                    return `
+                      <tr>
+                        <td>
+                          <div style="font-weight:700;font-size:14px;color:var(--text)">${t.eventTitle}</div>
+                          <div class="small mono muted">ID: ${t.id}</div>
+                        </td>
+                        <td><span class="badge badge-purple">${t.type}</span></td>
+                        <td><div class="small truncate" style="max-width:280px">${t.description}</div></td>
+                        <td><span class="badge badge-${prBadge}">${t.priority}</span></td>
+                        <td><span class="badge badge-${stBadge}">${t.status}</span></td>
+                        <td class="small muted">${t.updated}</td>
+                        <td>
+                          <div class="flex items-center gap-6">
+                            <button class="btn btn-ghost btn-xs" onclick="openEventOpTaskModal('${t.id}')">Manage</button>
+                            ${t.status !== 'Resolved' ? `
+                              <button class="btn btn-success btn-xs" onclick="resolveEventOpTaskDirect('${t.id}')" title="Mark Resolved">✓</button>
+                            ` : ''}
+                          </div>
+                        </td>
+                      </tr>
+                    `;
+                  }).join('') || '<tr><td colspan="7" class="text-center py-20">No matching operational issues found.</td></tr>'}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `}
+      `;
+    }
+
+    // ─── PAGE 4: REPORTS & ANALYTICS ────────────────────────────────
+    function getAllReportsList() {
+      const regReports = (DB.regReports || []).map(r => ({
+        ...r,
+        category: 'Registration & User Management',
+        scope: r.scope || 'Platform Wide',
+        author: r.author || 'Support Executive',
+        fileName: r.fileName || 'Registration_Audit_Report.pdf'
+      }));
+      const eventReports = (DB.eventOpsReports || []).map(r => ({
+        ...r,
+        category: 'Event Operations Report',
+        scope: r.scope || 'All Active Events',
+        author: r.author || 'Support Executive',
+        fileName: r.fileName || 'Event_Operations_Report.pdf'
+      }));
+      const customReports = (DB.supportExecReports || []).map(r => ({
+        ...r,
+        category: r.category || 'Support & Issue Summary',
+        scope: r.scope || 'Platform Wide',
+        author: r.author || 'Support Executive',
+        fileName: r.fileName || 'Support_Executive_Report.pdf'
+      }));
+
+      return [...customReports, ...regReports, ...eventReports];
+    }
+
+    function pageReportsAndAnalytics() {
+      const reports = getAllReportsList();
+      const repQ = (sessionStorage.getItem('rep_q') || '').toLowerCase();
+      const repType = sessionStorage.getItem('rep_type') || '';
+      const repSt = sessionStorage.getItem('rep_st') || '';
+
+      const totalCount = reports.length;
+      const draftCount = reports.filter(r => r.status === 'Draft').length;
+      const submittedCount = reports.filter(r => r.status === 'Submitted' || r.status === 'Pending Review' || r.status === 'Pending').length;
+      const reviewedCount = reports.filter(r => r.status === 'Reviewed' || r.status === 'Approved').length;
+
+      const filtered = reports.filter(r => {
+        const matchesQuery = !repQ || `${r.id} ${r.title} ${r.category} ${r.scope} ${r.fileName}`.toLowerCase().includes(repQ);
+        const matchesType = !repType || r.category === repType;
+        let matchesStatus = true;
+        if (repSt) {
+          if (repSt === 'Draft') matchesStatus = r.status === 'Draft';
+          else if (repSt === 'Submitted') matchesStatus = r.status === 'Submitted' || r.status === 'Pending Review' || r.status === 'Pending';
+          else if (repSt === 'Reviewed') matchesStatus = r.status === 'Reviewed' || r.status === 'Approved';
+        }
+        return matchesQuery && matchesType && matchesStatus;
+      });
+
+      return `
+        <div class="page-hd">
+          <div class="page-hd-left">
+            <div class="page-title">Reports &amp; Analytics</div>
+            <div class="page-sub">Consolidated operational, registration, and support performance reports for Super Admin review.</div>
+          </div>
+          <div class="page-hd-right">
+            <button class="btn btn-primary" onclick="openCreateSupportExecutiveReportModal()">📤 Create Report</button>
+          </div>
+        </div>
+
+        <div class="grid-4 mb-20">
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">📊</div>
+            <div class="stat-value" style="color:var(--accent)">${totalCount}</div>
+            <div class="stat-label">Total Reports</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">📝</div>
+            <div class="stat-value" style="color:var(--yellow)">${draftCount}</div>
+            <div class="stat-label">Draft Reports</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--purple-dim);color:var(--purple)">📤</div>
+            <div class="stat-value" style="color:var(--purple)">${submittedCount}</div>
+            <div class="stat-label">Submitted to Admin</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--green-dim);color:var(--green)">✅</div>
+            <div class="stat-value" style="color:var(--green)">${reviewedCount}</div>
+            <div class="stat-label">Reviewed &amp; Approved</div>
+          </div>
+        </div>
+
+        <div class="filter-row">
+          <div class="search-box input-group">
+            <span class="input-icon">🔍</span>
+            <input class="form-control" id="rep-q" placeholder="Search reports by title, category, scope, filename..." value="${repQ}" oninput="refreshReportsAnalytics()">
+          </div>
+          <select class="form-control filter-select" id="rep-type" onchange="refreshReportsAnalytics()">
+            <option value="">All Categories</option>
+            <option value="Registration &amp; User Management" ${repType === 'Registration & User Management' ? 'selected' : ''}>Registration &amp; User Management</option>
+            <option value="Event Operations Report" ${repType === 'Event Operations Report' ? 'selected' : ''}>Event Operations</option>
+            <option value="Support &amp; Issue Summary" ${repType === 'Support & Issue Summary' ? 'selected' : ''}>Support &amp; Issue Summary</option>
+          </select>
+          <select class="form-control filter-select" id="rep-st" onchange="refreshReportsAnalytics()">
+            <option value="">All Statuses</option>
+            <option value="Draft" ${repSt === 'Draft' ? 'selected' : ''}>Draft</option>
+            <option value="Submitted" ${repSt === 'Submitted' ? 'selected' : ''}>Submitted</option>
+            <option value="Reviewed" ${repSt === 'Reviewed' ? 'selected' : ''}>Reviewed</option>
+          </select>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Report Title &amp; ID</th>
+                  <th>Category</th>
+                  <th>Scope</th>
+                  <th>Attached File</th>
+                  <th>Status</th>
+                  <th>Review Feedback</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${filtered.map(r => {
+                  const isDraft = r.status === 'Draft';
+                  const isReviewed = r.status === 'Reviewed' || r.status === 'Approved';
+                  const stBadge = isReviewed ? 'green' : isDraft ? 'yellow' : 'purple';
+                  return `
+                    <tr>
+                      <td>
+                        <div style="font-weight:700;font-size:14px;color:var(--text)">${r.title}</div>
+                        <div class="small mono muted">ID: ${r.id} · By ${r.author || 'Support Executive'}</div>
+                      </td>
+                      <td><span class="badge badge-purple">${r.category}</span></td>
+                      <td><div class="small">${r.scope}</div><div class="small muted">${r.period || 'Q3 2026'}</div></td>
+                      <td>
+                        <div class="flex items-center gap-6">
+                          <span>📄</span>
+                          <span class="small mono text-accent" style="cursor:pointer" onclick="previewReportDocument('${r.id}')">${r.fileName}</span>
+                        </div>
+                      </td>
+                      <td><span class="badge badge-${stBadge}">${r.status}</span></td>
+                      <td>
+                        <div class="small muted">${r.reviewFeedback || r.adminNotes || (isReviewed ? 'Approved without remarks' : 'Awaiting admin review')}</div>
+                      </td>
+                      <td>
+                        <div class="flex items-center gap-6">
+                          <button class="btn btn-ghost btn-xs" onclick="previewReportDocument('${r.id}')" title="Preview Document">👁️ View</button>
+                          ${isDraft ? `
+                            <button class="btn btn-primary btn-xs" onclick="submitReportToAdminDirect('${r.id}')" title="Submit to Super Admin">📤 Submit</button>
+                          ` : ''}
+                        </div>
+                      </td>
+                    </tr>
+                  `;
+                }).join('') || '<tr><td colspan="7" class="text-center py-20">No matching reports found.</td></tr>'}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // ─── ACTION MODALS & HELPERS ────────────────────────────────────
+
+    function openReviewRegistrationModal(regId) {
+      const r = (DB.registrations || []).find(item => String(item.id) === String(regId));
+      if (!r) return;
+      const attendee = (DB.users || []).find(u => String(u.id) === String(r.attendeeId)) || { name: 'Attendee', email: '—', phone: '—' };
+      const event = (DB.events || []).find(e => String(e.id) === String(r.eventId)) || { title: 'Event', date: '—', venue: '—' };
+
+      const isPending = (r.status === 'pending' || r.verificationStatus === 'Pending Review' || !r.verified);
+      const paymentStatus = r.payment === 'paid' ? 'Paid' : (r.amount === 0 ? 'Free' : (r.payment || 'Pending Payment'));
+      const regStatus = r.verificationStatus || (r.status === 'confirmed' ? 'Verified' : 'Pending Review');
+
+      openModal(`Review Registration: ${r.ticketId || r.id}`, `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div style="background:var(--surface2);padding:10px 14px;border-radius:8px">
+            <div class="small muted">Attendee Name</div>
+            <div style="font-weight:700;font-size:14px">${attendee.name}</div>
+            <div class="small muted">${attendee.email}</div>
+            <div class="small muted">📞 ${attendee.phone || '—'}</div>
+          </div>
+          <div style="background:var(--surface2);padding:10px 14px;border-radius:8px">
+            <div class="small muted">Event Details</div>
+            <div style="font-weight:700;font-size:14px">${event.title}</div>
+            <div class="small muted">📅 ${event.date} · 📍 ${event.venue || 'Main Hall'}</div>
+          </div>
+        </div>
+
+        <div class="info-row"><span class="info-label">Ticket / Reg ID</span><span class="info-value mono"><strong>${r.ticketId || r.id}</strong></span></div>
+        <div class="info-row"><span class="info-label">Payment Status</span><span class="info-value"><span class="badge badge-${paymentStatus === 'Paid' ? 'green' : paymentStatus === 'Free' ? 'blue' : 'yellow'}">${paymentStatus} ${r.amount ? '(₹' + r.amount + ')' : ''}</span></span></div>
+        <div class="info-row"><span class="info-label">Registration Status</span><span class="info-value"><span class="badge badge-${regStatus === 'Verified' ? 'green' : regStatus === 'Flagged' ? 'yellow' : regStatus === 'Rejected' ? 'red' : 'purple'}">${regStatus}</span></span></div>
+        <div class="info-row"><span class="info-label">Submitted Date</span><span class="info-value">${r.date || 'Today'}</span></div>
+        <div class="info-row"><span class="info-label">Verification Document</span><span class="info-value"><strong>${r.docType || 'Government ID / Passport'}</strong> (${r.docRef || 'REF-' + (r.id || '101')})</span></div>
+
+        ${r.rejectionReason ? `
+          <div style="background:rgba(239,68,68,0.1);border:1px solid var(--red);padding:10px 14px;border-radius:8px;margin-top:12px">
+            <div style="font-weight:700;color:var(--red);font-size:13px">Rejection Reason:</div>
+            <div class="small" style="margin-top:2px">${r.rejectionReason}</div>
+          </div>
+        ` : ''}
+      `, [
+        { lbl: 'Close', cls: 'btn-ghost', fn: 'closeModal()' },
+        ...(isPending || regStatus !== 'Verified' ? [{ lbl: '✓ Approve & Verify', cls: 'btn-success', fn: `closeModal();approveRegistrationDirect('${r.id}')` }] : []),
+        ...(isPending || regStatus !== 'Rejected' ? [{ lbl: '✕ Reject with Reason', cls: 'btn-danger', fn: `closeModal();openRejectRegistrationWithReasonModal('${r.id}')` }] : []),
+      ]);
+    }
+    window.openReviewRegistrationModal = openReviewRegistrationModal;
+
+    function openRejectRegistrationWithReasonModal(regId) {
+      const r = (DB.registrations || []).find(item => String(item.id) === String(regId));
+      if (!r) return;
+      const attendee = (DB.users || []).find(u => String(u.id) === String(r.attendeeId)) || { name: 'Attendee' };
+
+      openModal(`Reject Registration: ${r.ticketId || r.id}`, `
+        <div class="small muted mb-14">Provide a reason for rejecting the registration for <strong>${attendee.name}</strong>. This reason will be recorded and visible in registration review history.</div>
+        <div class="form-group">
+          <label class="form-label">Predefined Reason</label>
+          <select class="form-control" id="reject-reason-preset" onchange="document.getElementById('reject-reason-custom').value = this.value">
+            <option value="Identification document is invalid or illegible">Identification document is invalid or illegible</option>
+            <option value="Payment verification mismatch or incomplete transaction">Payment verification mismatch or incomplete transaction</option>
+            <option value="Duplicate registration detected for this event">Duplicate registration detected for this event</option>
+            <option value="Event capacity has been exceeded">Event capacity has been exceeded</option>
+            <option value="Eligibility criteria not met for attendee category">Eligibility criteria not met for attendee category</option>
+            <option value="Other">Other (Enter custom reason below)</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Detailed Reason *</label>
+          <textarea class="form-control" id="reject-reason-custom" rows="3">Identification document is invalid or illegible</textarea>
+        </div>
+      `, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: 'Confirm Rejection', cls: 'btn-danger', fn: `confirmRejectRegistration('${r.id}')` }
+      ]);
+    }
+    window.openRejectRegistrationWithReasonModal = openRejectRegistrationWithReasonModal;
+
+    function confirmRejectRegistration(regId) {
+      const reason = (v('reject-reason-custom') || v('reject-reason-preset') || 'Verification criteria not met').trim();
+      const r = (DB.registrations || []).find(item => String(item.id) === String(regId));
+      if (!r) return;
+      r.status = 'rejected';
+      r.verificationStatus = 'Rejected';
+      r.rejectionReason = reason;
+      r.updatedAt = new Date().toISOString();
+      saveDB();
+      closeModal();
+      renderPage(_currentPage);
+      toast('Registration rejected with reason: ' + reason, 'info');
+    }
+    window.confirmRejectRegistration = confirmRejectRegistration;
+
+    function openSupportTicketModal(ticketId) {
+      let req = (DB.supportRequests || []).find(s => String(s.id) === String(ticketId));
+      if (!req) req = (DB.userQueries || []).find(q => String(q.id) === String(ticketId));
+      if (!req) return;
+
+      const requesterName = req.userName || (supportUser ? supportUser(req).name : 'Requester');
+      const requesterEmail = req.userEmail || (supportUser ? supportUser(req).email : '—');
+      const subject = req.subject || req.type || 'Support Request';
+      const message = req.message || req.detail || '—';
+      const priority = req.priority || 'Medium';
+      const status = req.status || 'Pending';
+      const assignedTo = req.assignedTo || 'Arjun Verma (Support Executive)';
+      const notes = req.internalNotes || [];
+      const history = req.history || [
+        { action: 'Ticket Created', by: requesterName, timestamp: req.date || req.created || 'Recently' }
+      ];
+
+      openModal(`Manage Ticket: ${req.id}`, `
+        <div style="background:var(--surface2);padding:12px;border-radius:8px;margin-bottom:14px">
+          <div class="flex justify-between items-start mb-4">
+            <div>
+              <div style="font-weight:700;font-size:14px;color:var(--text)">${requesterName} <span class="small muted">(${requesterEmail})</span></div>
+              <div class="small muted">Ticket ID: <span class="mono">${req.id}</span> · Submitted: ${req.date || req.created || 'Recently'}</div>
+            </div>
+            <span class="badge badge-${status === 'Resolved' ? 'green' : status === 'In Progress' ? 'purple' : 'yellow'}">${status}</span>
+          </div>
+          <div style="font-weight:600;font-size:13px;color:var(--accent);margin-top:6px">🏷️ ${subject}</div>
+          <p style="font-size:13px;color:var(--text2);margin-top:4px;line-height:1.5">${message}</p>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Priority</label>
+            <select class="form-control" id="ticket-edit-priority">
+              <option ${priority === 'High' ? 'selected' : ''}>High</option>
+              <option ${priority === 'Medium' ? 'selected' : ''}>Medium</option>
+              <option ${priority === 'Low' ? 'selected' : ''}>Low</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin-bottom:0">
+            <label class="form-label">Status</label>
+            <select class="form-control" id="ticket-edit-status">
+              <option ${status === 'Pending' ? 'selected' : ''}>Pending</option>
+              <option ${status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+              <option ${status === 'Resolved' ? 'selected' : ''}>Resolved</option>
+              <option ${status === 'Closed' ? 'selected' : ''}>Closed</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Assignee</label>
+          <select class="form-control" id="ticket-edit-assignee">
+            <option ${assignedTo.includes('Arjun') ? 'selected' : ''}>Arjun Verma (Support Executive)</option>
+            <option ${assignedTo.includes('Tier 2') ? 'selected' : ''}>Tier 2 Support Team</option>
+            <option ${assignedTo.includes('Operations') ? 'selected' : ''}>Operations Team</option>
+            <option ${assignedTo.includes('Unassigned') ? 'selected' : ''}>Unassigned</option>
+          </select>
+        </div>
+
+        <div class="mb-14">
+          <div class="flex justify-between items-center mb-6">
+            <label class="form-label" style="margin-bottom:0">Internal Staff Notes</label>
+            <span class="small muted">${notes.length} note(s) recorded</span>
+          </div>
+          <div style="display:flex;flex-direction:column;gap:8px;max-height:120px;overflow-y:auto;background:var(--surface);padding:8px;border-radius:6px;border:1px solid var(--border);margin-bottom:8px">
+            ${notes.map(n => `
+              <div style="font-size:12px;padding:6px;background:var(--surface2);border-radius:4px">
+                <div class="flex justify-between muted"><strong>${n.author || 'Support Exec'}</strong><span>${n.time || 'Recently'}</span></div>
+                <div style="margin-top:2px;color:var(--text)">${n.text}</div>
+              </div>
+            `).join('') || '<div class="small muted text-center py-8">No internal notes yet.</div>'}
+          </div>
+          <div class="flex gap-6">
+            <input class="form-control" id="new-internal-note" placeholder="Add an internal note...">
+            <button class="btn btn-ghost btn-sm" onclick="addSupportTicketInternalNote('${req.id}')">Add Note</button>
+          </div>
+        </div>
+
+        <div class="mb-14">
+          <div class="label mb-6" style="font-size:12px;font-weight:700">Resolution History &amp; Audit Trail</div>
+          <div style="font-size:11.5px;color:var(--text3);display:flex;flex-direction:column;gap:4px">
+            ${history.map(h => `
+              <div class="flex justify-between">
+                <span>• ${h.action} (${h.by || 'System'})</span>
+                <span>${h.timestamp || 'Recorded'}</span>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `, [
+        { lbl: 'Close', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: '⚡ Escalate to Super Admin', cls: 'btn-warning', fn: `escalateSupportTicketDirect('${req.id}')` },
+        { lbl: 'Save Changes', cls: 'btn-primary', fn: `saveSupportTicketChanges('${req.id}')` }
+      ]);
+    }
+    window.openSupportTicketModal = openSupportTicketModal;
+
+    function saveSupportTicketChanges(ticketId) {
+      let req = (DB.supportRequests || []).find(s => String(s.id) === String(ticketId));
+      if (!req) req = (DB.userQueries || []).find(q => String(q.id) === String(ticketId));
+      if (!req) return;
+
+      const newPriority = v('ticket-edit-priority');
+      const newStatus = v('ticket-edit-status');
+      const newAssignee = v('ticket-edit-assignee');
+
+      if (!req.history) req.history = [];
+      if (req.status !== newStatus) {
+        req.history.push({ action: `Status changed to ${newStatus}`, by: CU.name || 'Support Executive', timestamp: new Date().toLocaleTimeString() });
+      }
+      if (req.priority !== newPriority) {
+        req.history.push({ action: `Priority set to ${newPriority}`, by: CU.name || 'Support Executive', timestamp: new Date().toLocaleTimeString() });
+      }
+
+      req.priority = newPriority;
+      req.status = newStatus;
+      req.assignedTo = newAssignee;
+      req.updated = 'Just now';
+
+      saveDB();
+      closeModal();
+      renderPage(_currentPage);
+      toast(`Ticket ${ticketId} updated successfully!`, 'success');
+    }
+    window.saveSupportTicketChanges = saveSupportTicketChanges;
+
+    function addSupportTicketInternalNote(ticketId) {
+      let req = (DB.supportRequests || []).find(s => String(s.id) === String(ticketId));
+      if (!req) req = (DB.userQueries || []).find(q => String(q.id) === String(ticketId));
+      if (!req) return;
+
+      const noteText = v('new-internal-note').trim();
+      if (!noteText) { toast('Please enter a note', 'error'); return; }
+
+      if (!req.internalNotes) req.internalNotes = [];
+      req.internalNotes.push({
+        author: CU.name || 'Support Executive',
+        text: noteText,
+        time: new Date().toLocaleTimeString()
+      });
+
+      if (!req.history) req.history = [];
+      req.history.push({ action: 'Internal note added', by: CU.name || 'Support Executive', timestamp: new Date().toLocaleTimeString() });
+
+      saveDB();
+      openSupportTicketModal(ticketId);
+      toast('Internal note saved.', 'info');
+    }
+    window.addSupportTicketInternalNote = addSupportTicketInternalNote;
+
+    function escalateSupportTicketDirect(ticketId) {
+      let req = (DB.supportRequests || []).find(s => String(s.id) === String(ticketId));
+      if (!req) req = (DB.userQueries || []).find(q => String(q.id) === String(ticketId));
+      if (!req) return;
+
+      req.priority = 'High';
+      req.status = 'In Progress';
+      req.escalated = true;
+      req.escalatedTo = 'Super Admin';
+      req.assignedTo = 'Super Admin / Escalations Team';
+
+      if (!req.internalNotes) req.internalNotes = [];
+      req.internalNotes.push({
+        author: CU.name || 'Support Executive',
+        text: 'Escalated to Super Admin for critical review.',
+        time: new Date().toLocaleTimeString()
+      });
+
+      if (!req.history) req.history = [];
+      req.history.push({ action: 'Escalated to Super Admin', by: CU.name || 'Support Executive', timestamp: new Date().toLocaleTimeString() });
+
+      saveDB();
+      closeModal();
+      renderPage(_currentPage);
+      toast(`Ticket ${ticketId} has been escalated to Super Admin!`, 'warning');
+    }
+    window.escalateSupportTicketDirect = escalateSupportTicketDirect;
+
+    function resolveEventOpTaskDirect(taskId) {
+      const t = (DB.eventOperationsTasks || []).find(item => item.id === taskId);
+      if (!t) return;
+      t.status = 'Resolved';
+      t.updated = 'Just now';
+      saveDB();
+      renderPage(_currentPage);
+      toast(`Operational issue ${taskId} marked as resolved!`, 'success');
+    }
+    window.resolveEventOpTaskDirect = resolveEventOpTaskDirect;
+
+    function openCreateSupportExecutiveReportModal() {
+      const eventsOptions = (DB.events || []).map(e => `<option value="${e.title || e.name}">${e.title || e.name}</option>`).join('');
+      openModal('📤 Create Support Executive Report', `
+        <div class="form-group">
+          <label class="form-label">Report Category *</label>
+          <select class="form-control" id="ser-category">
+            <option value="Registration &amp; User Management">Registration &amp; User Management</option>
+            <option value="Event Operations Report">Event Operations Report</option>
+            <option value="Support &amp; Issue Summary">Support &amp; Issue Summary</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Report Title *</label>
+          <input class="form-control" id="ser-title" placeholder="e.g. Q3 2026 Support &amp; Operations Review">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Associated Scope / Event *</label>
+          <select class="form-control" id="ser-scope">
+            <option value="Platform Wide">Platform Wide</option>
+            <option value="All Active Events">All Active Events</option>
+            ${eventsOptions}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Reporting Period *</label>
+          <input class="form-control" id="ser-period" placeholder="e.g. August 2026, Q3 2026, Bi-Weekly Sprint">
+        </div>
+        <div class="form-group">
+          <label class="form-label">Summary &amp; Key Findings *</label>
+          <textarea class="form-control" id="ser-summary" rows="3" placeholder="Summary of findings, metrics, and actions taken..."></textarea>
+        </div>
+        <div class="form-group">
+          <label class="form-label">Attached Document (PDF / DOCX)</label>
+          <div class="file-upload-box" style="border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;background:var(--surface2);cursor:pointer" onclick="document.getElementById('ser-file').click()">
+            <input type="file" id="ser-file" accept=".pdf,.doc,.docx,.xls,.xlsx" style="display:none" onchange="handleSerFileSelect(this)">
+            <div id="ser-file-preview">
+              <div style="font-size:24px;margin-bottom:4px">📁</div>
+              <div style="font-weight:600;font-size:13px">Click to attach document (.pdf, .docx, .xlsx)</div>
+              <div class="small muted" id="ser-file-name-display">Attached: Support_Executive_Report.pdf</div>
+            </div>
+          </div>
+        </div>
+      `, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: '💾 Save Draft', cls: 'btn-ghost', fn: 'saveSupportExecutiveReport(false)' },
+        { lbl: '📤 Submit to Super Admin', cls: 'btn-primary', fn: 'saveSupportExecutiveReport(true)' }
+      ]);
+    }
+    window.openCreateSupportExecutiveReportModal = openCreateSupportExecutiveReportModal;
+
+    let _selectedSerFileName = 'Support_Executive_Report.pdf';
+    function handleSerFileSelect(input) {
+      if (input.files && input.files[0]) {
+        _selectedSerFileName = input.files[0].name;
+        const el = document.getElementById('ser-file-name-display');
+        if (el) el.textContent = `Attached: ${_selectedSerFileName} (${(input.files[0].size / 1024).toFixed(1)} KB)`;
+      }
+    }
+    window.handleSerFileSelect = handleSerFileSelect;
+
+    function saveSupportExecutiveReport(isSubmit) {
+      const category = v('ser-category');
+      const title = v('ser-title').trim();
+      const scope = v('ser-scope');
+      const period = v('ser-period').trim();
+      const summary = v('ser-summary').trim();
+
+      if (!title) { toast('Please enter a report title', 'error'); return; }
+      if (!period) { toast('Please specify a reporting period', 'error'); return; }
+      if (!summary) { toast('Please provide a summary', 'error'); return; }
+
+      const newRep = {
+        id: `SER-${Date.now().toString().slice(-4)}`,
+        title: title,
+        category: category,
+        scope: scope,
+        period: period,
+        summary: summary,
+        fileName: _selectedSerFileName || 'Support_Executive_Report.pdf',
+        status: isSubmit ? 'Submitted' : 'Draft',
+        author: CU.name || 'Support Executive',
+        updated: 'Just now',
+        reviewFeedback: isSubmit ? 'Submitted to Super Admin for formal review' : 'Draft saved in workspace'
+      };
+
+      if (!DB.supportExecReports) DB.supportExecReports = [];
+      DB.supportExecReports.unshift(newRep);
+      saveDB();
+      closeModal();
+      renderPage('reports-analytics');
+      toast(isSubmit ? 'Report submitted to Super Admin successfully!' : 'Report saved as draft.', 'success');
+    }
+    window.saveSupportExecutiveReport = saveSupportExecutiveReport;
+
+    function submitReportToAdminDirect(reportId) {
+      const all = getAllReportsList();
+      const rep = all.find(r => r.id === reportId);
+      if (!rep) return;
+      rep.status = 'Submitted';
+      rep.reviewFeedback = 'Submitted to Super Admin for review';
+      saveDB();
+      renderPage('reports-analytics');
+      toast(`Report ${reportId} submitted to Super Admin!`, 'success');
+    }
+    window.submitReportToAdminDirect = submitReportToAdminDirect;
+
+    function previewReportDocument(reportId) {
+      const all = getAllReportsList();
+      const rep = all.find(r => r.id === reportId);
+      if (!rep) return;
+
+      openModal(`Report Document: ${rep.title}`, `
+        <div class="info-row"><span class="info-label">Report ID</span><span class="info-value mono">${rep.id}</span></div>
+        <div class="info-row"><span class="info-label">Category</span><span class="info-value"><span class="badge badge-purple">${rep.category}</span></span></div>
+        <div class="info-row"><span class="info-label">Scope / Target</span><span class="info-value">${rep.scope || 'Platform Wide'}</span></div>
+        <div class="info-row"><span class="info-label">Reporting Period</span><span class="info-value">${rep.period || 'Q3 2026'}</span></div>
+        <div class="info-row"><span class="info-label">Author</span><span class="info-value">${rep.author || 'Support Executive'}</span></div>
+        <div class="info-row"><span class="info-label">Review Status</span><span class="info-value"><span class="badge badge-${rep.status === 'Reviewed' ? 'green' : rep.status === 'Draft' ? 'yellow' : 'purple'}">${rep.status}</span></span></div>
+
+        <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin:14px 0">
+          <div style="font-weight:700;font-size:13px;margin-bottom:6px">Summary &amp; Key Findings</div>
+          <p style="font-size:12.5px;color:var(--text2);line-height:1.6">${rep.summary || rep.type || 'Comprehensive analytical overview and verified performance indicators for the selected scope.'}</p>
+        </div>
+
+        <div style="background:var(--surface);border:1px dashed var(--border);border-radius:8px;padding:14px;text-align:center">
+          <div style="font-size:28px;margin-bottom:4px">📄</div>
+          <div style="font-weight:700;font-size:13px">${rep.fileName || 'Report_Document.pdf'}</div>
+          <div class="small muted">Verified Document Attachment · Ready for Super Admin download</div>
+        </div>
+
+        ${rep.reviewFeedback ? `
+          <div style="margin-top:14px;padding:10px 12px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:4px">
+            <div class="small muted" style="font-weight:700">Admin Feedback:</div>
+            <div style="font-size:12.5px;color:var(--text);margin-top:2px">${rep.reviewFeedback}</div>
+          </div>
+        ` : ''}
+      `, [
+        { lbl: 'Close', cls: 'btn-ghost', fn: 'closeModal()' }
+      ]);
+    }
+    window.previewReportDocument = previewReportDocument;
 
     // ════════════════════════════════════════════════
     //  EMPLOYEE 1: REGISTRATION & VERIFICATION EXECUTIVE
@@ -3168,7 +4719,7 @@ window.EventFlowModules['shared'] = true;
       confirm2('Delete Event', 'Are you sure you want to delete this event record?', () => {
         DB.events = DB.events.filter(e => String(e.id) !== String(eventId));
         saveDB();
-        renderPage('events');
+        renderPage(_currentPage);
         toast('Event deleted successfully', 'info');
       });
     }
@@ -3177,7 +4728,7 @@ window.EventFlowModules['shared'] = true;
       sessionStorage.setItem('eventops_events_query', v('eventops-q'));
       sessionStorage.setItem('eventops_events_status', v('eventops-st'));
       sessionStorage.setItem('eventops_events_category', v('eventops-cat'));
-      renderPage('events');
+      renderPage(_currentPage);
     }
 
     function eventOpsStatusBadge(status) {
@@ -3209,7 +4760,7 @@ window.EventFlowModules['shared'] = true;
       };
       e.status = statusMap[newStatus] || newStatus.toLowerCase();
       saveDB();
-      renderPage('events');
+      renderPage(_currentPage);
       toast(`Event status updated to ${newStatus}`, 'success');
     }
 
@@ -3218,7 +4769,7 @@ window.EventFlowModules['shared'] = true;
       if (!e) return;
       e.status = 'published';
       saveDB();
-      renderPage('events');
+      renderPage(_currentPage);
       toast('Event approved and set to Active!', 'success');
     }
 
@@ -3228,7 +4779,7 @@ window.EventFlowModules['shared'] = true;
         if (!e) return;
         e.status = 'cancelled';
         saveDB();
-        renderPage('events');
+        renderPage(_currentPage);
         toast('Event has been rejected/cancelled.', 'info');
       });
     }
@@ -4313,7 +5864,7 @@ window.EventFlowModules['shared'] = true;
       u.role = v('edit-usr-role');
       saveDB();
       closeModal();
-      renderPage('attendees');
+      renderPage(_currentPage);
       toast('User details updated!', 'success');
     }
 
@@ -4323,7 +5874,7 @@ window.EventFlowModules['shared'] = true;
       const newStatus = (u.status === 'deactivated' || u.status === 'inactive') ? 'active' : 'deactivated';
       u.status = newStatus;
       saveDB();
-      renderPage('attendees');
+      renderPage(_currentPage);
       toast(`User status changed to ${newStatus}`, 'info');
     }
 
@@ -4331,7 +5882,7 @@ window.EventFlowModules['shared'] = true;
       confirm2('Delete User', 'Are you sure you want to permanently delete this user record?', () => {
         DB.users = DB.users.filter(u => String(u.id) !== String(userId));
         saveDB();
-        renderPage('attendees');
+        renderPage(_currentPage);
         toast('User deleted successfully', 'info');
       });
     }
@@ -9812,9 +11363,11 @@ window.EventFlowModules['shared'] = true;
 
       if ((role === 'staff' || role === 'employee') && empType) {
         const employeePages = {
+          SUPPORT_EXECUTIVE: { key: 'employee1' },
           REGISTRATION_VERIFICATION: { key: 'employee1' },
-          EVENT_OPERATIONS: { key: 'employee2' },
-          SUPPORT_FINANCE: { key: 'employee3' },
+          EVENT_OPERATIONS: { key: 'employee1' },
+          SUPPORT_FINANCE: { key: 'employee2' },
+          FINANCE_EXECUTIVE: { key: 'employee2' },
         };
         if (employeePages[empType]) return employeePages[empType];
       }
@@ -9827,10 +11380,11 @@ window.EventFlowModules['shared'] = true;
         client: { key: 'client' },
         staff: { key: 'staff' },
         event_staff: { key: 'staff' },
+        employee: { key: 'employee1' },
         attendee: { key: 'attendee' },
         employee1: { key: 'employee1' },
         employee2: { key: 'employee2' },
-        employee3: { key: 'employee3' },
+        employee3: { key: 'employee2' },
       };
       return rolePages[role] || null;
     }

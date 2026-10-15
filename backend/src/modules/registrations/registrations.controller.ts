@@ -1,7 +1,7 @@
-import { Controller, Get, Post, Body, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Body, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
 import { RegistrationsService } from './registrations.service';
-import { CreateRegistrationDto } from './dto/registration.dto';
+import { CancelRegistrationDto, CreateRegistrationDto, UpdateRegistrationDetailsDto } from './dto/registration.dto';
 import { RoleGuard } from '../../common/guards/role.guard';
 import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
 import { UserId } from '../../common/decorators/user-id.decorator';
@@ -21,8 +21,8 @@ export class RegistrationsController {
   @ApiResponse({ status: 201, description: 'Registered successfully. Returns qrCode and verificationId.' })
   @ApiResponse({ status: 403, description: 'Only ATTENDEE can register' })
   @ApiResponse({ status: 409, description: 'Already registered for this event' })
-  create(@Body() dto: CreateRegistrationDto, @UserRoleDecorator() role: UserRole) {
-    return this.service.create(dto, role);
+  create(@Body() dto: CreateRegistrationDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.create(dto, role, userId);
   }
 
   @Get()
@@ -35,7 +35,22 @@ export class RegistrationsController {
   @ApiOperation({ summary: 'Get registration by ID' })
   @ApiResponse({ status: 200, description: 'Registration details with qrCode and verificationId' })
   @ApiResponse({ status: 404, description: 'Registration not found' })
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  findOne(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.findOne(id, role, userId);
+  }
+
+  @Patch(':id/details')
+  updateDetails(@Param('id') id: string, @Body() dto: UpdateRegistrationDetailsDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.updateDetails(id, dto, role, userId);
+  }
+
+  @Post(':id/waitlist/confirm')
+  confirmWaitlist(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.confirmWaitlist(id, role, userId);
+  }
+
+  @Patch(':id/cancel')
+  cancel(@Param('id') id: string, @Body() dto: CancelRegistrationDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.cancel(id, dto.reason, role, userId);
   }
 }

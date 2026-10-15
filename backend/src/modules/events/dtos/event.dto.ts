@@ -1,4 +1,4 @@
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsEnum, IsDateString } from 'class-validator';
+import { IsBoolean, IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateEventDto {
@@ -75,6 +75,11 @@ export class CreateEventDto {
   @IsString()
   @IsOptional()
   clientId?: string;
+
+  @IsString() @IsOptional() registrationDeadline?: string;
+  @IsString() @IsOptional() cancellationDeadline?: string;
+  @IsString() @IsOptional() eligibility?: string;
+  @IsBoolean() @IsOptional() waitlistEnabled?: boolean;
 }
 
 export class UpdateEventDto {
@@ -142,6 +147,11 @@ export class UpdateEventDto {
   @IsString()
   @IsOptional()
   status?: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
+
+  @IsString() @IsOptional() registrationDeadline?: string;
+  @IsString() @IsOptional() cancellationDeadline?: string;
+  @IsString() @IsOptional() eligibility?: string;
+  @IsBoolean() @IsOptional() waitlistEnabled?: boolean;
 }
 
 export class EventResponseDto {

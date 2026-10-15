@@ -21,8 +21,8 @@ export class StaffAssignmentsController {
   @ApiResponse({ status: 201, description: 'Assignment created. Staff notified.' })
   @ApiResponse({ status: 403, description: 'Only EVENT_ORGANIZER can assign staff' })
   @ApiResponse({ status: 409, description: 'Staff already assigned to this event' })
-  create(@Body() dto: CreateStaffAssignmentDto, @UserRoleDecorator() role: UserRole) {
-    return this.service.create(dto, role);
+  create(@Body() dto: CreateStaffAssignmentDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.create(dto, role, userId);
   }
 
   @Get()

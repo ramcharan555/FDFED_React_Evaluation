@@ -1,6 +1,14 @@
 # Event Management & Coordination System - Backend
 
-Complete NestJS backend with in-memory data structures and role-based access control (RBAC).
+NestJS backend with role-based access control (RBAC), repeatable demo seed data, and restart-safe local JSON persistence.
+
+## Demo data and persistence
+
+The backend seeds linked demo users, role profiles, events, registrations, payments, attendance, and activity records when its data file does not exist. Mutations are saved before successful responses are sent, so the demo state survives server restarts.
+
+By default, the file is `backend/data/eventflow-store.json` (ignored by Git). Set `EVENTFLOW_DATA_FILE` to use a different path. Keep this file private: it contains local demo account data.
+
+Payments use the `DEMO_PROVIDER` only and are simulated. No card or bank details are accepted, and processed refunds are simulated as well.
 
 ## 📋 Table of Contents
 

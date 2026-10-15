@@ -21,8 +21,15 @@ export class PaymentsController {
   @ApiResponse({ status: 201, description: 'Payment processed. Ticket confirmed.' })
   @ApiResponse({ status: 403, description: 'Only ATTENDEE can make payments' })
   @ApiResponse({ status: 409, description: 'Payment already completed for this registration' })
-  create(@Body() dto: CreatePaymentDto, @UserRoleDecorator() role: UserRole) {
-    return this.service.create(dto, role);
+  create(@Body() dto: CreatePaymentDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.create(dto, role, userId);
+  }
+
+  @Post('refunds/:id/process')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Complete a simulated refund (SUPER_ADMIN only)' })
+  processRefund(@Param('id') id: string, @UserRoleDecorator() role: UserRole) {
+    return this.service.processRefund(id, role);
   }
 
   @Get()
@@ -34,7 +41,7 @@ export class PaymentsController {
   @Get(':id')
   @ApiOperation({ summary: 'Get payment by ID' })
   @ApiResponse({ status: 404, description: 'Payment not found' })
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
+  findOne(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.findOne(id, role, userId);
   }
 }

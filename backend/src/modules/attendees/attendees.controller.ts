@@ -66,8 +66,9 @@ export class AttendeesController {
   findByEvent(
     @Param('eventId') eventId: string,
     @UserRoleDecorator() role: UserRole,
+    @UserId() userId: string,
   ) {
-    return this.attendeesService.findByEvent(eventId, role);
+    return this.attendeesService.findByEvent(eventId, role, userId);
   }
 
   @Get(':id')
@@ -77,8 +78,9 @@ export class AttendeesController {
   findOne(
     @Param('id') id: string,
     @UserRoleDecorator() role: UserRole,
+    @UserId() userId: string,
   ) {
-    return this.attendeesService.findOne(id, role);
+    return this.attendeesService.findOne(id, role, userId);
   }
 
   @Put(':id')

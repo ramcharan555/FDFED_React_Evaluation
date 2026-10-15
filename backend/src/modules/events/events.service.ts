@@ -11,6 +11,10 @@ export class EventsService {
     this.dataStore = DataStore.getInstance();
   }
 
+  private isActiveReservation(registration: DataStore['registrations'][number]): boolean {
+    return registration.status !== 'pending_payment' || !registration.reservationExpiresAt || registration.reservationExpiresAt > new Date();
+  }
+
   // Create Event - Organizer or Super Admin
   create(createEventDto: CreateEventDto, role: UserRole, organizerId?: string): any {
     if (![UserRole.SUPER_ADMIN, UserRole.EVENT_ORGANIZER].includes(role)) {
@@ -42,6 +46,10 @@ export class EventsService {
     };
     (event as any).description = (createEventDto as any).description || '';
     (event as any).city = (createEventDto as any).city || '';
+    event.registrationDeadline = createEventDto.registrationDeadline;
+    event.cancellationDeadline = createEventDto.cancellationDeadline;
+    event.eligibility = createEventDto.eligibility;
+    event.waitlistEnabled = createEventDto.waitlistEnabled ?? false;
 
     this.dataStore.events.push(event);
     return this.mapEventToFrontend(event);
@@ -56,7 +64,7 @@ export class EventsService {
 
     // Count registrations for this event
     const registered = this.dataStore.registrations.filter(
-      r => r.eventId === event.eventId && r.status !== 'cancelled',
+      r => r.eventId === event.eventId && ['registered', 'attended', 'pending_payment'].includes(r.status) && this.isActiveReservation(r),
     ).length;
 
     return {
@@ -67,6 +75,12 @@ export class EventsService {
       price: event.ticketPrice,
       city,
       registered,
+      remainingCapacity: Math.max(0, event.capacity - registered),
+      registrationDeadline: event.registrationDeadline || event.date,
+      cancellationDeadline: event.cancellationDeadline || event.date,
+      eligibility: event.eligibility || 'Open to all active attendees',
+      waitlistEnabled: event.waitlistEnabled ?? false,
+      changes: this.dataStore.eventChanges.filter(c => c.eventId === event.eventId),
       description: (event as any).description || '',
     };
   }
@@ -88,7 +102,7 @@ export class EventsService {
     }
 
     if (role === UserRole.ATTENDEE) {
-      events = events.filter((e) => e.status === 'published');
+      events = events.filter((e) => e.status === 'published' && new Date(`${e.date}T23:59:59`) >= new Date());
     }
 
     return events.map(e => this.mapEventToFrontend(e));
@@ -110,7 +124,8 @@ export class EventsService {
   }
 
   // Get all events (no role filter — for super_admin dashboard)
-  findAllAdmin(search?: string, status?: string): any[] {
+  findAllAdmin(role: UserRole, search?: string, status?: string): any[] {
+    if (role !== UserRole.SUPER_ADMIN) throw new ForbiddenException('Only super admin can access the complete event catalog');
     let events = [...this.dataStore.events];
     if (search) {
       events = events.filter(
@@ -126,11 +141,18 @@ export class EventsService {
   }
 
   // Get event by ID
-  findOne(eventId: string): any {
+  findOne(eventId: string, role: UserRole, userId?: string): any {
     const event = this.dataStore.events.find((e) => e.eventId === eventId);
 
     if (!event) {
       throw new NotFoundException(`Event with ID ${eventId} not found`);
+    }
+    if (role === UserRole.ATTENDEE && (event.status !== 'published' || new Date(`${event.date}T23:59:59`) < new Date())) {
+      throw new NotFoundException(`Event with ID ${eventId} not found`);
+    }
+    if (role === UserRole.EVENT_ORGANIZER) {
+      const organizer = this.dataStore.organizers.find(o => o.userId === userId);
+      if (!organizer || organizer.organizerId !== event.organizerId) throw new ForbiddenException('You can only access your own events');
     }
 
     return this.mapEventToFrontend(event);
@@ -150,6 +172,11 @@ export class EventsService {
       throw new ForbiddenException('Only organizers and super admin can update events');
     }
 
+    const before = { date: event.date, time: event.time, location: event.location, status: event.status };
+    const occupied = this.dataStore.registrations.filter(r =>
+      r.eventId === eventId && ['registered', 'attended', 'pending_payment'].includes(r.status) && this.isActiveReservation(r),
+    ).length;
+    if ((updateEventDto as any).capacity !== undefined && (updateEventDto as any).capacity < occupied) throw new BadRequestException(`Capacity cannot be lower than ${occupied} active registrations`);
     // Support both backend (name) and frontend (title) field names
     const dto = updateEventDto as any;
     if (dto.name || dto.title) event.name = dto.name || dto.title;
@@ -163,8 +190,34 @@ export class EventsService {
     if (dto.status) event.status = dto.status;
     if (dto.description !== undefined) (event as any).description = dto.description;
     if (dto.city) (event as any).city = dto.city;
+    if (dto.registrationDeadline !== undefined) event.registrationDeadline = dto.registrationDeadline;
+    if (dto.cancellationDeadline !== undefined) event.cancellationDeadline = dto.cancellationDeadline;
+    if (dto.eligibility !== undefined) event.eligibility = dto.eligibility;
+    if (dto.waitlistEnabled !== undefined) event.waitlistEnabled = dto.waitlistEnabled;
 
     event.updatedAt = new Date();
+    const changes: Array<{ type: 'cancelled' | 'postponed' | 'time_changed' | 'venue_changed'; summary: string; previousValue?: string; newValue?: string }> = [];
+    if (before.date !== event.date) changes.push({ type: new Date(event.date) > new Date(before.date) ? 'postponed' : 'time_changed', summary: `Event date changed from ${before.date} to ${event.date}`, previousValue: before.date, newValue: event.date });
+    if (before.time !== event.time) changes.push({ type: 'time_changed', summary: `Event time changed from ${before.time} to ${event.time}`, previousValue: before.time, newValue: event.time });
+    if (before.location !== event.location) changes.push({ type: 'venue_changed', summary: `Event venue changed from ${before.location} to ${event.location}`, previousValue: before.location, newValue: event.location });
+    if (before.status !== 'cancelled' && event.status === 'cancelled') changes.push({ type: 'cancelled', summary: 'Event cancelled by the organizer' });
+    for (const change of changes) {
+      this.dataStore.eventChanges.push({ changeId: this.dataStore.generateId('chg'), eventId, ...change, createdAt: new Date() });
+      const affected = this.dataStore.registrations.filter(r => r.eventId === eventId && r.status !== 'cancelled');
+      for (const registration of affected) {
+        const attendee = this.dataStore.attendees.find(a => a.attendeeId === registration.attendeeId);
+        if (change.type === 'cancelled') {
+          registration.status = 'cancelled'; registration.cancelledAt = new Date(); registration.cancellationReason = 'Event cancelled by organizer'; registration.qrCode = undefined; registration.verificationId = undefined; registration.updatedAt = new Date();
+          const payment = this.dataStore.payments.find(p => p.registrationId === registration.registrationId && p.status === 'completed');
+          if (payment && !this.dataStore.refunds.some(r => r.registrationId === registration.registrationId)) {
+            const refund = { refundId: this.dataStore.generateId('ref'), paymentId: payment.paymentId, registrationId: registration.registrationId, amount: payment.amount, status: 'pending' as const, reason: 'Event cancelled by organizer', requestedAt: new Date() };
+            this.dataStore.refunds.push(refund);
+            if (attendee) this.dataStore.notifications.push({ notificationId: this.dataStore.generateId('notif'), userId: attendee.userId, eventId, registrationId: registration.registrationId, paymentId: payment.paymentId, message: `Event cancelled. Simulated refund of ₹${refund.amount} is pending.`, type: 'refund_pending', read: false, dateTime: new Date(), createdAt: new Date() });
+          }
+        }
+        if (attendee) this.dataStore.notifications.push({ notificationId: this.dataStore.generateId('notif'), userId: attendee.userId, eventId, registrationId: registration.registrationId, message: `${event.name}: ${change.summary}`, type: change.type === 'cancelled' ? 'event_cancelled' : 'event_changed', read: false, dateTime: new Date(), createdAt: new Date() });
+      }
+    }
     return this.mapEventToFrontend(event);
   }
 

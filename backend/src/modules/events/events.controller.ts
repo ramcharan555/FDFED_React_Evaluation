@@ -67,10 +67,11 @@ export class EventsController {
   @ApiQuery({ name: 'status', required: false })
   @ApiResponse({ status: 200, description: 'All events for admin view' })
   findAllAdmin(
+    @UserRoleDecorator() role: UserRole,
     @Query('search') search?: string,
     @Query('status') status?: string,
   ) {
-    return this.eventsService.findAllAdmin(search, status);
+    return this.eventsService.findAllAdmin(role, search, status);
   }
 
   @Get('statistics')
@@ -84,8 +85,8 @@ export class EventsController {
   @ApiOperation({ summary: 'Get event by ID' })
   @ApiResponse({ status: 200, description: 'Event details' })
   @ApiResponse({ status: 404, description: 'Event not found' })
-  findOne(@Param('id') id: string) {
-    return this.eventsService.findOne(id);
+  findOne(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.eventsService.findOne(id, role, userId);
   }
 
   @Put(':id')
