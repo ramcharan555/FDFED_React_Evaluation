@@ -155,6 +155,20 @@ export class EventRequestsService {
       throw new ForbiddenException('Only CLIENT can create event requests');
     }
 
+    const client = this.db.clients.find(
+      (item) => item.userId === userId || item.clientId === userId,
+    );
+    if (role === UserRole.CLIENT && !client) {
+      throw new ForbiddenException('Client profile not found');
+    }
+    const clientId = role === UserRole.CLIENT ? client!.clientId : dto.clientId;
+    const organizer = this.db.organizers.find(
+      (item) => item.organizerId === dto.organizerId || item.userId === dto.organizerId,
+    );
+    if (!organizer) {
+      throw new BadRequestException('Selected organizer was not found');
+    }
+
     if (this.isPastDate(dto.eventDate)) {
       throw new BadRequestException('Desired event date cannot be in the past');
     }
@@ -170,7 +184,7 @@ export class EventRequestsService {
     // Check for duplicate active requests
     const isDuplicate = this.db.eventRequests.some(
       r =>
-        r.clientId === dto.clientId &&
+        r.clientId === clientId &&
         r.eventName.toLowerCase().trim() === dto.eventName.toLowerCase().trim() &&
         r.eventDate === dto.eventDate &&
         ['submitted', 'pending', 'under_review', 'info_requested', 'proposal_sent', 'awaiting_client', 'confirmed'].includes(r.status)
@@ -185,13 +199,18 @@ export class EventRequestsService {
     const requestId = this.db.generateId('req');
     const request = {
       requestId,
-      clientId: dto.clientId,
-      organizerId: dto.organizerId,
+      clientId,
+      organizerId: organizer.organizerId,
       eventName: dto.eventName.trim(),
+      eventType: dto.eventType?.trim() || 'General',
       eventDate: dto.eventDate,
+      eventTime: dto.eventTime?.trim() || '00:00',
+      city: dto.city?.trim() || '',
+      dateFlexibility: dto.dateFlexibility || 'exact',
       budget: Number(dto.budget),
       capacity: Number(dto.capacity),
       requirements: dto.requirements || '',
+      notes: dto.notes || '',
       status: 'submitted' as const,
       agreementStatus: 'not_sent' as const,
       paymentStatus: 'unpaid' as const,
@@ -202,10 +221,10 @@ export class EventRequestsService {
         {
           id: this.db.generateId('aud'),
           action: 'Request Submitted',
-          performedBy: userId || dto.clientId,
+          performedBy: userId || clientId,
           role: role,
           timestamp: new Date(),
-          details: { budget: dto.budget, capacity: dto.capacity, eventDate: dto.eventDate },
+          details: { budget: dto.budget, capacity: dto.capacity, eventDate: dto.eventDate, eventType: dto.eventType, city: dto.city },
         },
       ],
       version: 1,
@@ -216,14 +235,13 @@ export class EventRequestsService {
     this.db.eventRequests.push(request);
 
     // Notify organizer
-    const organizer = this.db.organizers.find(o => o.organizerId === dto.organizerId || o.userId === dto.organizerId);
     this.db.notifications.push({
       notificationId: this.db.generateId('notif'),
-      userId: organizer ? organizer.userId : dto.organizerId,
+      userId: organizer.userId,
       eventId: undefined,
       registrationId: undefined,
       paymentId: undefined,
-      message: `New event request: "${dto.eventName}" from client ${dto.clientId}`,
+      message: `New event request: "${dto.eventName}" from client ${clientId}`,
       type: 'event_request',
       read: false,
       dateTime: new Date(),

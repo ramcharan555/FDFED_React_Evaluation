@@ -182,8 +182,16 @@ async function apiGetDashboard() {
   return apiRequest('/analytics/dashboard');
 }
 
+async function apiGetClientDashboard() {
+  return apiRequest('/analytics/client-dashboard');
+}
+
 async function apiGetOrganizerDashboard(organizerId) {
   return apiRequest('/analytics/organizer-dashboard');
+}
+
+async function apiGetMyActivity(limit = 5) {
+  return apiRequest(`/activity-logs/me?limit=${Math.min(Math.max(Number(limit) || 5, 1), 20)}`);
 }
 
 // ─── EVENT REQUESTS ──────────────────────────────────────────────
@@ -355,7 +363,9 @@ window.apiCreateEvent = apiCreateEvent;
 window.apiUpdateEvent = apiUpdateEvent;
 window.apiDeleteEvent = apiDeleteEvent;
 window.apiGetDashboard = apiGetDashboard;
+window.apiGetClientDashboard = apiGetClientDashboard;
 window.apiGetOrganizerDashboard = apiGetOrganizerDashboard;
+window.apiGetMyActivity = apiGetMyActivity;
 window.apiGetEventRequests = apiGetEventRequests;
 window.apiGetClientRequests = apiGetClientRequests;
 window.apiGetOrganizerRequests = apiGetOrganizerRequests;
@@ -2502,6 +2512,10 @@ window.EventFlowModules['shared'] = true;
           el.innerHTML = isDepartmentEmployee()
             ? dashDepartmentEmployee()
             : ({ organizer: dashOrganizer, client: dashClient, staff: dashStaff, attendee: dashAttendee }[r] || dashAttendee)();
+          if (r === 'client') {
+            loadClientUpcomingEvents();
+            loadClientRecentActivity();
+          }
           break;
         case 'registrations':
           el.innerHTML = pageRegistrationsForEmployee();
@@ -4838,12 +4852,94 @@ window.EventFlowModules['shared'] = true;
     <div class="stat-card"><div class="stat-icon" style="background:var(--green-dim);color:var(--green)">✅</div><div class="stat-value" style="color:var(--green)">${myReqs.filter(r => r.status === 'approved').length}</div><div class="stat-label">Approved</div></div>
     <div class="stat-card"><div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">⏳</div><div class="stat-value" style="color:var(--yellow)">${myReqs.filter(r => r.status === 'pending' || r.status === 'in_review').length}</div><div class="stat-label">In Progress</div></div>
   </div>
-  <div class="h4 mb-16">My Event Requests</div>
-  <div style="display:flex;flex-direction:column;gap:14px">
-    ${myReqs.map(r => `<div class="card"><div class="flex justify-between items-start"><div style="flex:1"><div style="font-size:16px;font-weight:700;margin-bottom:5px">${r.title}</div><div class="small mb-8">${r.type} · ${r.guests} guests · ${r.date}</div><p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">${r.desc}</p><span class="badge badge-${reqBadge(r.status)}">${r.status}</span></div><div style="text-align:right;flex-shrink:0;margin-left:20px"><div style="font-size:22px;font-weight:800;color:var(--green)">₹${r.budget.toLocaleString()}</div><div class="small">Budget</div></div></div><div class="flex gap-8 mt-14"><button class="btn btn-ghost btn-sm" onclick="viewRequestDrawer('${r.id}')">View Details</button></div></div>`).join('')}
-    ${myReqs.length === 0 ? `<div class="empty"><div class="empty-icon">📋</div><div class="empty-title">No requests yet</div><div class="empty-desc">Submit your first event request!</div><button class="btn btn-primary mt-16" onclick="goNav('request-status')">Create Request</button></div>` : ''}
-  </div>`;
+  <div class="card" id="client-upcoming-events" aria-live="polite" style="margin-bottom:20px">
+    <div class="h4 mb-12">Upcoming Events</div>
+    <div class="small" style="color:var(--text3)">Loading your upcoming events…</div>
+  </div>
+  <div class="card" id="client-recent-activity" aria-live="polite">
+    <div class="h4 mb-12">Recent Activity</div>
+    <div class="small" style="color:var(--text3)">Loading your recent activity…</div>
+  </div>
+  `;
     }
+
+    function clientActivityPage(target) {
+      const resource = String(target.resource || '').toLowerCase();
+      if (resource.includes('notification')) return ['notifications', 'View notifications'];
+      return ['request-status', 'View request status'];
+    }
+
+    function clientUpcomingEventDate(event) {
+      const date = new Date(`${event.date}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return `${event.date || 'Date TBD'}${event.time ? ` · ${event.time}` : ''}`;
+      const formattedDate = new Intl.DateTimeFormat(undefined, { dateStyle: 'medium' }).format(date);
+      return `${formattedDate}${event.time ? ` · ${event.time}` : ''}`;
+    }
+
+    async function loadClientUpcomingEvents() {
+      const container = g('client-upcoming-events');
+      if (!container) return;
+
+      try {
+        const response = await apiGetClientDashboard();
+        const dashboard = response && response.data ? response.data : response;
+        const events = Array.isArray(dashboard?.upcomingEvents) ? dashboard.upcomingEvents : [];
+        if (!g('client-upcoming-events')) return;
+
+        if (events.length === 0) {
+          container.innerHTML = `<div class="h4 mb-12">Upcoming Events</div><div class="empty" style="padding:20px 0"><div class="empty-title">No upcoming events</div><div class="empty-desc">Confirmed future events will appear here.</div></div>`;
+          return;
+        }
+
+        container.innerHTML = `<div class="h4 mb-12">Upcoming Events</div><div style="display:flex;flex-direction:column;gap:0">${events.map(event => `<div class="flex justify-between items-center gap-10" style="padding:12px 0;border-bottom:1px solid var(--border)"><div style="min-width:0"><div style="font-weight:600;font-size:13.5px">${escapeHtml(event.title || 'Event')}</div><div class="small" style="color:var(--text2)">${escapeHtml(clientUpcomingEventDate(event))}${event.location ? ` · ${escapeHtml(event.location)}` : ''}</div></div><button class="btn btn-ghost btn-xs" onclick="goNav('request-status')">Manage Event</button></div>`).join('')}</div>`;
+      } catch (error) {
+        if (!g('client-upcoming-events')) return;
+        container.innerHTML = `<div class="h4 mb-12">Upcoming Events</div><div class="empty" style="padding:20px 0"><div class="empty-title">Unable to load upcoming events</div><div class="empty-desc">Please try again.</div><button class="btn btn-ghost btn-sm mt-12" onclick="refreshClientUpcomingEvents()">Retry</button></div>`;
+      }
+    }
+
+    window.refreshClientUpcomingEvents = loadClientUpcomingEvents;
+
+    function clientActivityTime(timestamp) {
+      const date = new Date(timestamp);
+      if (Number.isNaN(date.getTime())) return 'Recently';
+      return new Intl.DateTimeFormat(undefined, {
+        dateStyle: 'medium', timeStyle: 'short',
+      }).format(date);
+    }
+
+    function clientActivityLabel(activity) {
+      const action = String(activity.action || 'Activity update')
+        .replace(/[_-]+/g, ' ')
+        .replace(/\b\w/g, char => char.toUpperCase());
+      return escapeHtml(action);
+    }
+
+    async function loadClientRecentActivity() {
+      const container = g('client-recent-activity');
+      if (!container) return;
+
+      try {
+        const response = await apiGetMyActivity(5);
+        const activities = Array.isArray(response) ? response : (response && response.logs) || [];
+        if (!g('client-recent-activity')) return;
+
+        if (activities.length === 0) {
+          container.innerHTML = `<div class="h4 mb-12">Recent Activity</div><div class="empty" style="padding:20px 0"><div class="empty-title">No recent activity</div><div class="empty-desc">Updates to your event requests will appear here.</div></div>`;
+          return;
+        }
+
+        container.innerHTML = `<div class="h4 mb-12">Recent Activity</div><div style="display:flex;flex-direction:column;gap:0">${activities.map(activity => {
+          const [page, linkLabel] = clientActivityPage(activity);
+          return `<div class="flex justify-between items-center gap-10" style="padding:12px 0;border-bottom:1px solid var(--border)"><div style="min-width:0"><div style="font-weight:600;font-size:13.5px">${clientActivityLabel(activity)}</div><time class="small" datetime="${escapeHtml(String(activity.timestamp || ''))}" style="color:var(--text3)">${escapeHtml(clientActivityTime(activity.timestamp))}</time></div><button class="btn btn-ghost btn-xs" onclick="goNav('${page}')">${linkLabel}</button></div>`;
+        }).join('')}</div>`;
+      } catch (error) {
+        if (!g('client-recent-activity')) return;
+        container.innerHTML = `<div class="h4 mb-12">Recent Activity</div><div class="empty" style="padding:20px 0"><div class="empty-title">Unable to load activity</div><div class="empty-desc">Please try again.</div><button class="btn btn-ghost btn-sm mt-12" onclick="refreshClientRecentActivity()">Retry</button></div>`;
+      }
+    }
+
+    window.refreshClientRecentActivity = loadClientRecentActivity;
 
     function dashStaff() {
       const mine = DB.staffAssignments.filter(a => String(a.staffId) === String(CU.id));
@@ -8919,14 +9015,21 @@ window.EventFlowModules['shared'] = true;
     //  CLIENT PAGES
     // ════════════════════════════════════════════════
     function pageFindOrganizers() {
-      const q = (sessionStorage.getItem('search_org_q') || '').toLowerCase();
+      const q = (sessionStorage.getItem('search_org_q') || '').trim().toLowerCase();
       const rating = sessionStorage.getItem('search_org_rating') || 'all';
       const category = sessionStorage.getItem('search_org_category') || 'all';
 
       let organizers = DB.users.filter(u => u.role === 'organizer');
 
       if (q) {
-        organizers = organizers.filter(o => o.name.toLowerCase().includes(q) || o.service.toLowerCase().includes(q));
+        organizers = organizers.filter(o => [
+          o.name,
+          o.service,
+          o.specialization,
+          o.category,
+          o.city,
+          o.location,
+        ].filter(Boolean).some(value => String(value).toLowerCase().includes(q)));
       }
       if (category !== 'all') {
         organizers = organizers.filter(o => o.service === category || o.eventTypes?.includes(category));
@@ -9109,26 +9212,73 @@ window.EventFlowModules['shared'] = true;
       toast(`Opening contact form for ${org.name}...`, 'info');
     }
 
-    function openRequestModal(organizerId) {
+    let eventRequestDraft = null;
+
+    function openRequestModal(organizerId, keepDraft = false) {
       const org = DB.users.find(u => String(u.id) === String(organizerId));
+      if (!org) return;
+      const draft = keepDraft && eventRequestDraft?.organizerId === organizerId ? eventRequestDraft : {};
       openModal(`Request Event - ${org.name}`, `
-    <div class="form-group"><label class="form-label">Event Title *</label><input class="form-control" id="req-title" placeholder="e.g., Product Launch 2026"></div>
-    <div class="form-group"><label class="form-label">Event Type *</label><select class="form-control" id="req-type"><option>Corporate Events</option><option>Conferences</option><option>Weddings</option><option>Workshops</option></select></div>
-    <div class="form-group"><label class="form-label">Expected Date *</label><input class="form-control" id="req-date" type="date"></div>
-    <div class="form-group"><label class="form-label">Expected Guests</label><input class="form-control" id="req-guests" type="number" placeholder="100"></div>
-    <div class="form-group"><label class="form-label">Budget (INR) *</label><input class="form-control" id="req-budget" type="number" placeholder="50000"></div>
-    <div class="form-group"><label class="form-label">Description</label><textarea class="form-control" id="req-desc" placeholder="Tell the organizer about your event..."></textarea></div>
-  `, [{ lbl: 'Send Request', cls: 'btn-primary', fn: `submitEventRequest('${organizerId}')` }]);
+    <div class="form-group"><label class="form-label">Event Title *</label><input class="form-control" id="req-title" value="${escapeHtml(draft.eventName || '')}" placeholder="e.g., Product Launch 2026"></div>
+    <div class="form-group"><label class="form-label">Event Type *</label><select class="form-control" id="req-type">${['Corporate Events', 'Conferences', 'Weddings', 'Workshops'].map(type => `<option${draft.eventType === type ? ' selected' : ''}>${type}</option>`).join('')}</select></div>
+    <div class="form-group"><label class="form-label">Expected Date *</label><input class="form-control" id="req-date" type="date" value="${escapeHtml(draft.eventDate || '')}"></div>
+    <div class="form-group"><label class="form-label">Expected Guests</label><input class="form-control" id="req-guests" type="number" value="${escapeHtml(String(draft.capacity || ''))}" placeholder="100"></div>
+    <div class="form-group"><label class="form-label">Budget (INR) *</label><input class="form-control" id="req-budget" type="number" value="${escapeHtml(String(draft.budget || ''))}" placeholder="50000"></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea class="form-control" id="req-desc" placeholder="Tell the organizer about your event...">${escapeHtml(draft.requirements || '')}</textarea></div>
+  `, [{ lbl: 'Review Request', cls: 'btn-primary', fn: `reviewEventRequest('${organizerId}')` }]);
     }
 
-    function submitEventRequest(organizerId) {
-      const title = v('req-title'), type = v('req-type'), date = v('req-date'), guests = v('req-guests') || 0, budget = parseInt(v('req-budget')) || 0, desc = v('req-desc');
-      if (!title || !date || budget < 1000) { toast('Please fill required fields', 'error'); return; }
-      DB.eventRequests.push({ id: DB._nextId.reqs++, clientId: CU.id, organizer: organizerId, title, type, date, guests, budget, desc, status: 'pending', created: today() });
-      saveDB();
-      closeModal();
-      renderPage(_currentPage);
-      toast('Request sent to organizer!', 'success');
+    function reviewEventRequest(organizerId) {
+      const eventName = v('req-title').trim();
+      const eventType = v('req-type');
+      const eventDate = v('req-date');
+      const capacity = Number(v('req-guests'));
+      const requirements = v('req-desc').trim();
+      const budget = Number(v('req-budget'));
+      const todayDate = new Date().toISOString().slice(0, 10);
+
+      if (!eventName || !eventDate || !Number.isInteger(capacity) || capacity < 1 || !Number.isFinite(budget) || budget < 1000) {
+        toast('Complete all required fields with valid guest count and budget', 'error');
+        return;
+      }
+      if (eventDate < todayDate) {
+        toast('Event date cannot be in the past', 'error');
+        return;
+      }
+
+      const org = DB.users.find(u => String(u.id) === String(organizerId)) || {};
+      eventRequestDraft = {
+        organizerId,
+        clientId: CU.id,
+        eventName,
+        eventType,
+        eventDate,
+        eventTime: '00:00',
+        capacity,
+        city: org.city || org.location || 'India',
+        requirements,
+        budget,
+        dateFlexibility: 'exact',
+      };
+      const items = [
+        ['Event', eventName], ['Type', eventType], ['Expected date', eventDate], ['Guests', capacity], ['Budget', `₹${budget.toLocaleString()}`], ['Description', requirements || '—'],
+      ];
+      openModal('Review Event Request', `<div class="small mb-16" style="color:var(--text2)">Review the details below before sending them to the organizer.</div><div style="display:flex;flex-direction:column;gap:10px">${items.map(([label, value]) => `<div style="padding:10px 12px;background:var(--surface3);border-radius:8px"><div class="small" style="color:var(--text3);margin-bottom:3px">${label}</div><div style="font-size:13.5px;white-space:pre-wrap">${escapeHtml(String(value))}</div></div>`).join('')}</div>`, [
+        { lbl: 'Back to Edit', cls: 'btn-ghost', fn: `openRequestModal('${organizerId}', true)` },
+        { lbl: 'Submit Request', cls: 'btn-primary', fn: 'submitEventRequest()' },
+      ]);
+    }
+
+    async function submitEventRequest() {
+      if (!eventRequestDraft) return;
+      try {
+        const response = await apiCreateEventRequest(eventRequestDraft);
+        eventRequestDraft = null;
+        closeModal();
+        toast(response?.message || 'Request sent to organizer!', 'success');
+      } catch (error) {
+        toast(error?.message || 'Unable to submit the event request', 'error');
+      }
     }
 
     function pageFindStaff() {

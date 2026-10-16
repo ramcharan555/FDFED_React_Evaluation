@@ -1,5 +1,6 @@
-import { Injectable } from '@nestjs/common';
+import { ForbiddenException, Injectable } from '@nestjs/common';
 import { DataStore, ActivityLog } from '../../common/data-store';
+import { UserRole } from '../../common/constants';
 
 @Injectable()
 export class ActivityLogService {
@@ -46,6 +47,51 @@ export class ActivityLogService {
     return this.dataStore.activityLogs
       .filter((log) => log.action === action)
       .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+  }
+
+  findForClient(userId: string, role: UserRole, limit = 5): ActivityLog[] {
+    if (role !== UserRole.CLIENT) {
+      throw new ForbiddenException('Only clients can view client activity');
+    }
+
+    const client = this.dataStore.clients.find(
+      (item) => item.userId === userId || item.clientId === userId,
+    );
+    const clientIdentifiers = new Set(
+      [userId, client?.clientId].filter(Boolean).map(String),
+    );
+
+    return this.dataStore.activityLogs
+      .filter((log) => this.belongsToClient(log, clientIdentifiers))
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, Math.min(Math.max(limit, 1), 20));
+  }
+
+  private belongsToClient(log: ActivityLog, clientIdentifiers: Set<string>): boolean {
+    if (log.actorUserId && clientIdentifiers.has(String(log.actorUserId))) {
+      return true;
+    }
+
+    return this.containsClientIdentifier(log.details, clientIdentifiers);
+  }
+
+  private containsClientIdentifier(value: unknown, clientIdentifiers: Set<string>): boolean {
+    if (!value || typeof value !== 'object') {
+      return false;
+    }
+
+    return Object.entries(value as Record<string, unknown>).some(([key, nestedValue]) => {
+      const normalizedKey = key.toLowerCase();
+      if (
+        ['clientid', 'userid', 'performedby'].includes(normalizedKey) &&
+        typeof nestedValue !== 'object' &&
+        clientIdentifiers.has(String(nestedValue))
+      ) {
+        return true;
+      }
+
+      return this.containsClientIdentifier(nestedValue, clientIdentifiers);
+    });
   }
 
   getStatistics(): {

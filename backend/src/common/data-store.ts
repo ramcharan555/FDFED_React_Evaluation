@@ -171,10 +171,15 @@ export interface EventRequest {
   clientId: string;
   organizerId: string;
   eventName: string;
+  eventType?: string;
   eventDate: string;
+  eventTime?: string;
+  city?: string;
+  dateFlexibility?: 'exact' | 'flexible';
   budget: number;
   capacity: number;
   requirements: string;
+  notes?: string;
   status: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'confirmed' | 'approved' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';
   agreementStatus: 'not_sent' | 'pending_signature' | 'agreed' | 'declined';
   paymentStatus: 'unpaid' | 'deposit_pending' | 'deposit_paid' | 'fully_paid' | 'refunded';
@@ -366,6 +371,7 @@ export interface ActivityLog {
   action: string;
   resource: string;
   role: string;
+  actorUserId?: string;
   timestamp: Date;
   status: string;
   details?: any;

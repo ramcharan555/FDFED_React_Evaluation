@@ -22,6 +22,7 @@ export class ActivityLoggingInterceptor implements NestInterceptor {
     const method = request.method;
     const path = request.path;
     const role = (request as any).userRole;
+    const actorUserId = (request as any).user?.userId;
 
     // Only log non-GET requests
     if (!['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
@@ -34,6 +35,7 @@ export class ActivityLoggingInterceptor implements NestInterceptor {
           action: method,
           resource: path,
           role: role || 'unknown',
+          actorUserId,
           timestamp: new Date(),
           status: 'success',
           details: data,

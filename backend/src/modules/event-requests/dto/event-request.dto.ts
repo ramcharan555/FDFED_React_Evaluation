@@ -1,5 +1,5 @@
 import {
-  IsString, IsNotEmpty, IsOptional, IsNumber, IsPositive, IsEnum, IsInt, Min, IsBoolean,
+  IsString, IsNotEmpty, IsOptional, IsNumber, IsPositive, IsEnum, IsInt, Min, IsBoolean, IsIn,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
@@ -19,10 +19,20 @@ export class CreateEventRequestDto {
   @IsNotEmpty()
   eventName!: string;
 
+  @ApiProperty({ description: 'Event type/category', example: 'Corporate Events' })
+  @IsString()
+  @IsNotEmpty()
+  eventType!: string;
+
   @ApiProperty({ description: 'Desired event date (YYYY-MM-DD)', example: '2026-09-01' })
   @IsString()
   @IsNotEmpty()
   eventDate!: string;
+
+  @ApiProperty({ description: 'Preferred event start time', example: '18:00' })
+  @IsString()
+  @IsNotEmpty()
+  eventTime!: string;
 
   @ApiProperty({ description: 'Budget in INR', example: 50000 })
   @IsNumber()
@@ -34,10 +44,26 @@ export class CreateEventRequestDto {
   @Min(1)
   capacity!: number;
 
+  @ApiProperty({ description: 'Preferred event city', example: 'Bangalore' })
+  @IsString()
+  @IsNotEmpty()
+  city!: string;
+
+  @ApiPropertyOptional({ description: 'Whether the requested date is flexible', enum: ['exact', 'flexible'] })
+  @IsString()
+  @IsIn(['exact', 'flexible'])
+  @IsOptional()
+  dateFlexibility?: 'exact' | 'flexible';
+
   @ApiPropertyOptional({ description: 'Special requirements', example: 'Need catering and live band' })
   @IsString()
   @IsOptional()
   requirements?: string;
+
+  @ApiPropertyOptional({ description: 'Additional client notes' })
+  @IsString()
+  @IsOptional()
+  notes?: string;
 }
 
 export class UpdateEventRequestStatusDto {

@@ -6,6 +6,7 @@ import { AppService } from './app.service';
 import { RequestLoggingMiddleware } from './common/middleware/request-logging.middleware';
 import { EventsAuditMiddleware } from './common/middleware/events-audit.middleware';
 import { DataStorePersistenceInterceptor } from './common/interceptors/data-store-persistence.interceptor';
+import { ActivityLoggingInterceptor } from './common/interceptors/activity-logging.interceptor';
 
 // Existing modules
 import { EventsModule } from './modules/events/events.module';
@@ -60,6 +61,10 @@ import { SupportModule } from './modules/support/support.module';
     {
       provide: APP_INTERCEPTOR,
       useClass: DataStorePersistenceInterceptor,
+    },
+    {
+      provide: APP_INTERCEPTOR,
+      useClass: ActivityLoggingInterceptor,
     },
   ],
 })

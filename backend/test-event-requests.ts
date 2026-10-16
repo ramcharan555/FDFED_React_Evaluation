@@ -40,9 +40,12 @@ async function runTests() {
       clientId: 'cli-001',
       organizerId: 'org-001',
       eventName: 'Past Event Test',
+      eventType: 'Corporate Events',
       eventDate: '2020-05-01',
+      eventTime: '10:00',
       budget: 50000,
       capacity: 100,
+      city: 'Bangalore',
     }, UserRole.CLIENT, 'usr-client-001');
     assert(false, 'Past date request creation should fail');
   } catch (err: any) {
@@ -54,9 +57,12 @@ async function runTests() {
     clientId: 'cli-001',
     organizerId: 'org-001',
     eventName: 'Automated Lifecycle Test Gala',
+    eventType: 'Corporate Events',
     eventDate: '2026-12-10',
+    eventTime: '18:00',
     budget: 65000,
     capacity: 250,
+    city: 'Bangalore',
     requirements: 'Stage, PA system, 250 seated dinners',
   }, UserRole.CLIENT, 'usr-client-001');
 
@@ -72,9 +78,12 @@ async function runTests() {
       clientId: 'cli-001',
       organizerId: 'org-001',
       eventName: 'Automated Lifecycle Test Gala',
+      eventType: 'Corporate Events',
       eventDate: '2026-12-10',
+      eventTime: '18:00',
       budget: 65000,
       capacity: 250,
+      city: 'Bangalore',
     }, UserRole.CLIENT, 'usr-client-001');
     assert(false, 'Duplicate active request should be blocked');
   } catch (err: any) {
@@ -131,9 +140,12 @@ async function runTests() {
     clientId: 'cli-001',
     organizerId: 'org-001',
     eventName: 'Rejection Reason Test',
+    eventType: 'Corporate Events',
     eventDate: '2026-12-28',
+    eventTime: '10:00',
     budget: 30000,
     capacity: 50,
+    city: 'Bangalore',
   }, UserRole.CLIENT, 'usr-client-001').data;
 
   try {

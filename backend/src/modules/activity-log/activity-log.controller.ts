@@ -12,6 +12,7 @@ import { ApiOperation, ApiResponse, ApiHeader, ApiQuery } from '@nestjs/swagger'
 import { ActivityLogService } from './activity-log.service';
 import { RoleGuard } from '../../common/guards/role.guard';
 import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
+import { UserId } from '../../common/decorators/user-id.decorator';
 import { UserRole } from '../../common/constants';
 
 @Controller('api/activity-logs')
@@ -49,6 +50,27 @@ export class ActivityLogController {
     return this.activityLogService.findAll(
       limit ? parseInt(limit as any) : 100,
       offset ? parseInt(offset as any) : 0,
+    );
+  }
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get recent activity for the authenticated client' })
+  @ApiQuery({
+    name: 'limit',
+    required: false,
+    type: Number,
+    description: 'Limit results (default: 5, maximum: 20)',
+  })
+  @ApiResponse({ status: 200, description: 'Client activity logs' })
+  findMine(
+    @UserId() userId: string,
+    @UserRoleDecorator() role: UserRole,
+    @Query('limit') limit?: number,
+  ) {
+    return this.activityLogService.findForClient(
+      userId,
+      role,
+      limit ? parseInt(limit as any) : 5,
     );
   }
 
