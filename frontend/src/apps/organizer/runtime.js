@@ -213,6 +213,13 @@ async function apiUpdateRequestStatus(requestId, status) {
   });
 }
 
+async function apiSendEventProposal(requestId, proposal, isRevision = false) {
+  return apiRequest(`/event-requests/${requestId}/${isRevision ? 'revise-proposal' : 'proposal'}`, {
+    method: 'POST',
+    body: JSON.stringify(proposal),
+  });
+}
+
 // ─── EVENT PLANS ─────────────────────────────────────────────────
 async function apiCreateEventPlan(planData) {
   return apiRequest('/event-plans', {
@@ -364,6 +371,7 @@ window.apiGetClientRequests = apiGetClientRequests;
 window.apiGetOrganizerRequests = apiGetOrganizerRequests;
 window.apiCreateEventRequest = apiCreateEventRequest;
 window.apiUpdateRequestStatus = apiUpdateRequestStatus;
+window.apiSendEventProposal = apiSendEventProposal;
 window.apiCreateEventPlan = apiCreateEventPlan;
 window.apiApproveEventPlan = apiApproveEventPlan;
 window.apiGetAttendeeRegistrations = apiGetAttendeeRegistrations;
@@ -2546,6 +2554,13 @@ window.EventFlowModules['shared'] = true;
             : isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOpsEvents() : pageEvents();
           break;
         case 'event-requests':
+          if (r === 'organizer') {
+            try {
+              await syncOrganizerEventRequests();
+            } catch (error) {
+              console.error('Unable to refresh organizer event requests', error);
+            }
+          }
           el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOperationsWorkspace() : pageEventRequests();
           break;
         case 'support-center':
@@ -7570,6 +7585,25 @@ window.EventFlowModules['shared'] = true;
       return r;
     }
 
+    async function syncOrganizerEventRequests() {
+      const response = await apiGetOrganizerRequests();
+      const requests = Array.isArray(response) ? response : (response?.data || []);
+      if (!Array.isArray(requests)) throw new Error('Invalid event requests response');
+
+      DB.eventRequests = requests.map(request => ({
+        ...request,
+        id: request.requestId,
+        organizer: CU.id,
+        title: request.eventName,
+        type: request.eventType || 'Corporate',
+        date: request.eventDate,
+        time: request.eventTime,
+        guests: request.capacity,
+        desc: request.requirements || '',
+        created: request.createdAt,
+      }));
+    }
+
     function checkOrganizerDateAvailability(organizerId, dateStr, excludeReqId) {
       if (!dateStr) return { available: false, reason: 'Date not provided' };
       const todayDate = new Date();
@@ -7922,6 +7956,7 @@ window.EventFlowModules['shared'] = true;
             <div><span style="color:var(--text3);display:block;font-size:10.5px">VALID UNTIL</span><strong>${activeProposal.validUntil}</strong></div>
           </div>
           <div style="font-size:12px;color:var(--text2);margin-bottom:10px"><strong>Terms:</strong> ${activeProposal.terms || 'Standard deliverables apply.'}</div>
+          ${activeProposal.clientNotes ? `<div style="background:rgba(245,158,11,0.12);border-radius:8px;padding:10px;font-size:12px;color:var(--text2);margin-bottom:10px"><strong>Client feedback:</strong> ${escapeHtml(activeProposal.clientNotes)}</div>` : ''}
 
           ${activeProposal.status === 'pending_client' ? `
             <div style="display:flex;gap:6px;margin-top:10px;flex-wrap:wrap">
@@ -8130,8 +8165,13 @@ window.EventFlowModules['shared'] = true;
       const expDate = new Date();
       expDate.setDate(expDate.getDate() + 14);
       const defaultValidUntil = expDate.toISOString().split('T')[0];
+      const activeProposal = r.proposals?.[r.proposals.length - 1];
+      const revisionFeedback = isRevision && activeProposal?.status === 'revision_requested' && activeProposal.clientNotes
+        ? `<div style="background:rgba(245,158,11,0.12);border-radius:8px;padding:10px 12px;font-size:12px;color:var(--text2);margin-bottom:14px"><strong>Client requested changes:</strong> ${escapeHtml(activeProposal.clientNotes)}</div>`
+        : '';
 
       openModal(isRevision ? 'Revise Event Proposal' : 'Send Event Proposal', `
+        ${revisionFeedback}
         <div class="form-group mb-12">
           <label class="form-label">Total Proposed Amount (₹)</label>
           <input type="number" class="form-control" id="prop-amount" value="${defaultAmount}" min="1">
@@ -8159,7 +8199,7 @@ window.EventFlowModules['shared'] = true;
       ]);
     }
 
-    function submitSendProposal(id, isRevision) {
+    async function submitSendProposal(id, isRevision) {
       const amount = parseFloat(v('prop-amount'));
       const deposit = parseFloat(v('prop-deposit'));
       const proposedDate = v('prop-date');
@@ -8191,41 +8231,22 @@ window.EventFlowModules['shared'] = true;
         return;
       }
 
-      // Mark any pending proposal superseded
-      r.proposals.forEach(p => {
-        if (p.status === 'pending_client') p.status = 'revision_requested';
-      });
-
-      const nextVersion = r.proposals.length + 1;
-      r.proposals.push({
-        version: nextVersion,
-        amount,
-        depositRequired: deposit,
-        proposedDate,
-        validUntil,
-        terms,
-        status: 'pending_client',
-        sentAt: todayStr
-      });
-
-      r.date = proposedDate;
-      r.status = 'proposal_sent';
-      r.agreementStatus = 'not_sent';
-      r.paymentStatus = 'unpaid';
-      r.auditHistory.push({
-        id: 'aud-' + Date.now(),
-        action: `Proposal Sent (v${nextVersion})`,
-        performedBy: CU.name || 'Sarah Chen',
-        role: 'organizer',
-        timestamp: todayStr,
-        details: { version: nextVersion, amount, deposit, validUntil, proposedDate }
-      });
-
-      saveDB();
-      closeModal();
-      toast(`Proposal v${nextVersion} sent to client!`, 'success');
-      viewRequestDrawer(id);
-      renderPage('event-requests');
+      try {
+        const response = await apiSendEventProposal(id, {
+          amount,
+          depositRequired: deposit,
+          proposedDate,
+          validUntil,
+          terms,
+        }, isRevision);
+        const version = response?.data?.proposals?.length || r.proposals.length + 1;
+        closeModal();
+        await syncOrganizerEventRequests();
+        toast(`Proposal v${version} sent to client!`, 'success');
+        renderPage('event-requests');
+      } catch (error) {
+        showError(error?.message || 'Unable to send the proposal.');
+      }
     }
 
     function simulateClientDecision(id, decision) {

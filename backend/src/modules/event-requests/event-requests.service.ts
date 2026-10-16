@@ -185,6 +185,7 @@ export class EventRequestsService {
     const isDuplicate = this.db.eventRequests.some(
       r =>
         r.clientId === clientId &&
+        r.organizerId === organizer.organizerId &&
         r.eventName.toLowerCase().trim() === dto.eventName.toLowerCase().trim() &&
         r.eventDate === dto.eventDate &&
         ['submitted', 'pending', 'under_review', 'info_requested', 'proposal_sent', 'awaiting_client', 'confirmed'].includes(r.status)
@@ -647,6 +648,14 @@ export class EventRequestsService {
       throw new BadRequestException('No active proposal found on this request to respond to');
     }
 
+    if (request.status !== 'proposal_sent' || activeProposal.status !== 'pending_client') {
+      throw new BadRequestException('This proposal is no longer awaiting a client decision');
+    }
+
+    if (dto.decision === 'request_revision' && !dto.notes?.trim()) {
+      throw new BadRequestException('A reason is required when requesting a revised proposal');
+    }
+
     // Check expiry
     if (activeProposal.validUntil) {
       const validUntilDate = new Date(activeProposal.validUntil + 'T23:59:59');
@@ -659,7 +668,7 @@ export class EventRequestsService {
     }
 
     activeProposal.clientResponseAt = new Date();
-    activeProposal.clientNotes = dto.notes || '';
+    activeProposal.clientNotes = dto.notes?.trim() || '';
 
     if (dto.decision === 'accept') {
       activeProposal.status = 'accepted';
@@ -717,7 +726,9 @@ export class EventRequestsService {
         eventId: undefined,
         registrationId: undefined,
         paymentId: undefined,
-        message: `Client responded to proposal for "${request.eventName}": ${dto.decision.toUpperCase()}`,
+        message: dto.decision === 'request_revision'
+          ? `Client requested a revised plan for "${request.eventName}": ${activeProposal.clientNotes}`
+          : `Client responded to proposal for "${request.eventName}": ${dto.decision.toUpperCase()}`,
         type: `proposal_${dto.decision}`,
         read: false,
         dateTime: new Date(),

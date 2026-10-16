@@ -71,6 +71,8 @@ async function runTests() {
   assert(newReq.agreementStatus === 'not_sent', 'Agreement status initialized to "not_sent"');
   assert(newReq.paymentStatus === 'unpaid', 'Payment status initialized to "unpaid"');
   assert(newReq.auditHistory?.length === 1, 'Audit history initialized with initial submission entry');
+  const organizerRequests = service.findAll(UserRole.EVENT_ORGANIZER, 'usr-org-001');
+  assert(organizerRequests.some(request => request.requestId === newReq.requestId), 'Organizer can retrieve the submitted request');
 
   // Test 6: Duplicate request detection
   try {
@@ -161,8 +163,50 @@ async function runTests() {
   assert(rejectRes.data.status === 'rejected', 'Status changed to "rejected"');
   assert(rejectRes.data.rejectionReason === 'Fully booked with corporate commitments during holiday week.', 'Rejection reason preserved in request record');
 
-  // Test 13: Client Decision on Proposal
-  console.log('\n--- 6. Client Acceptance & Confirmation Conditions ---');
+  // Test 13: Client reproposal workflow
+  console.log('\n--- 6. Client Reproposal Workflow ---');
+  const revisionTestReq = service.create({
+    clientId: 'cli-001',
+    organizerId: 'org-001',
+    eventName: 'Client Reproposal Test',
+    eventType: 'Corporate Events',
+    eventDate: '2027-01-14',
+    eventTime: '11:00',
+    budget: 75000,
+    capacity: 120,
+    city: 'Bangalore',
+  }, UserRole.CLIENT, 'usr-client-001').data;
+  service.sendProposal(revisionTestReq.requestId, {
+    amount: 70000,
+    depositRequired: 20000,
+    proposedDate: '2027-01-14',
+    validUntil: '2026-12-20',
+    terms: 'Initial plan for the Bangalore venue.',
+  }, UserRole.EVENT_ORGANIZER, 'usr-org-001');
+  try {
+    service.clientResponse(revisionTestReq.requestId, { decision: 'request_revision', notes: '   ' }, UserRole.CLIENT, 'usr-client-001');
+    assert(false, 'A reproposal request without a reason should fail');
+  } catch (err: any) {
+    assert(err.message.includes('reason is required'), 'Reproposal reason is mandatory');
+  }
+  const revisionResponse = service.clientResponse(revisionTestReq.requestId, {
+    decision: 'request_revision',
+    notes: 'Please change the venue to Chennai and reduce the price.',
+  }, UserRole.CLIENT, 'usr-client-001');
+  assert(revisionResponse.data.status === 'under_review', 'Reproposal request returns the request to under_review');
+  assert(revisionResponse.data.proposals[0].clientNotes.includes('Chennai'), 'Client reproposal reason is saved on the proposal');
+  assert(db.notifications.some(n => n.userId === 'usr-org-001' && n.message.includes('Chennai')), 'Organizer receives the reproposal reason in an in-app notification');
+  const revisedPlan = service.reviseProposal(revisionTestReq.requestId, {
+    amount: 65000,
+    depositRequired: 18000,
+    proposedDate: '2027-01-14',
+    validUntil: '2026-12-20',
+    terms: 'Revised Chennai venue plan.',
+  }, UserRole.EVENT_ORGANIZER, 'usr-org-001');
+  assert(revisedPlan.data.status === 'proposal_sent' && revisedPlan.data.proposals.length === 2, 'Organizer can submit a revised plan for client review');
+
+  // Test 14: Client Decision on Proposal
+  console.log('\n--- 7. Client Acceptance & Confirmation Conditions ---');
   const acceptRes = service.clientResponse(newReq.requestId, {
     decision: 'accept',
     notes: 'We accept proposal v2 terms.'
@@ -171,7 +215,7 @@ async function runTests() {
   assert(acceptRes.data.agreementStatus === 'pending_signature', 'Agreement status updated to "pending_signature"');
   assert(acceptRes.data.paymentStatus === 'deposit_pending', 'Payment status updated to "deposit_pending"');
 
-  // Test 14: Confirm Booking BEFORE agreement signed -> FAILS
+  // Test 15: Confirm Booking BEFORE agreement signed -> FAILS
   try {
     service.confirmBooking(newReq.requestId, {}, UserRole.EVENT_ORGANIZER, 'usr-org-001');
     assert(false, 'Confirm booking without agreement should fail');
@@ -179,7 +223,7 @@ async function runTests() {
     assert(err.message.includes('agreement'), 'Booking confirmation blocked when agreement is not signed');
   }
 
-  // Test 15: Mark agreement signed, but deposit unpaid -> FAILS
+  // Test 16: Mark agreement signed, but deposit unpaid -> FAILS
   service.updateAgreementStatus(newReq.requestId, { agreementStatus: 'agreed' }, UserRole.CLIENT, 'usr-client-001');
   try {
     service.confirmBooking(newReq.requestId, {}, UserRole.EVENT_ORGANIZER, 'usr-org-001');
@@ -188,7 +232,7 @@ async function runTests() {
     assert(err.message.includes('deposit') || err.message.includes('payment'), 'Booking confirmation blocked when deposit is not paid');
   }
 
-  // Test 16: Mark deposit paid -> Confirmation SUCCEEDS & Event Created
+  // Test 17: Mark deposit paid -> Confirmation SUCCEEDS & Event Created
   service.updatePaymentStatus(newReq.requestId, { paymentStatus: 'deposit_paid' }, UserRole.EVENT_ORGANIZER, 'usr-org-001');
   const confirmRes = service.confirmBooking(newReq.requestId, {}, UserRole.EVENT_ORGANIZER, 'usr-org-001');
   assert(confirmRes.data.status === 'confirmed', 'Request status moved to "confirmed"');

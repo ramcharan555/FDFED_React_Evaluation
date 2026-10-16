@@ -221,6 +221,13 @@ async function apiUpdateRequestStatus(requestId, status) {
   });
 }
 
+async function apiRespondToEventProposal(requestId, decision, notes = '') {
+  return apiRequest(`/event-requests/${requestId}/client-response`, {
+    method: 'POST',
+    body: JSON.stringify({ decision, notes }),
+  });
+}
+
 // ─── EVENT PLANS ─────────────────────────────────────────────────
 async function apiCreateEventPlan(planData) {
   return apiRequest('/event-plans', {
@@ -371,6 +378,7 @@ window.apiGetClientRequests = apiGetClientRequests;
 window.apiGetOrganizerRequests = apiGetOrganizerRequests;
 window.apiCreateEventRequest = apiCreateEventRequest;
 window.apiUpdateRequestStatus = apiUpdateRequestStatus;
+window.apiRespondToEventProposal = apiRespondToEventProposal;
 window.apiCreateEventPlan = apiCreateEventPlan;
 window.apiApproveEventPlan = apiApproveEventPlan;
 window.apiGetAttendeeRegistrations = apiGetAttendeeRegistrations;
@@ -2533,6 +2541,13 @@ window.EventFlowModules['shared'] = true;
           el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageFinanceCenter() : pageRevenueReports();
           break;
         case 'request-status':
+          if (r === 'client') {
+            try {
+              await syncClientEventRequests();
+            } catch (error) {
+              console.error('Unable to refresh client event requests', error);
+            }
+          }
           el.innerHTML = pageRequestStatus();
           break;
         case 'staff':
@@ -7504,6 +7519,27 @@ window.EventFlowModules['shared'] = true;
     // ════════════════════════════════════════════════
     //  UNIFIED REQUEST STATUS (CLIENT & ORGANIZER)
     // ════════════════════════════════════════════════
+    async function syncClientEventRequests() {
+      const response = await apiGetClientRequests();
+      const requests = Array.isArray(response) ? response : (response?.data || []);
+      if (!Array.isArray(requests)) throw new Error('Invalid event requests response');
+
+      DB.eventRequests = requests.map(request => ({
+        ...request,
+        id: request.requestId,
+        clientId: CU.id,
+        backendClientId: request.clientId,
+        organizer: request.organizerId,
+        title: request.eventName,
+        type: request.eventType || 'Event',
+        date: request.eventDate,
+        time: request.eventTime,
+        guests: request.capacity,
+        desc: request.requirements || '',
+        created: request.createdAt,
+      }));
+    }
+
     function pageRequestStatus() {
       const isOrganizer = CU.role === 'organizer';
       if (isOrganizer) {
@@ -7592,9 +7628,67 @@ window.EventFlowModules['shared'] = true;
       </div>
       <div class="flex gap-8 mt-14">
         <button class="btn btn-ghost btn-sm" onclick="viewRequestDrawer('${r.id}')">View Details</button>
+        ${r.status === 'proposal_sent' && r.proposals?.[r.proposals.length - 1]?.status === 'pending_client' ? `<button class="btn btn-primary btn-sm" onclick="openClientPlanReview('${r.id}')">Review Plan</button>` : ''}
         ${r.status === 'pending' ? `<button class="btn btn-danger btn-sm" onclick="cancelReq('${r.id}')">Cancel</button>` : ''}
       </div>
     </div>`).join('')}</div>`}`;
+      }
+    }
+
+    function openClientPlanReview(id) {
+      const request = DB.eventRequests.find(item => String(item.id) === String(id));
+      const proposal = request?.proposals?.[request.proposals.length - 1];
+      if (!request || !proposal || request.status !== 'proposal_sent' || proposal.status !== 'pending_client') {
+        toast('This plan is no longer available for review.', 'error');
+        return;
+      }
+
+      openModal('Review Proposed Plan', `
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;font-size:13px">
+          <div><div class="small">PROPOSED PRICE</div><strong style="color:var(--green)">&#8377;${Number(proposal.amount || 0).toLocaleString()}</strong></div>
+          <div><div class="small">REQUIRED DEPOSIT</div><strong>&#8377;${Number(proposal.depositRequired || 0).toLocaleString()}</strong></div>
+          <div><div class="small">EVENT DATE</div><strong>${escapeHtml(proposal.proposedDate || request.date || '—')}</strong></div>
+          <div><div class="small">VALID UNTIL</div><strong>${escapeHtml(proposal.validUntil || '—')}</strong></div>
+        </div>
+        <div style="background:var(--surface2);border-radius:10px;padding:14px;font-size:13px;line-height:1.6"><strong>Plan details</strong><br>${escapeHtml(proposal.terms || 'No additional plan details provided.')}</div>
+      `, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: 'Request Reproposal', cls: 'btn-ghost', fn: `openReproposalReasonModal('${id}')` },
+        { lbl: 'Approve Plan', cls: 'btn-success', fn: `submitClientPlanDecision('${id}', 'accept')` },
+      ]);
+    }
+
+    function openReproposalReasonModal(id) {
+      openModal('Request Reproposal', `
+        <div class="form-group">
+          <label class="form-label">Reason for changes <span style="color:var(--red)">*</span></label>
+          <textarea id="client-reproposal-reason" class="form-control" rows="4" placeholder="For example: change venue to Chennai, reduce the price, or change the date."></textarea>
+          <div id="client-reproposal-error" style="display:none;color:var(--red);font-size:12px;margin-top:6px"></div>
+        </div>
+      `, [
+        { lbl: 'Back', cls: 'btn-ghost', fn: `openClientPlanReview('${id}')` },
+        { lbl: 'Submit Request', cls: 'btn-primary', fn: `submitClientPlanDecision('${id}', 'request_revision')` },
+      ]);
+    }
+
+    async function submitClientPlanDecision(id, decision) {
+      const reason = decision === 'request_revision' ? (v('client-reproposal-reason') || '').trim() : '';
+      const errorEl = g('client-reproposal-error');
+      if (decision === 'request_revision' && !reason) {
+        if (errorEl) { errorEl.textContent = 'Please provide a reason for the requested changes.'; errorEl.style.display = 'block'; }
+        return;
+      }
+
+      try {
+        await apiRespondToEventProposal(id, decision, reason);
+        closeModal();
+        await syncClientEventRequests();
+        renderPage('request-status');
+        toast(decision === 'accept' ? 'Plan approved.' : 'Your reproposal request was sent to the organizer.', 'success');
+      } catch (error) {
+        const message = error?.message || 'Unable to save your plan decision.';
+        if (errorEl) { errorEl.textContent = message; errorEl.style.display = 'block'; }
+        else toast(message, 'error');
       }
     }
 
