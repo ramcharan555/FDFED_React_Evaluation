@@ -57,6 +57,8 @@ let PaymentsService = class PaymentsService {
         try {
             const verificationId = qr_code_service_1.QrCodeService.generateVerificationId();
             const qrCode = await qr_code_service_1.QrCodeService.generateQRCode(verificationId);
+            if (registration.status !== 'pending_payment')
+                throw new common_1.ConflictException('Registration is no longer awaiting payment');
             const paymentId = this.db.generateId('pay');
             const now = new Date();
             const payment = {

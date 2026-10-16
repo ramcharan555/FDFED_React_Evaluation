@@ -2168,68 +2168,118 @@ window.EventFlowModules['shared'] = true;
     // ════════════════════════════════════════════════
     //  ADMIN: Employee Stats & Management (superuser)
     // ════════════════════════════════════════════════
-    function buildGroupedAnalyticsBars(groups, height, legend) {
-      let max = 1;
-      groups.forEach(g => {
-        (g.bars || []).forEach(b => { if ((b.value || 0) > max) max = b.value; });
-      });
-      const chartHeight = height || 200;
-      return `
-  <div style="display:flex;flex-direction:column;gap:10px">
-    ${legend ? `
-    <div style="display:flex;justify-content:flex-end;gap:16px;font-size:12px;color:var(--text2);margin-bottom:4px">
-      ${legend.map(l => `<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:${l.color}"></span>${l.label}</span>`).join('')}
-    </div>` : ''}
-    <div style="display:flex;align-items:flex-end;gap:16px;height:${chartHeight}px;padding-top:16px;border-bottom:1px solid var(--border)">
-      ${groups.map(group => {
-        return `
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%">
-          <div style="display:flex;align-items:flex-end;gap:5px;width:100%;height:100%;justify-content:center">
-            ${group.bars.map(bar => {
-          const barHeight = Math.max(8, Math.round(((bar.value || 0) / max) * Math.max(chartHeight - 52, 40)));
-          return `
-              <div style="flex:1;max-width:26px;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;gap:4px">
-                <div style="font-size:10px;font-weight:700;color:var(--text3)">${bar.value}</div>
-                <div style="width:100%;height:${barHeight}px;flex-shrink:0;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--green),#15803d);box-shadow:0 8px 16px rgba(15,23,42,.12)" title="${bar.label || ''}: ${bar.value}"></div>
-              </div>`;
-        }).join('')}
-          </div>
-          <div style="font-size:11px;font-weight:600;color:var(--text2);text-align:center;line-height:1.2;margin-top:4px">${group.label}</div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`;
+    let adminChartSequence = 0;
+    const ADMIN_CHART_COLORS = ['#559ff5', '#edb65c', '#67c4bb', '#aa9ce5'];
+
+    function adminChartText(value) {
+      return escapeHtml(String(value)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-    function buildAnalyticsBars(items, height) {
-      const max = Math.max(1, ...items.map(item => item.value || 0));
-      const chartHeight = height || 180;
-      return `
-  <div style="display:flex;align-items:flex-end;gap:14px;height:${chartHeight}px;padding-top:12px">
-    ${items.map(item => {
-        const barHeight = Math.max(8, Math.round(((item.value || 0) / max) * Math.max(chartHeight - 52, 40)));
-        return `
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px">
-        <div style="font-size:11px;color:var(--text3)">${item.value}</div>
-        <div style="width:100%;max-width:58px;height:${barHeight}px;flex-shrink:0;border-radius:18px 18px 8px 8px;background:linear-gradient(180deg,var(--green),#15803d);box-shadow:0 16px 28px rgba(15,23,42,.18)"></div>
-        <div style="font-size:11px;color:var(--text2);text-align:center;line-height:1.35">${item.label}</div>
+
+    function adminChartNumber(value, options = {}) {
+      const number = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 1 }).format(value);
+      return `${options.prefix || ''}${number}${options.suffix || ''}`;
+    }
+
+    // Monotone curves pass through the data without overshooting peaks or zero.
+    function adminChartLine(points) {
+      if (!points.length) return '';
+      if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+      const slopes = points.slice(1).map((point, index) => (point.y - points[index].y) / (point.x - points[index].x));
+      const tangents = points.map((point, index) => {
+        if (!index) return slopes[0];
+        if (index === points.length - 1) return slopes[slopes.length - 1];
+        return slopes[index - 1] * slopes[index] <= 0 ? 0 : 2 / (1 / slopes[index - 1] + 1 / slopes[index]);
+      });
+      return points.slice(1).reduce((path, point, index) => {
+        const previous = points[index];
+        const dx = (point.x - previous.x) / 3;
+        return `${path} C ${previous.x + dx} ${previous.y + tangents[index] * dx}, ${point.x - dx} ${point.y - tangents[index + 1] * dx}, ${point.x} ${point.y}`;
+      }, `M ${points[0].x} ${points[0].y}`);
+    }
+
+    function buildAdminAnalyticsChart(groups, height, options = {}) {
+      const data = (groups || []).map(group => ({
+        label: String(group.label || ''),
+        bars: (group.bars || []).map(bar => ({ ...bar, value: Number.isFinite(Number(bar.value)) ? Math.max(0, Number(bar.value)) : 0 })),
+      }));
+      if (!data.length) return '<div class="admin-chart admin-chart--empty">No data available for this period.</div>';
+      const id = `admin-chart-${++adminChartSequence}`;
+      const width = 600, plotHeight = 180;
+      const highest = Math.max(1, ...data.flatMap(group => group.bars.map(bar => bar.value)));
+      const roughStep = highest / 4;
+      const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+      const step = Math.max(1, ([1, 2, 5, 10].find(value => value * magnitude >= roughStep) || 10) * magnitude);
+      const maximum = step * 4;
+      const groupWidth = width / data.length;
+      const seriesCount = Math.max(1, ...data.map(group => group.bars.length));
+      const color = index => ADMIN_CHART_COLORS[index % ADMIN_CHART_COLORS.length];
+      const y = value => plotHeight - value / maximum * plotHeight;
+      const ticks = Array.from({ length: 5 }, (_, index) => maximum - index * step);
+      const paths = Array.from({ length: seriesCount }, (_, series) => data.map((group, index) => ({ x: groupWidth * (index + 0.5), y: y(group.bars[series]?.value || 0) })));
+      const legend = options.legend || [];
+      const marks = options.kind === 'line' ? paths.map((points, series) => {
+        const path = adminChartLine(points);
+        const area = `${path} L ${points[points.length - 1].x} ${plotHeight} L ${points[0].x} ${plotHeight} Z`;
+        return `<path d="${area}" fill="url(#${id}-fill-${series})"/><path d="${path}" fill="none" stroke="${color(series)}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+          ${points.map((point, index) => `<circle cx="${point.x}" cy="${point.y}" r="${index === points.length - 1 ? 3 : 2}" fill="${index === points.length - 1 ? '#edb65c' : color(series)}" stroke="var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`).join('')}`;
+      }).join('') : data.map((group, index) => {
+        const barWidth = Math.min(14, groupWidth / (seriesCount * 3));
+        const gap = 5;
+        const start = groupWidth * (index + 0.5) - (seriesCount * barWidth + (seriesCount - 1) * gap) / 2;
+        return group.bars.map((bar, series) => `<rect x="${start + series * (barWidth + gap)}" y="${y(bar.value)}" width="${barWidth}" height="${plotHeight - y(bar.value)}" rx="2" fill="${color(series)}" fill-opacity="0.92"/>`).join('');
+      }).join('');
+
+      return `<div class="admin-chart admin-chart--${options.kind || 'bar'}" role="group" aria-label="${adminChartText(options.label || 'Analytics chart')}" style="--admin-chart-height:${Math.max(112, (height || 200) - 36)}px">
+        ${legend.length ? `<div class="admin-chart__legend">${legend.map((item, index) => `<span><i style="background:${color(index)}"></i>${adminChartText(item.label)}</span>`).join('')}</div>` : ''}
+        <div class="admin-chart__body">
+          <div class="admin-chart__axis-y" aria-hidden="true">${ticks.map((tick, index) => `<span style="top:${index * 25}%">${adminChartNumber(tick, options)}</span>`).join('')}</div>
+          <div class="admin-chart__plot">
+            <svg class="admin-chart__svg" viewBox="0 0 ${width} ${plotHeight}" preserveAspectRatio="none" aria-hidden="true">
+              <defs>${paths.map((points, series) => `<linearGradient id="${id}-fill-${series}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color(series)}" stop-opacity="0.2"/><stop offset="100%" stop-color="${color(series)}" stop-opacity="0.015"/></linearGradient>`).join('')}</defs>
+              ${ticks.map(tick => `<line x1="0" y1="${y(tick)}" x2="${width}" y2="${y(tick)}" class="admin-chart__grid" vector-effect="non-scaling-stroke"/>`).join('')}
+              ${marks}
+            </svg>
+            <div class="admin-chart__targets">${data.map((group, index) => {
+              const values = group.bars.map((bar, series) => `${legend[series]?.label || options.label || (bar.label !== group.label ? bar.label : '') || 'Total'}: ${adminChartNumber(bar.value, options)}`);
+              return `<button type="button" class="admin-chart__target" style="--point-y:${y(group.bars[0]?.value || 0) / plotHeight * 100}%" aria-label="${adminChartText(`${group.label}. ${values.join('. ')}`)}">
+                <span class="admin-chart__tooltip" aria-hidden="true"><strong>${adminChartText(group.label)}</strong>${values.map((value, series) => `<span><i style="background:${color(series)}"></i>${adminChartText(value)}</span>`).join('')}</span>
+                ${options.kind === 'line' ? '<svg class="admin-chart__focus-point" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#559ff5" fill-opacity="0.18"/><circle cx="8" cy="8" r="3.5" fill="#559ff5"/></svg>' : ''}
+              </button>`;
+            }).join('')}</div>
+          </div>
+        </div>
+        <div class="admin-chart__axis-x" style="grid-template-columns:repeat(${data.length},minmax(0,1fr))" aria-hidden="true">${data.map(group => `<span>${adminChartText(group.label)}</span>`).join('')}</div>
       </div>`;
-      }).join('')}
-  </div>`;
+    }
+
+    function buildGroupedAnalyticsBars(groups, height, legend) {
+      return buildAdminAnalyticsChart(groups, height, { legend });
+    }
+
+    function buildAnalyticsBars(items, height, options = {}) {
+      return buildAdminAnalyticsChart(items.map(item => ({ label: item.label, bars: [item] })), height, options);
+    }
+
+    function buildAnalyticsLine(items, height, options = {}) {
+      return buildAnalyticsBars(items, height, { ...options, kind: 'line' });
+    }
+
+    function buildAnalyticsRings(items) {
+      const circumference = 2 * Math.PI * 30;
+      return `<div class="admin-chart admin-chart--rings">${items.map(item => {
+        const value = Math.min(100, Math.max(0, Number(item.value) || 0));
+        return `<div class="admin-chart__ring-item" role="img" aria-label="${adminChartText(`${item.label}: ${value}% active`)}"><div class="admin-chart__ring">
+          <svg viewBox="0 0 76 76" aria-hidden="true"><circle class="admin-chart__ring-track" cx="38" cy="38" r="30"/><circle class="admin-chart__ring-value" cx="38" cy="38" r="30" stroke-dasharray="${circumference}" stroke-dashoffset="${circumference * (1 - value / 100)}"/></svg><strong>${value}%</strong>
+          </div><span>${adminChartText(item.label)}</span></div>`;
+      }).join('')}</div>`;
     }
     function buildAnalyticsProgress(items) {
       const total = items.reduce((sum, item) => sum + (item.value || 0), 0) || 1;
-      return `<div style="display:flex;flex-direction:column;gap:14px">
+      return `<div class="admin-chart admin-chart--progress">
     ${items.map(item => {
         const pct = Math.round(((item.value || 0) / total) * 100);
-        return `<div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-size:12px;color:var(--text2)">${item.label}</span>
-        <span style="font-size:12px;color:var(--text)">${item.value} · ${pct}%</span>
-      </div>
-      <div style="height:10px;border-radius:999px;background:var(--surface3);overflow:hidden">
-        <div style="width:${pct}%;height:100%;border-radius:999px;background:${item.color}"></div>
-      </div>
-    </div>`;
+        const color = String(item.color || '').match(/#[0-9a-f]{6}/i)?.[0] || '#559ff5';
+        return `<div class="admin-chart__progress-row"><div class="admin-chart__progress-label"><span>${adminChartText(item.label)}</span><span><strong>${item.value}</strong> <small>${pct}%</small></span></div><div class="admin-chart__progress-track"><div style="width:${pct}%;background:${color}"></div></div></div>`;
       }).join('')}
   </div>`;
     }
@@ -5001,7 +5051,7 @@ window.EventFlowModules['shared'] = true;
   <div class="page-hd">
     <div class="page-hd-left">
       <div class="page-title">User Reports & Analytics</div>
-      <div class="page-sub">Visual bar graphs: monthly registrations, active vs inactive users, and role distributions.</div>
+      <div class="page-sub">Monthly registrations, account activity, and user role distribution.</div>
     </div>
     <div class="page-hd-right">
       <div style="display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:10px;border:1px solid var(--border)">
@@ -5049,11 +5099,11 @@ window.EventFlowModules['shared'] = true;
   <!-- Bar Graphs Row 1: Monthly Joins & Active vs Inactive Grouped Bar Chart -->
   <div class="grid-2 mb-20" style="gap:20px;align-items:start">
     <div class="card">
-      <div class="h4 mb-12">📊 Monthly Users Joining</div>
-      ${buildAnalyticsBars(monthBars, 145)}
+      <div class="h4 mb-12">Monthly Registrations</div>
+      ${buildAnalyticsLine(monthBars, 180, { label: 'New users' })}
     </div>
     <div class="card">
-      <div class="h4 mb-12">👥 Active vs Inactive Users by Role (Grouped Bar Graph)</div>
+      <div class="h4 mb-12">Active & Inactive Users</div>
       ${buildGroupedAnalyticsBars(activeInactiveGroups, 145, [
         { label: 'Active Users', color: 'linear-gradient(180deg, #22c55e, #15803d)' },
         { label: 'Inactive Users', color: 'linear-gradient(180deg, #ef4444, #b91c1c)' }
@@ -5064,12 +5114,12 @@ window.EventFlowModules['shared'] = true;
   <!-- Bar Graphs Row 2: Platform Role Breakdown & Activity Rate % -->
   <div class="grid-2" style="gap:20px;align-items:start">
     <div class="card">
-      <div class="h4 mb-12">🏷️ Total Users by Role (Bar Graph)</div>
+      <div class="h4 mb-12">Users by Role</div>
       ${buildAnalyticsBars(roleBars, 145)}
     </div>
     <div class="card">
-      <div class="h4 mb-12">📈 Activity Rate by Role (% Active Bar Graph)</div>
-      ${buildAnalyticsBars(activityRateBars, 145)}
+      <div class="h4 mb-12">Activity Rate by Role</div>
+      ${buildAnalyticsRings(activityRateBars)}
       <div style="margin-top:12px;text-align:center;font-size:11.5px;color:var(--text2)">
         Percentage of accounts actively participating in each role category.
       </div>
@@ -5173,7 +5223,7 @@ window.EventFlowModules['shared'] = true;
   <div class="page-hd">
     <div class="page-hd-left">
       <div class="page-title">Event Reports & Analytics</div>
-      <div class="page-sub">Bar graph analytics for ongoing events, completed events, and events about to happen.</div>
+      <div class="page-sub">Event activity, category breakdowns, and registration trends.</div>
     </div>
     <div class="page-hd-right">
       <div style="display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:10px;border:1px solid var(--border)">
@@ -5224,11 +5274,11 @@ window.EventFlowModules['shared'] = true;
   <!-- Bar Graphs Row 1: Lifecycle Stages Comparison & Category Breakdown -->
   <div class="grid-2 mb-20" style="gap:20px">
     <div class="card">
-      <div class="h4 mb-12">📊 Event Lifecycle Stages (Bar Graph)</div>
+      <div class="h4 mb-12">Event Lifecycle</div>
       ${buildAnalyticsBars(lifecycleBars, 215)}
     </div>
     <div class="card">
-      <div class="h4 mb-12">🏷️ Event Category Breakdown (Bar Graph)</div>
+      <div class="h4 mb-12">Event Categories</div>
       ${buildAnalyticsBars(catBars.length ? catBars : [{ label: 'No Events', value: 0, color: 'linear-gradient(180deg, #64748b, #475569)' }], 215)}
     </div>
   </div>
@@ -5236,11 +5286,11 @@ window.EventFlowModules['shared'] = true;
   <!-- Bar Graphs Row 2: Monthly Timeline & Grouped Capacity vs Registrations -->
   <div class="grid-2" style="gap:20px">
     <div class="card">
-      <div class="h4 mb-12">📅 Monthly Event Timeline (Past, Current & Future Bar Graph)</div>
-      ${buildAnalyticsBars(monthlyBars, 215)}
+      <div class="h4 mb-12">Monthly Event Timeline</div>
+      ${buildAnalyticsLine(monthlyBars, 215, { label: 'Events' })}
     </div>
     <div class="card">
-      <div class="h4 mb-12">🎟️ Booked Seats vs Total Capacity (Grouped Bar Graph)</div>
+      <div class="h4 mb-12">Booked Seats & Capacity</div>
       ${buildGroupedAnalyticsBars(capacityOccupancyGroups, 215, [
         { label: 'Booked Seats', color: 'linear-gradient(180deg, #22c55e, #15803d)' },
         { label: 'Total Capacity', color: 'linear-gradient(180deg, #3b82f6, #1d4ed8)' }
@@ -5346,7 +5396,7 @@ window.EventFlowModules['shared'] = true;
   <div class="page-hd">
     <div class="page-hd-left">
       <div class="page-title">Revenue Reports & Analytics</div>
-      <div class="page-sub">Bar graph visualizations of platform revenue over time, pricing tiers, and category income.</div>
+      <div class="page-sub">Revenue trends, ticket pricing, and income by event category.</div>
     </div>
     <div class="page-hd-right">
       <div style="display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:10px;border:1px solid var(--border)">
@@ -5392,10 +5442,10 @@ window.EventFlowModules['shared'] = true;
   <div class="grid-2 mb-20" style="gap:20px">
     <div class="card">
       <div class="flex justify-between items-center mb-12">
-        <span class="h4">📈 Platform Revenue Over Time (₹ in Thousands)</span>
+        <span class="h4">Platform Revenue</span>
         <span class="badge badge-green">${numMonths} Months Trend</span>
       </div>
-      ${buildAnalyticsBars(revenueBars, 215)}
+      ${buildAnalyticsLine(revenueBars, 215, { label: 'Revenue', prefix: '₹', suffix: 'K' })}
       <div style="margin-top:12px;font-size:11.5px;color:var(--text2);text-align:center">
         Monthly revenue performance trajectory in thousands (₹K).
       </div>
@@ -5403,9 +5453,9 @@ window.EventFlowModules['shared'] = true;
 
     <div class="card">
       <div class="flex justify-between items-center mb-12">
-        <span class="h4">🏷️ Revenue by Event Category (₹ in Thousands)</span>
+        <span class="h4">Revenue by Category</span>
       </div>
-      ${buildAnalyticsBars(catRevenueBars, 215)}
+      ${buildAnalyticsBars(catRevenueBars, 215, { label: 'Revenue', prefix: '₹', suffix: 'K' })}
       <div style="margin-top:12px;font-size:11.5px;color:var(--text2);text-align:center">
         Revenue breakdown by event category.
       </div>
@@ -5415,13 +5465,13 @@ window.EventFlowModules['shared'] = true;
   <!-- Bar Graphs Row 2: Ticket Pricing Tiers & Revenue Streams -->
   <div class="grid-2" style="gap:20px">
     <div class="card">
-      <div class="h4 mb-12">🎟️ Event Count by Pricing Tier (Bar Graph)</div>
+      <div class="h4 mb-12">Events by Ticket Price</div>
       ${buildAnalyticsBars(pricingTierBars, 215)}
     </div>
 
     <div class="card">
-      <div class="h4 mb-12">💼 Revenue Stream Contribution (₹ in Thousands)</div>
-      ${buildAnalyticsBars(streamBars, 215)}
+      <div class="h4 mb-12">Revenue Sources</div>
+      ${buildAnalyticsBars(streamBars, 215, { label: 'Revenue', prefix: '₹', suffix: 'K' })}
     </div>
   </div>`;
     }

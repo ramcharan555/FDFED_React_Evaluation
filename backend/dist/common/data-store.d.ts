@@ -143,7 +143,11 @@ export interface Registration {
     attendeeId: string;
     eventId: string;
     registrationDate: string;
-    status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'no-show' | 'attended';
+    status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'rejected' | 'no-show' | 'attended';
+    reviewStatus?: 'approved' | 'rejected';
+    rejectionReason?: string;
+    reviewedAt?: Date;
+    declineViewedAt?: Date;
     additionalInfo?: string;
     ticketType: string;
     qrCode?: string;
@@ -237,6 +241,15 @@ export interface EventReview {
     date: string;
     createdAt: Date;
 }
+export interface ClientOrganizerReview {
+    reviewId: string;
+    eventId: string;
+    clientId: string;
+    organizerId: string;
+    rating: number;
+    comment: string;
+    createdAt: Date;
+}
 export interface StaffReview {
     reviewId: string;
     reviewerId: string;
@@ -316,6 +329,7 @@ export declare class DataStore {
     eventReports: EventReport[];
     staffReports: StaffReport[];
     eventReviews: EventReview[];
+    clientOrganizerReviews: ClientOrganizerReview[];
     staffReviews: StaffReview[];
     notifications: Notification[];
     activityLogs: ActivityLog[];

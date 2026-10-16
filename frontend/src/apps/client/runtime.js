@@ -233,6 +233,10 @@ async function apiGetAttendeeRegistrations(attendeeId) {
   return apiRequest('/registrations');
 }
 
+async function apiGetOrganizerProfileReviews(organizerId) {
+  return apiRequest(`/reviews/organizers/${encodeURIComponent(organizerId)}`);
+}
+
 async function apiRegisterForEvent(regData) {
   return apiRequest('/registrations', {
     method: 'POST',
@@ -9012,14 +9016,22 @@ window.EventFlowModules['shared'] = true;
       renderPage('find-organizers');
     }
 
-    function viewOrganizerProfile(organizerId) {
+    async function viewOrganizerProfile(organizerId) {
       const org = DB.users.find(u => String(u.id) === String(organizerId));
       if (!org) return;
 
-      const rating = org.rating || 4.2;
-      const reviews = Math.floor(Math.random() * 200) + 50;
-      const events = Math.floor(Math.random() * 300) + 50;
-      const completedEvents = Math.floor(events * 0.9);
+      let profileReviews;
+      let profileReviewsError = '';
+      try {
+        const response = await apiGetOrganizerProfileReviews(org.organizerId || organizerId);
+        profileReviews = response.data || response;
+      } catch (error) {
+        profileReviewsError = error.message || 'Unable to load organizer reviews';
+        toast(profileReviewsError, 'error');
+      }
+      const reviews = profileReviews?.reviews || [];
+      const totalReviews = Number(profileReviews?.totalReviews ?? org.reviewCount) || 0;
+      const rating = Number(profileReviews?.averageRating ?? org.rating) || 0;
 
       const orgModalAv = org.avatarImage ? `
         <div style="width:80px;height:80px;border-radius:12px;overflow:hidden;flex-shrink:0;background:${org.color || 'var(--accent)'}20;position:relative">
@@ -9036,8 +9048,8 @@ window.EventFlowModules['shared'] = true;
           <div style="font-weight:700;font-size:20px;margin-bottom:4px">${org.name}</div>
           <div style="color:var(--accent);font-weight:500;margin-bottom:8px">${org.service || 'Event Organizer'}</div>
           <div style="display:flex;gap:12px;margin-bottom:8px">
-            <span style="background:var(--yellow);color:#1a1400;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600">⭐ ${rating.toFixed(1)}</span>
-            <span style="color:var(--text2);font-size:13px">${reviews} reviews</span>
+            <span style="background:var(--yellow);color:#1a1400;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600">⭐ ${rating ? rating.toFixed(1) : 'No ratings yet'}</span>
+            <span style="color:var(--text2);font-size:13px">${totalReviews} reviews</span>
             <span style="color:var(--text2);font-size:13px">📍 ${org.city || 'India'}</span>
           </div>
           <div style="color:var(--text2);font-size:13px">${org.bio || 'Professional event organizer'}</div>
@@ -9046,21 +9058,18 @@ window.EventFlowModules['shared'] = true;
     </div>
     
     <div style="margin-bottom:20px">
-      <div class="h4 mb-12">Statistics</div>
-      <div class="grid-3" style="gap:12px;margin-bottom:16px">
-        <div style="background:var(--surface3);padding:12px;border-radius:8px;text-align:center">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">COMPLETED EVENTS</div>
-          <div style="font-size:24px;font-weight:800;color:var(--green)">${completedEvents}</div>
-        </div>
-        <div style="background:var(--surface3);padding:12px;border-radius:8px;text-align:center">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">TOTAL REVIEWS</div>
-          <div style="font-size:24px;font-weight:800;color:var(--blue)">${reviews}</div>
-        </div>
-        <div style="background:var(--surface3);padding:12px;border-radius:8px;text-align:center">
-          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">SATISFACTION RATE</div>
-          <div style="font-size:24px;font-weight:800;color:var(--green)">96%</div>
-        </div>
-      </div>
+      <div class="h4 mb-12">Client Reviews</div>
+      ${profileReviewsError ? `<p style="color:var(--danger);font-size:13px">${escapeHtml(profileReviewsError)}</p>` : reviews.length ? `<div style="display:flex;flex-direction:column;gap:10px">${reviews.map(review => `
+        <article style="padding:16px;background:var(--surface3);border:1px solid var(--border);border-radius:8px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Event name</div>
+          <div style="font-size:14px;color:var(--text);font-weight:600;overflow-wrap:anywhere">${escapeHtml(review.eventName || 'Past event')}</div>
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+            <span style="display:flex;align-items:center;gap:8px"><strong style="color:var(--yellow);letter-spacing:2px" aria-label="${review.rating} out of 5 stars">${'★'.repeat(Number(review.rating))}${'☆'.repeat(5 - Number(review.rating))}</strong><span style="font-size:12px;font-weight:600;color:var(--text)">${review.rating}/5</span></span>
+            <time style="font-size:12px;color:var(--text3)">${escapeHtml(String(review.createdAt || '').slice(0, 10))}</time>
+          </div>
+          <p style="margin:10px 0 12px;color:var(--text2);font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(review.comment)}</p>
+          <div style="font-size:12px;color:var(--text2)">Given by <strong style="color:var(--text)">${escapeHtml(review.reviewerName || 'Client')}</strong></div>
+        </article>`).join('')}</div>` : '<p style="color:var(--text3);font-size:13px">No client reviews yet.</p>'}
     </div>
     
     <div style="margin-bottom:20px">

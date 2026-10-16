@@ -27,6 +27,7 @@ const DATA_COLLECTIONS = [
   'eventReports',
   'staffReports',
   'eventReviews',
+  'clientOrganizerReviews',
   'staffReviews',
   'notifications',
   'activityLogs',
@@ -48,6 +49,8 @@ const DATE_FIELDS = new Set([
   'reservationExpiresAt',
   'offerExpiresAt',
   'resolutionEmailSentAt',
+  'reviewedAt',
+  'declineViewedAt',
 ]);
 
 // ==================== USER ENTITIES ====================
@@ -209,7 +212,11 @@ export interface Registration {
   attendeeId: string;
   eventId: string;
   registrationDate: string;
-  status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'no-show' | 'attended';
+  status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'rejected' | 'no-show' | 'attended';
+  reviewStatus?: 'approved' | 'rejected';
+  rejectionReason?: string;
+  reviewedAt?: Date;
+  declineViewedAt?: Date;
   additionalInfo?: string;
   ticketType: string;
   qrCode?: string;
@@ -316,6 +323,16 @@ export interface EventReview {
   createdAt: Date;
 }
 
+export interface ClientOrganizerReview {
+  reviewId: string;
+  eventId: string;
+  clientId: string;
+  organizerId: string;
+  rating: number;
+  comment: string;
+  createdAt: Date;
+}
+
 export interface StaffReview {
   reviewId: string;
   reviewerId: string; // organizerId
@@ -416,6 +433,7 @@ export class DataStore {
   eventReports: EventReport[] = [];
   staffReports: StaffReport[] = [];
   eventReviews: EventReview[] = [];
+  clientOrganizerReviews: ClientOrganizerReview[] = [];
   staffReviews: StaffReview[] = [];
 
   // Notifications
@@ -452,6 +470,7 @@ export class DataStore {
 
     const demoSeeds = {
       events: this.events.filter(event => event.eventId.startsWith('evt-demo-')),
+      clientOrganizerReviews: this.clientOrganizerReviews,
       registrations: this.registrations.filter(registration => registration.registrationId.startsWith('reg-demo-')),
       payments: this.payments.filter(payment => payment.paymentId.startsWith('pay-demo-')),
       refunds: this.refunds.filter(refund => refund.refundId.startsWith('ref-demo-')),
@@ -478,6 +497,18 @@ export class DataStore {
         throw new Error(`Invalid "${collection}" collection in ${this.persistencePath}`);
       }
       if (Array.isArray(rows)) Object.assign(this, { [collection]: rows });
+    }
+
+    if (Number(parsed.organizerReviewSeedVersion || 0) < 1) {
+      for (const review of demoSeeds.clientOrganizerReviews) {
+        if (
+          this.events.some(event => event.eventId === review.eventId && event.organizerId === review.organizerId) &&
+          this.clients.some(client => client.clientId === review.clientId) &&
+          this.organizers.some(organizer => organizer.organizerId === review.organizerId) &&
+          !this.clientOrganizerReviews.some(existing => existing.reviewId === review.reviewId || (existing.eventId === review.eventId && existing.clientId === review.clientId))
+        ) this.clientOrganizerReviews.push(review);
+      }
+      this.persist();
     }
 
     if (Number(parsed.demoSeedVersion || 0) < 2) {
@@ -511,7 +542,7 @@ export class DataStore {
     fs.mkdirSync(directory, { recursive: true });
     const snapshot: Partial<Record<DataCollection, unknown>> = {};
     for (const collection of DATA_COLLECTIONS) snapshot[collection] = this[collection];
-    Object.assign(snapshot, { demoSeedVersion: 2 });
+    Object.assign(snapshot, { demoSeedVersion: 2, organizerReviewSeedVersion: 1 });
 
     const temporaryPath = `${this.persistencePath}.tmp`;
     fs.writeFileSync(temporaryPath, JSON.stringify(snapshot, null, 2), { encoding: 'utf8', mode: 0o600 });
@@ -1775,6 +1806,19 @@ export class DataStore {
       },
     ];
 
+    this.clientOrganizerReviews = [
+      {
+        reviewId: 'rev-org-demo-001', eventId: 'evt-001', clientId: 'cli-001', organizerId: 'org-001', rating: 5,
+        comment: 'Sarah and her team delivered a polished summit. Communication was clear, the speakers and schedule were well coordinated, and our guests had a great experience.',
+        createdAt: new Date('2024-06-20'),
+      },
+      {
+        reviewId: 'rev-org-demo-002', eventId: 'evt-002', clientId: 'cli-001', organizerId: 'org-001', rating: 5,
+        comment: 'The wellness retreat was thoughtfully organized and ran smoothly. The venue, session timing, and on-site coordination made the day relaxing for everyone.',
+        createdAt: new Date('2024-07-23'),
+      },
+    ];
+
     this.staffReviews = [
       {
         reviewId: 'rev-staff-001',
@@ -1882,6 +1926,7 @@ export class DataStore {
     this.eventReports = [];
     this.staffReports = [];
     this.eventReviews = [];
+    this.clientOrganizerReviews = [];
     this.staffReviews = [];
     this.notifications = [];
     this.activityLogs = [];

@@ -3804,3 +3804,71 @@
 2026-10-15T19:20:30.733Z ::1 GET /api/support/tickets 200 10ms
 2026-10-15T19:20:33.790Z ::1 PATCH /api/support/tickets/SUP-2026-00006/status 200 90ms
 2026-10-15T19:20:33.821Z ::1 GET /api/support/tickets 200 15ms
+2026-10-16T11:39:59.783Z ::1 GET /api/analytics/dashboard 304 17ms
+2026-10-16T11:40:15.864Z ::1 POST /api/auth/login 200 25ms
+2026-10-16T11:40:16.587Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T11:40:16.594Z ::1 GET /api/events 200 7ms
+2026-10-16T11:40:16.602Z ::1 GET /api/registrations 304 6ms
+2026-10-16T11:40:24.926Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T11:40:24.932Z ::1 GET /api/events 304 6ms
+2026-10-16T11:40:31.207Z ::1 GET /api/registrations 304 5ms
+2026-10-16T11:40:35.648Z ::1 GET /api/registrations 304 4ms
+2026-10-16T11:43:48.801Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T11:43:48.803Z ::1 GET /api/events 304 2ms
+2026-10-16T11:43:48.810Z ::1 GET /api/registrations 304 2ms
+2026-10-16T11:45:07.198Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T11:45:07.203Z ::1 GET /api/events 304 4ms
+2026-10-16T11:45:07.214Z ::1 GET /api/registrations 304 3ms
+2026-10-16T11:45:53.418Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T11:45:53.423Z ::1 GET /api/events 304 5ms
+2026-10-16T11:45:53.431Z ::1 GET /api/registrations 304 1ms
+2026-10-16T11:46:44.997Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T11:46:45.005Z ::1 GET /api/events 304 8ms
+2026-10-16T11:46:45.013Z ::1 GET /api/registrations 304 2ms
+2026-10-16T11:47:16.457Z 127.0.0.1 POST /api/auth/login 200 15ms
+2026-10-16T11:47:16.476Z 127.0.0.1 POST /api/auth/login 200 5ms
+2026-10-16T11:47:16.493Z 127.0.0.1 PATCH /api/registrations/reg-review-test/review 400 11ms
+2026-10-16T11:47:16.504Z 127.0.0.1 PATCH /api/registrations/reg-review-test/review 400 4ms
+2026-10-16T11:47:16.531Z 127.0.0.1 PATCH /api/registrations/reg-review-test/review 200 22ms
+2026-10-16T11:47:16.546Z 127.0.0.1 GET /api/registrations 200 4ms
+2026-10-16T11:47:16.573Z 127.0.0.1 PATCH /api/registrations/reg-review-test/decline-viewed 200 15ms
+2026-10-16T11:47:16.588Z 127.0.0.1 GET /api/registrations/reg-review-test 200 5ms
+2026-10-16T11:47:16.604Z 127.0.0.1 GET /api/notifications 200 7ms
+2026-10-16T11:48:47.694Z ::1 POST /api/auth/login 200 8ms
+2026-10-16T11:48:47.714Z ::1 GET /api/reviews/organizers/usr-org-001 404 6ms
+2026-10-16T11:49:06.258Z ::1 GET /api/reviews/organizers/usr-org-001 404 3ms
+2026-10-16T11:50:40.639Z ::1 POST /api/auth/login 200 24ms
+2026-10-16T11:50:40.660Z ::1 GET /api/reviews/organizers/usr-org-001 200 8ms
+2026-10-16T11:50:47.590Z 127.0.0.1 POST /api/auth/login 200 14ms
+2026-10-16T11:50:47.608Z 127.0.0.1 POST /api/auth/login 200 5ms
+2026-10-16T11:50:47.615Z 127.0.0.1 PATCH /api/registrations/reg-review-test/review 400 4ms
+2026-10-16T11:50:47.620Z 127.0.0.1 PATCH /api/registrations/reg-review-test/review 400 2ms
+2026-10-16T11:50:47.627Z 127.0.0.1 PATCH /api/registrations/reg-review-test/review 200 4ms
+2026-10-16T11:50:47.633Z 127.0.0.1 GET /api/registrations 200 2ms
+2026-10-16T11:50:47.644Z 127.0.0.1 GET /api/registrations/reg-review-test 200 1ms
+2026-10-16T11:50:47.651Z 127.0.0.1 PATCH /api/registrations/reg-review-test/decline-viewed 200 4ms
+2026-10-16T11:50:47.658Z 127.0.0.1 PATCH /api/registrations/reg-review-test/decline-viewed 200 4ms
+2026-10-16T11:50:47.662Z 127.0.0.1 GET /api/registrations/reg-review-test 200 1ms
+2026-10-16T11:50:47.668Z 127.0.0.1 GET /api/notifications 200 2ms
+2026-10-16T11:53:02.107Z ::1 GET /api/analytics/dashboard 304 2ms
+2026-10-16T11:53:02.108Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T11:53:02.110Z ::1 GET /api/events 200 2ms
+2026-10-16T11:53:02.111Z ::1 GET /api/registrations 304 1ms
+2026-10-16T12:15:46.635Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T12:15:46.666Z ::1 GET /api/events 304 31ms
+2026-10-16T12:15:46.676Z ::1 GET /api/registrations 304 6ms
+2026-10-16T12:15:54.758Z ::1 POST /api/auth/login 200 30ms
+2026-10-16T12:15:55.331Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T12:15:55.375Z ::1 GET /api/events 304 43ms
+2026-10-16T12:15:55.393Z ::1 GET /api/registrations 304 10ms
+2026-10-16T12:15:56.759Z ::1 GET /api/registrations 304 24ms
+2026-10-16T12:15:58.160Z ::1 GET /api/registrations 304 5ms
+2026-10-16T12:32:40.260Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T12:32:40.266Z ::1 GET /api/events 304 6ms
+2026-10-16T12:32:40.271Z ::1 GET /api/registrations 304 2ms
+2026-10-16T12:35:56.024Z EVENT_ROUTE role=anonymous GET /api/events
+2026-10-16T12:35:56.026Z ::1 GET /api/events 304 2ms
+2026-10-16T12:35:56.069Z ::1 GET /api/registrations 304 24ms
+2026-10-16T12:37:57.232Z ::1 POST /api/auth/login 200 19ms
+2026-10-16T12:37:57.660Z ::1 GET /api/analytics/dashboard 304 2ms
+2026-10-16T12:38:04.124Z ::1 GET /api/analytics/dashboard 304 3ms

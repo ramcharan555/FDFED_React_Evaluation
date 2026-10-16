@@ -5,6 +5,7 @@ export declare class ReviewsService {
     constructor();
     createEventReview(dto: CreateEventReviewDto, role: UserRole): any;
     findAllEventReviews(eventId?: string): any[];
+    findPublicOrganizerReviews(organizerId: string, role: UserRole): any;
     createStaffReview(dto: CreateStaffReviewDto, role: UserRole): any;
     findAllStaffReviews(staffId?: string): any[];
 }

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Query, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Get, Post, Body, Query, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiQuery } from '@nestjs/swagger';
 import { ReviewsService } from './reviews.service';
 import { CreateEventReviewDto, CreateStaffReviewDto } from '../reports/dto/report.dto';
@@ -27,6 +27,12 @@ export class ReviewsController {
   @ApiQuery({ name: 'eventId', required: false, description: 'Filter by event ID' })
   findAllEventReviews(@Query('eventId') eventId?: string) {
     return this.service.findAllEventReviews(eventId);
+  }
+
+  @Get('organizers/:organizerId')
+  @ApiOperation({ summary: 'Get organizer profile reviews with event name, reviewer name and rating' })
+  findPublicOrganizerReviews(@Param('organizerId') organizerId: string, @UserRoleDecorator() role: UserRole) {
+    return this.service.findPublicOrganizerReviews(organizerId, role);
   }
 
   @Post('staff')

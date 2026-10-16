@@ -30,6 +30,9 @@ let ReviewsController = class ReviewsController {
     findAllEventReviews(eventId) {
         return this.service.findAllEventReviews(eventId);
     }
+    findPublicOrganizerReviews(organizerId, role) {
+        return this.service.findPublicOrganizerReviews(organizerId, role);
+    }
     createStaffReview(dto, role) {
         return this.service.createStaffReview(dto, role);
     }
@@ -59,6 +62,15 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ReviewsController.prototype, "findAllEventReviews", null);
+__decorate([
+    (0, common_1.Get)('organizers/:organizerId'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get organizer profile reviews with event name, reviewer name and rating' }),
+    __param(0, (0, common_1.Param)('organizerId')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", void 0)
+], ReviewsController.prototype, "findPublicOrganizerReviews", null);
 __decorate([
     (0, common_1.Post)('staff'),
     (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),

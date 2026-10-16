@@ -135,16 +135,78 @@ let RegistrationsService = class RegistrationsService {
         this.assertOwner(registration, role, userId);
         return this.enrich(registration);
     }
+    markDeclineViewed(id, role, userId) {
+        if (role !== constants_1.UserRole.ATTENDEE)
+            throw new common_1.ForbiddenException('Only the attendee can mark their decline as viewed');
+        const registration = this.db.registrations.find(r => r.registrationId === id);
+        if (!registration)
+            throw new common_1.NotFoundException('Registration not found');
+        this.assertOwner(registration, role, userId);
+        if (registration.status !== 'rejected')
+            throw new common_1.ConflictException('This registration has not been declined');
+        if (!registration.declineViewedAt) {
+            registration.declineViewedAt = new Date();
+            registration.updatedAt = registration.declineViewedAt;
+        }
+        return { success: true, data: this.enrich(registration) };
+    }
     updateDetails(id, dto, role, userId) {
         const registration = this.db.registrations.find(r => r.registrationId === id);
         if (!registration)
             throw new common_1.NotFoundException(`Registration ${id} not found`);
         this.assertOwner(registration, role, userId);
-        if (['cancelled', 'attended', 'no-show'].includes(registration.status))
+        if (['cancelled', 'rejected', 'attended', 'no-show'].includes(registration.status))
             throw new common_1.BadRequestException('Historical registrations cannot be changed');
         registration.additionalInfo = dto.additionalInfo;
         registration.updatedAt = new Date();
         return { success: true, message: 'Registration details updated', data: this.enrich(registration) };
+    }
+    review(id, dto, role, userId) {
+        if (![constants_1.UserRole.EVENT_ORGANIZER, constants_1.UserRole.SUPER_ADMIN].includes(role))
+            throw new common_1.ForbiddenException('Only the event organizer can review registrations');
+        const registration = this.db.registrations.find(r => r.registrationId === id);
+        if (!registration)
+            throw new common_1.NotFoundException('Registration not found');
+        const event = this.db.events.find(e => e.eventId === registration.eventId);
+        if (!event)
+            throw new common_1.NotFoundException('Event not found');
+        const organizer = this.db.organizers.find(o => o.userId === userId);
+        if (role !== constants_1.UserRole.SUPER_ADMIN && (!organizer || organizer.organizerId !== event.organizerId))
+            throw new common_1.ForbiddenException('You can only review registrations for your own events');
+        if (!['approved', 'rejected'].includes(dto.decision))
+            throw new common_1.BadRequestException('Choose an approval or decline decision');
+        const reason = typeof dto.reason === 'string' ? dto.reason.trim() : '';
+        if (dto.decision === 'rejected' && (reason.length < 10 || reason.length > 1000))
+            throw new common_1.BadRequestException('Please explain the decline in 10 to 1000 characters');
+        if (registration.reviewStatus || !['registered', 'pending_payment', 'waitlisted'].includes(registration.status))
+            throw new common_1.ConflictException('This registration is no longer pending review');
+        if (['completed', 'cancelled'].includes(event.status) || new Date(`${event.date}T23:59:59`) < new Date())
+            throw new common_1.BadRequestException('Registrations for a past or closed event cannot be reviewed');
+        const now = new Date();
+        const priorStatus = registration.status;
+        const releasedSeat = ['registered', 'pending_payment'].includes(priorStatus) && this.activeReservation(registration);
+        const hadWaitlistOffer = !!registration.offerExpiresAt;
+        registration.reviewStatus = dto.decision;
+        registration.reviewedAt = now;
+        registration.updatedAt = now;
+        if (dto.decision === 'approved') {
+            this.notify(registration, `The organizer approved your registration for "${event.name}".`, 'registration_approved');
+            return { success: true, message: 'Registration approved', data: this.enrich(registration) };
+        }
+        registration.status = 'rejected';
+        registration.rejectionReason = reason;
+        registration.qrCode = undefined;
+        registration.verificationId = undefined;
+        registration.reservationExpiresAt = undefined;
+        registration.offerExpiresAt = undefined;
+        const payment = this.db.payments.find(p => p.registrationId === id && p.status === 'completed');
+        if (payment && !this.db.refunds.some(refund => refund.registrationId === id && ['pending', 'completed'].includes(refund.status))) {
+            this.db.refunds.push({ refundId: this.db.generateId('ref'), paymentId: payment.paymentId, registrationId: id, amount: payment.amount, status: 'pending', reason: `Organizer declined registration: ${reason}`, requestedAt: now });
+        }
+        this.notify(registration, `Your registration for "${event.name}" was declined. Reason: ${reason}${payment ? ' A full refund of your ticket payment is pending.' : ''}`, 'registration_rejected', payment?.paymentId);
+        if (releasedSeat || hadWaitlistOffer)
+            this.offerNext(event.eventId);
+        return { success: true, message: 'Registration declined and reason sent to the attendee', data: this.enrich(registration) };
     }
     async confirmWaitlist(id, role, userId) {
         const registration = this.db.registrations.find(r => r.registrationId === id);
@@ -175,6 +237,8 @@ let RegistrationsService = class RegistrationsService {
         if (!registration)
             throw new common_1.NotFoundException(`Registration ${id} not found`);
         this.assertOwner(registration, role, userId);
+        if (registration.status === 'rejected')
+            throw new common_1.ConflictException('A declined registration cannot be cancelled');
         if (registration.status === 'cancelled')
             throw new common_1.ConflictException('Registration is already cancelled');
         if (registration.status === 'attended')

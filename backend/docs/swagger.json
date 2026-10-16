@@ -2470,6 +2470,100 @@
         ]
       }
     },
+    "/api/registrations/{id}/review": {
+      "patch": {
+        "operationId": "RegistrationsController_review",
+        "summary": "Approve or decline a registration for your event; declines require an attendee-visible reason",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewRegistrationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "registrations"
+        ]
+      }
+    },
+    "/api/registrations/{id}/decline-viewed": {
+      "patch": {
+        "operationId": "RegistrationsController_markDeclineViewed",
+        "summary": "Mark your declined registration as viewed so it moves to Other Tickets",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "registrations"
+        ]
+      }
+    },
     "/api/registrations/{id}/waitlist/confirm": {
       "post": {
         "operationId": "RegistrationsController_confirmWaitlist",
@@ -3192,6 +3286,39 @@
             "required": false,
             "in": "query",
             "description": "Filter by event ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reviews"
+        ]
+      }
+    },
+    "/api/reviews/organizers/{organizerId}": {
+      "get": {
+        "operationId": "ReviewsController_findPublicOrganizerReviews",
+        "summary": "Get organizer profile reviews with event name, reviewer name and rating",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "organizerId",
+            "required": true,
+            "in": "path",
             "schema": {
               "type": "string"
             }
@@ -4615,6 +4742,28 @@
             "description": "Corrected attendee-provided registration information"
           }
         }
+      },
+      "ReviewRegistrationDto": {
+        "type": "object",
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "approved",
+              "rejected"
+            ],
+            "description": "Organizer registration decision"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Required when declining; shared with the attendee",
+            "minLength": 10,
+            "maxLength": 1000
+          }
+        },
+        "required": [
+          "decision"
+        ]
       },
       "CancelRegistrationDto": {
         "type": "object",

@@ -67,6 +67,7 @@ let EventsService = class EventsService {
             ...event,
             // Frontend-compatible aliases
             id: event.eventId,
+            organizerUserId: this.dataStore.organizers.find(organizer => organizer.organizerId === event.organizerId)?.userId,
             title: event.name,
             price: event.ticketPrice,
             city,

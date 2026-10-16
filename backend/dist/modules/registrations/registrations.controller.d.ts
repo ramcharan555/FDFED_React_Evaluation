@@ -1,5 +1,5 @@
 import { RegistrationsService } from './registrations.service';
-import { CancelRegistrationDto, CreateRegistrationDto, UpdateRegistrationDetailsDto } from './dto/registration.dto';
+import { CancelRegistrationDto, CreateRegistrationDto, ReviewRegistrationDto, UpdateRegistrationDetailsDto } from './dto/registration.dto';
 import { UserRole } from '../../common/constants';
 export declare class RegistrationsController {
     private readonly service;
@@ -8,6 +8,8 @@ export declare class RegistrationsController {
     findAll(role: UserRole, userId: string): any[];
     findOne(id: string, role: UserRole, userId: string): any;
     updateDetails(id: string, dto: UpdateRegistrationDetailsDto, role: UserRole, userId: string): any;
+    review(id: string, dto: ReviewRegistrationDto, role: UserRole, userId: string): any;
+    markDeclineViewed(id: string, role: UserRole, userId: string): any;
     confirmWaitlist(id: string, role: UserRole, userId: string): Promise<any>;
     cancel(id: string, dto: CancelRegistrationDto, role: UserRole, userId: string): any;
 }

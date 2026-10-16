@@ -1,4 +1,4 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
 import { DataStore } from '../../common/data-store';
 import { UserRole } from '../../common/constants';
 import { CreateEventReviewDto, CreateStaffReviewDto } from '../reports/dto/report.dto';
@@ -29,6 +29,33 @@ export class ReviewsService {
   findAllEventReviews(eventId?: string): any[] {
     if (eventId) return this.db.eventReviews.filter(r => r.eventId === eventId);
     return this.db.eventReviews;
+  }
+
+  findPublicOrganizerReviews(organizerId: string, role: UserRole): any {
+    if (role !== UserRole.CLIENT && role !== UserRole.SUPER_ADMIN) throw new ForbiddenException('Only clients can view published organizer reviews');
+    const organizer = this.db.organizers.find(item => item.organizerId === organizerId || item.userId === organizerId);
+    if (!organizer || !this.db.findUserById(organizer.userId)) throw new NotFoundException('Organizer not found');
+    const reviews = this.db.clientOrganizerReviews.filter(review => review.organizerId === organizer.organizerId)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return {
+      success: true,
+      data: {
+        organizerId: organizer.organizerId,
+        averageRating: reviews.length ? Number((reviews.reduce((total, review) => total + review.rating, 0) / reviews.length).toFixed(1)) : organizer.rating || null,
+        totalReviews: reviews.length,
+        reviews: reviews.map(review => {
+          const client = this.db.clients.find(item => item.clientId === review.clientId);
+          return {
+            eventId: review.eventId,
+            eventName: this.db.events.find(event => event.eventId === review.eventId)?.name || 'Past event',
+            reviewerName: client ? this.db.findUserById(client.userId)?.name || 'Client' : 'Client',
+            rating: review.rating,
+            comment: review.comment,
+            createdAt: review.createdAt,
+          };
+        }),
+      },
+    };
   }
 
   createStaffReview(dto: CreateStaffReviewDto, role: UserRole): any {
