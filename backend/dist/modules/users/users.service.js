@@ -13,7 +13,6 @@ exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const data_store_1 = require("../../common/data-store");
 const constants_1 = require("../../common/constants");
-const password_1 = require("../../common/utils/password");
 let UsersService = class UsersService {
     constructor() { this.db = data_store_1.DataStore.getInstance(); }
     findAll(role) {
@@ -38,7 +37,7 @@ let UsersService = class UsersService {
             throw new common_1.ConflictException('Email already registered');
         const userId = this.db.generateId('usr');
         const user = {
-            userId, name: dto.name, email: dto.email, password: (0, password_1.hashPassword)(dto.password), employeeType: dto.userRole === constants_1.UserRole.EVENT_STAFF ? dto.employeeType : undefined,
+            userId, name: dto.name, email: dto.email, password: dto.password,
             userRole: dto.userRole, status: 'active',
             address: dto.address, phoneNo: dto.phoneNo,
             createdAt: new Date(), updatedAt: new Date(),
@@ -70,12 +69,8 @@ let UsersService = class UsersService {
         const user = this.db.findUserById(userId);
         if (!user)
             throw new common_1.NotFoundException(`User ${userId} not found`);
-        if (dto.email && this.db.users.some(u => u.userId !== userId && u.email.toLowerCase() === dto.email.trim().toLowerCase()))
-            throw new common_1.ConflictException('Email already registered');
-        if (dto.status && role === constants_1.UserRole.SUPER_ADMIN)
-            this.updateStatus(userId, dto.status, role);
         if (dto.name)
-            user.name = dto.name.trim();
+            user.name = dto.name;
         if (dto.email)
             user.email = dto.email;
         if (dto.address)
@@ -94,10 +89,6 @@ let UsersService = class UsersService {
         const idx = this.db.users.findIndex(u => u.userId === userId);
         if (idx === -1)
             throw new common_1.NotFoundException(`User ${userId} not found`);
-        const u = this.db.users[idx];
-        const attendee = this.db.attendees.find(a => a.userId === userId), organizer = this.db.organizers.find(o => o.userId === userId), staff = this.db.staffProfiles.find(s => s.userId === userId), client = this.db.clients.find(c => c.userId === userId);
-        if (u.userRole === constants_1.UserRole.SUPER_ADMIN || this.db.registrations.some(r => r.attendeeId === attendee?.attendeeId) || this.db.events.some(e => e.organizerId === organizer?.organizerId || e.clientId === client?.clientId && !!client) || this.db.staffAssignments.some(a => a.staffId === staff?.staffId) || this.db.employeeReports.some(r => r.submittedBy === userId) || this.db.financeReportSubmissions.some(r => r.submittedBy === userId))
-            throw new common_1.ConflictException('Suspend accounts with linked history instead of deleting them');
         this.db.users.splice(idx, 1);
         this.db.clients = this.db.clients.filter(c => c.userId !== userId);
         this.db.organizers = this.db.organizers.filter(o => o.userId !== userId);
@@ -112,10 +103,6 @@ let UsersService = class UsersService {
         const user = this.db.findUserById(userId);
         if (!user)
             throw new common_1.NotFoundException(`User ${userId} not found`);
-        if (!['active', 'inactive', 'suspended'].includes(status))
-            throw new common_1.ConflictException('Invalid account status');
-        if (user.userRole === constants_1.UserRole.SUPER_ADMIN && status !== 'active' && this.db.users.filter(u => u.userRole === constants_1.UserRole.SUPER_ADMIN && u.status === 'active' && u.userId !== userId).length === 0)
-            throw new common_1.ConflictException('Keep at least one active Super Admin');
         user.status = status;
         user.updatedAt = new Date();
         const { password, ...safe } = user;

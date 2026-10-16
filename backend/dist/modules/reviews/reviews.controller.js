@@ -20,19 +20,18 @@ const report_dto_1 = require("../reports/dto/report.dto");
 const role_guard_1 = require("../../common/guards/role.guard");
 const user_role_decorator_1 = require("../../common/decorators/user-role.decorator");
 const constants_1 = require("../../common/constants");
-const user_id_decorator_1 = require("../../common/decorators/user-id.decorator");
 let ReviewsController = class ReviewsController {
     constructor(service) {
         this.service = service;
     }
-    createEventReview(dto, role, userId) {
-        return this.service.createEventReview(dto, role, userId);
+    createEventReview(dto, role) {
+        return this.service.createEventReview(dto, role);
     }
     findAllEventReviews(eventId) {
         return this.service.findAllEventReviews(eventId);
     }
-    createStaffReview(dto, role, userId) {
-        return this.service.createStaffReview(dto, role, userId);
+    createStaffReview(dto, role) {
+        return this.service.createStaffReview(dto, role);
     }
     findAllStaffReviews(staffId) {
         return this.service.findAllStaffReviews(staffId);
@@ -47,9 +46,8 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Only ATTENDEE or CLIENT can review events' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
-    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [report_dto_1.CreateEventReviewDto, String, String]),
+    __metadata("design:paramtypes", [report_dto_1.CreateEventReviewDto, String]),
     __metadata("design:returntype", void 0)
 ], ReviewsController.prototype, "createEventReview", null);
 __decorate([
@@ -69,9 +67,8 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Only EVENT_ORGANIZER can review staff' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
-    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [report_dto_1.CreateStaffReviewDto, String, String]),
+    __metadata("design:paramtypes", [report_dto_1.CreateStaffReviewDto, String]),
     __metadata("design:returntype", void 0)
 ], ReviewsController.prototype, "createStaffReview", null);
 __decorate([

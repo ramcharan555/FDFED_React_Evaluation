@@ -4,7 +4,6 @@ import {
 import { DataStore } from '../../common/data-store';
 import { UserRole } from '../../common/constants';
 import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
-import { hashPassword } from '../../common/utils/password';
 
 @Injectable()
 export class UsersService {
@@ -31,7 +30,7 @@ export class UsersService {
 
     const userId = this.db.generateId('usr');
     const user = {
-      userId, name: dto.name, email: dto.email, password: hashPassword(dto.password), employeeType: dto.userRole === UserRole.EVENT_STAFF ? dto.employeeType : undefined,
+      userId, name: dto.name, email: dto.email, password: dto.password,
       userRole: dto.userRole, status: 'active' as const,
       address: dto.address, phoneNo: dto.phoneNo,
       createdAt: new Date(), updatedAt: new Date(),
@@ -62,9 +61,7 @@ export class UsersService {
     const user = this.db.findUserById(userId);
     if (!user) throw new NotFoundException(`User ${userId} not found`);
 
-    if (dto.email && this.db.users.some(u => u.userId !== userId && u.email.toLowerCase() === dto.email!.trim().toLowerCase())) throw new ConflictException('Email already registered');
-    if (dto.status && role === UserRole.SUPER_ADMIN) this.updateStatus(userId, dto.status, role);
-    if (dto.name) user.name = dto.name.trim();
+    if (dto.name) user.name = dto.name;
     if (dto.email) user.email = dto.email;
     if (dto.address) user.address = dto.address;
     if (dto.phoneNo) user.phoneNo = dto.phoneNo;
@@ -79,9 +76,6 @@ export class UsersService {
     if (role !== UserRole.SUPER_ADMIN) throw new ForbiddenException('Only SUPER_ADMIN can delete users');
     const idx = this.db.users.findIndex(u => u.userId === userId);
     if (idx === -1) throw new NotFoundException(`User ${userId} not found`);
-    const u = this.db.users[idx];
-    const attendee = this.db.attendees.find(a => a.userId === userId), organizer = this.db.organizers.find(o => o.userId === userId), staff = this.db.staffProfiles.find(s => s.userId === userId), client = this.db.clients.find(c => c.userId === userId);
-    if (u.userRole === UserRole.SUPER_ADMIN || this.db.registrations.some(r => r.attendeeId === attendee?.attendeeId) || this.db.events.some(e => e.organizerId === organizer?.organizerId || e.clientId === client?.clientId && !!client) || this.db.staffAssignments.some(a => a.staffId === staff?.staffId) || this.db.employeeReports.some(r => r.submittedBy === userId) || this.db.financeReportSubmissions.some(r => r.submittedBy === userId)) throw new ConflictException('Suspend accounts with linked history instead of deleting them');
     this.db.users.splice(idx, 1);
 
     this.db.clients = this.db.clients.filter(c => c.userId !== userId);
@@ -97,8 +91,6 @@ export class UsersService {
     if (role !== UserRole.SUPER_ADMIN) throw new ForbiddenException('Only SUPER_ADMIN can update user status');
     const user = this.db.findUserById(userId);
     if (!user) throw new NotFoundException(`User ${userId} not found`);
-    if (!['active', 'inactive', 'suspended'].includes(status)) throw new ConflictException('Invalid account status');
-    if (user.userRole === UserRole.SUPER_ADMIN && status !== 'active' && this.db.users.filter(u => u.userRole === UserRole.SUPER_ADMIN && u.status === 'active' && u.userId !== userId).length === 0) throw new ConflictException('Keep at least one active Super Admin');
     user.status = status;
     user.updatedAt = new Date();
     const { password, ...safe } = user;

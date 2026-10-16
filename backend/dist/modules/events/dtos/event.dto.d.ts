@@ -1,5 +1,4 @@
 export declare class CreateEventDto {
-    description?: string;
     name: string;
     category: string;
     date: string;
@@ -15,7 +14,6 @@ export declare class CreateEventDto {
     waitlistEnabled?: boolean;
 }
 export declare class UpdateEventDto {
-    description?: string;
     name?: string;
     category?: string;
     date?: string;

@@ -3,9 +3,9 @@ import { CreateEventPlanDto, UpdateEventPlanApprovalDto } from './dto/event-plan
 export declare class EventPlansService {
     private db;
     constructor();
-    create(dto: CreateEventPlanDto, role: UserRole, userId?: string): any;
+    create(dto: CreateEventPlanDto, role: UserRole): any;
     findAll(role: UserRole, userId?: string): any[];
-    findOne(planId: string, role: UserRole, userId?: string): any;
+    findOne(planId: string): any;
     updateApproval(planId: string, dto: UpdateEventPlanApprovalDto, role: UserRole, userId?: string): any;
 }
 //# sourceMappingURL=event-plans.service.d.ts.map

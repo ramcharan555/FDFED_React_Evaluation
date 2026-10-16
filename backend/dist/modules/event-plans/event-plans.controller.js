@@ -25,14 +25,14 @@ let EventPlansController = class EventPlansController {
     constructor(service) {
         this.service = service;
     }
-    create(dto, role, userId) {
-        return this.service.create(dto, role, userId);
+    create(dto, role) {
+        return this.service.create(dto, role);
     }
     findAll(role, userId) {
         return this.service.findAll(role, userId);
     }
-    findOne(id, role, userId) {
-        return this.service.findOne(id, role, userId);
+    findOne(id) {
+        return this.service.findOne(id);
     }
     updateApproval(id, dto, role, userId) {
         return this.service.updateApproval(id, dto, role, userId);
@@ -47,9 +47,8 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Forbidden' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
-    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [event_plan_dto_1.CreateEventPlanDto, String, String]),
+    __metadata("design:paramtypes", [event_plan_dto_1.CreateEventPlanDto, String]),
     __metadata("design:returntype", void 0)
 ], EventPlansController.prototype, "create", null);
 __decorate([
@@ -68,10 +67,8 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 200, description: 'Event plan details' }),
     (0, swagger_1.ApiResponse)({ status: 404, description: 'Event plan not found' }),
     __param(0, (0, common_1.Param)('id')),
-    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
-    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], EventPlansController.prototype, "findOne", null);
 __decorate([

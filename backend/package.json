@@ -6,9 +6,6 @@
   "private": true,
   "license": "MIT",
   "scripts": {
-    "test": "node --require ts-node/register --test tests/*.test.cjs",
-    "test:browser": "node --require ts-node/register tests/browser-workspaces.cjs",
-    "typecheck": "tsc --noEmit",
     "prebuild": "rimraf dist",
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",

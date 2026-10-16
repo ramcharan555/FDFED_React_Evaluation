@@ -33,8 +33,6 @@ let StaffAssignmentsService = class StaffAssignmentsService {
         const staff = this.db.staffProfiles.find(s => s.staffId === dto.staffId);
         if (!staff)
             throw new common_1.NotFoundException(`Staff ${dto.staffId} not found`);
-        if (dto.organizerId !== event.organizerId)
-            throw new common_1.BadRequestException('Assignment organizer must own the event');
         // ✅ NEW: Check staff availability
         if (staff.availableDates && staff.availableDates.length > 0) {
             const eventDate = event.date; // Format: YYYY-MM-DD
@@ -116,11 +114,6 @@ let StaffAssignmentsService = class StaffAssignmentsService {
                 throw new common_1.ForbiddenException('You can only update assignments for your own events');
             }
         }
-        if (role === constants_1.UserRole.EVENT_STAFF && !['accepted', 'declined'].includes(dto.status))
-            throw new common_1.ForbiddenException('Staff can only accept or decline an invitation');
-        const transitions = { pending: ['accepted', 'declined', 'cancelled'], accepted: ['completed', 'cancelled'], declined: ['cancelled'], completed: [], cancelled: [] };
-        if (!transitions[assignment.status]?.includes(dto.status))
-            throw new common_1.ConflictException('Invalid assignment state transition');
         assignment.status = dto.status;
         assignment.updatedAt = new Date();
         // Notify organizer when staff accepts/declines

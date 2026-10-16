@@ -1,6 +1,6 @@
 /**
- * Single-process data store backed by atomic JSON snapshots.
- * Demo seed records initialize a new store; mutations persist to disk.
+ * In-memory data store for the application
+ * Simulates a database without actual persistence
  * Includes all entities from the ER diagram
  */
 import { UserRole, EmployeeType } from './constants';
@@ -9,12 +9,6 @@ export interface User {
     name: string;
     email: string;
     password: string;
-    bio?: string;
-    preferences?: {
-        emailNotifications: boolean;
-        smsReminders: boolean;
-        eventRecommendations: boolean;
-    };
     userRole: UserRole;
     employeeType?: EmployeeType | string;
     status: 'active' | 'inactive' | 'suspended';
@@ -152,7 +146,6 @@ export interface Registration {
     status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'no-show' | 'attended';
     additionalInfo?: string;
     ticketType: string;
-    ticketPriceAtBooking?: number;
     qrCode?: string;
     verificationId?: string;
     cancellationReason?: string;
@@ -161,9 +154,6 @@ export interface Registration {
     reservationExpiresAt?: Date;
     createdAt: Date;
     updatedAt: Date;
-    reviewStatus?: 'pending' | 'approved' | 'flagged';
-    reviewedBy?: string;
-    reviewReason?: string;
 }
 export interface Payment {
     paymentId: string;
@@ -180,7 +170,7 @@ export interface Refund {
     paymentId: string;
     registrationId: string;
     amount: number;
-    status: 'pending' | 'under_review' | 'approved' | 'rejected' | 'processing' | 'completed' | 'failed' | 'not_applicable';
+    status: 'pending' | 'completed' | 'failed' | 'not_applicable';
     reason: string;
     requestedAt: Date;
     processedAt?: Date;
@@ -331,13 +321,6 @@ export declare class DataStore {
     activityLogs: ActivityLog[];
     supportTickets: SupportTicket[];
     supportAttachments: SupportAttachment[];
-    financeSettlements: any[];
-    commissionPolicies: any[];
-    financeAudit: any[];
-    financeGrants: any[];
-    financeReportSubmissions: any[];
-    employeeReports: any[];
-    operationTasks: any[];
     private constructor();
     static getInstance(): DataStore;
     private get persistencePath();

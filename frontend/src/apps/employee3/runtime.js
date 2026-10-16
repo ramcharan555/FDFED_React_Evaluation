@@ -2346,14 +2346,10 @@ window.EventFlowModules['shared'] = true;
       updateNotifDot();
       buildNav(navRole);
       if (isDepartmentEmployee()) buildEmployeeNav(CU.employeeType);
-      goNav(['FINANCE_EXECUTIVE', 'SUPPORT_FINANCE'].includes(CU.employeeType) && window.EventFlowFinance?.handles(location.hash.slice(1)) ? location.hash.slice(1) : 'dashboard');
+      goNav('dashboard');
     }
 
     function buildEmployeeNav(employeeType) {
-      if (['FINANCE_EXECUTIVE', 'SUPPORT_FINANCE'].includes(employeeType) && window.EventFlowFinance) {
-        g('sb-nav').innerHTML = window.EventFlowFinance.nav();
-        return;
-      }
       const nav = {
         REGISTRATION_VERIFICATION: [
           { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
@@ -2443,12 +2439,6 @@ window.EventFlowModules['shared'] = true;
     }
 
     function goNav(pg) {
-      if (pg === 'profile' && CU && ['FINANCE_EXECUTIVE', 'SUPPORT_FINANCE'].includes(CU.employeeType)) pg = 'settings';
-      if (CU && ['FINANCE_EXECUTIVE', 'SUPPORT_FINANCE'].includes(CU.employeeType) && window.EventFlowFinance) {
-        window.EventFlowFinance.navigate(pg);
-        const nextHash = '#' + pg;
-        if (location.hash !== nextHash) history.pushState(null, '', nextHash);
-      }
       _currentPage = pg;
       // Keep event-request tabs associated with their parent sidebar section.
       const sidebarPage = pg === 'staff-event-requests'
@@ -2494,14 +2484,6 @@ window.EventFlowModules['shared'] = true;
       _currentPage = pg;
       const el = g('page-content');
       const r = CU.role;
-
-      if (r === 'staff' && ['FINANCE_EXECUTIVE', 'SUPPORT_FINANCE'].includes(CU.employeeType) && window.EventFlowFinance) {
-        if (window.EventFlowFinance.handles(pg)) {
-          await window.EventFlowFinance.render(el, pg);
-          return;
-        }
-        window.EventFlowFinance.stop();
-      }
 
       if (pg === 'customer-support') {
         el.innerHTML = await window.EventFlowSupport.render(CU);
@@ -9733,9 +9715,6 @@ window.EventFlowModules['shared'] = true;
       }
 
       function validateInput(target) {
-        // Finance date filters must accept historical dates; their forms use
-        // native constraints and backend validation rather than event-creation rules.
-        if (target.closest('.finance-workspace')) return true;
         if (target.tagName !== 'INPUT' && target.tagName !== 'SELECT' && target.tagName !== 'TEXTAREA') return true;
         if (target.type === 'file' || target.type === 'checkbox' || target.type === 'radio') return true;
         if (target.disabled || target.readOnly) return true;

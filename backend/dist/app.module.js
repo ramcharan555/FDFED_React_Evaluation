@@ -35,8 +35,6 @@ const notifications_module_1 = require("./modules/notifications/notifications.mo
 const analytics_module_1 = require("./modules/analytics/analytics.module");
 const uploads_module_1 = require("./modules/uploads/uploads.module");
 const support_module_1 = require("./modules/support/support.module");
-const finance_module_1 = require("./modules/finance/finance.module");
-const workspace_module_1 = require("./modules/workspace/workspace.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(request_logging_middleware_1.RequestLoggingMiddleware).forRoutes('*');
@@ -72,8 +70,6 @@ exports.AppModule = AppModule = __decorate([
             analytics_module_1.AnalyticsModule,
             uploads_module_1.UploadsModule,
             support_module_1.SupportModule,
-            finance_module_1.FinanceModule,
-            workspace_module_1.WorkspaceModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [

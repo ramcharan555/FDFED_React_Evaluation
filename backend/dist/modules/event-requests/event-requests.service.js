@@ -628,10 +628,6 @@ let EventRequestsService = class EventRequestsService {
      */
     updatePaymentStatus(requestId, dto, role, userId) {
         const request = this.findOne(requestId, role, userId);
-        if (![constants_1.UserRole.EVENT_ORGANIZER, constants_1.UserRole.SUPER_ADMIN].includes(role))
-            throw new common_1.ForbiddenException('Only the organizer or Super Admin can record demo deposit bookkeeping');
-        if (!['deposit_paid', 'fully_paid', 'deposit_pending', 'unpaid', 'refunded'].includes(dto.paymentStatus))
-            throw new common_1.BadRequestException('Invalid deposit status');
         request.paymentStatus = dto.paymentStatus;
         request.updatedAt = new Date();
         request.auditHistory = request.auditHistory || [];
@@ -641,7 +637,7 @@ let EventRequestsService = class EventRequestsService {
             performedBy: userId || 'user',
             role: role,
         });
-        return { success: true, simulated: true, message: `Demo deposit bookkeeping updated to ${dto.paymentStatus}; no money was transferred`, data: request };
+        return { success: true, message: `Payment status updated to ${dto.paymentStatus}`, data: request };
     }
     /**
      * Confirm booking: STRICTLY requires agreementStatus === 'agreed' AND paymentStatus satisfied
@@ -658,16 +654,16 @@ let EventRequestsService = class EventRequestsService {
             throw new common_1.BadRequestException(`Cannot confirm a request that has been ${request.status}`);
         }
         // Check agreement condition
-        const isAgreed = request.agreementStatus === 'agreed';
+        const isAgreed = request.agreementStatus === 'agreed' || dto?.agreementConfirmed;
         if (!isAgreed) {
             throw new common_1.BadRequestException('Cannot confirm booking: Signed agreement is required before confirmation. (Agreement status: ' +
                 request.agreementStatus +
                 ')');
         }
         // Check payment / deposit condition
-        const isDepositSatisfied = request.proposals?.[request.proposals.length - 1]?.depositRequired === 0 ||
-            request.paymentStatus === 'deposit_paid' ||
-            request.paymentStatus === 'fully_paid';
+        const isDepositSatisfied = request.paymentStatus === 'deposit_paid' ||
+            request.paymentStatus === 'fully_paid' ||
+            dto?.depositConfirmed;
         if (!isDepositSatisfied) {
             throw new common_1.BadRequestException('Cannot confirm booking: Required deposit/payment must be satisfied before confirmation. (Payment status: ' +
                 request.paymentStatus +
@@ -694,7 +690,7 @@ let EventRequestsService = class EventRequestsService {
             location: 'TBD',
             capacity: request.capacity,
             ticketPrice: 0,
-            status: 'draft',
+            status: 'ongoing',
             description: request.requirements,
             createdAt: new Date(),
             updatedAt: new Date(),

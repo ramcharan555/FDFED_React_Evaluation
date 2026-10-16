@@ -25,14 +25,14 @@ let ReportsController = class ReportsController {
     constructor(service) {
         this.service = service;
     }
-    createEventReport(dto, role, userId) {
-        return this.service.createEventReport(dto, role, userId);
+    createEventReport(dto, role) {
+        return this.service.createEventReport(dto, role);
     }
     findAllEventReports(role, userId) {
         return this.service.findAllEventReports(role, userId);
     }
-    createStaffReport(dto, role, userId) {
-        return this.service.createStaffReport(dto, role, userId);
+    createStaffReport(dto, role) {
+        return this.service.createStaffReport(dto, role);
     }
     findAllStaffReports(role, userId) {
         return this.service.findAllStaffReports(role, userId);
@@ -47,9 +47,8 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Only EVENT_ORGANIZER can create event reports' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
-    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [report_dto_1.CreateEventReportDto, String, String]),
+    __metadata("design:paramtypes", [report_dto_1.CreateEventReportDto, String]),
     __metadata("design:returntype", void 0)
 ], ReportsController.prototype, "createEventReport", null);
 __decorate([
@@ -69,9 +68,8 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Staff can only report for assigned events' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
-    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [report_dto_1.CreateStaffReportDto, String, String]),
+    __metadata("design:paramtypes", [report_dto_1.CreateStaffReportDto, String]),
     __metadata("design:returntype", void 0)
 ], ReportsController.prototype, "createStaffReport", null);
 __decorate([

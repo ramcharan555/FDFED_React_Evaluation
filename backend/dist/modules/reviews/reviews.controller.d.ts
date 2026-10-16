@@ -4,9 +4,9 @@ import { UserRole } from '../../common/constants';
 export declare class ReviewsController {
     private readonly service;
     constructor(service: ReviewsService);
-    createEventReview(dto: CreateEventReviewDto, role: UserRole, userId: string): any;
+    createEventReview(dto: CreateEventReviewDto, role: UserRole): any;
     findAllEventReviews(eventId?: string): any[];
-    createStaffReview(dto: CreateStaffReviewDto, role: UserRole, userId: string): any;
+    createStaffReview(dto: CreateStaffReviewDto, role: UserRole): any;
     findAllStaffReviews(staffId?: string): any[];
 }
 //# sourceMappingURL=reviews.controller.d.ts.map

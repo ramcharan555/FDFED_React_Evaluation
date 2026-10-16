@@ -20,8 +20,8 @@ export class EventPlansController {
   @ApiOperation({ summary: 'Create event plan (EVENT_ORGANIZER)' })
   @ApiResponse({ status: 201, description: 'Event plan created. Notifies client.' })
   @ApiResponse({ status: 403, description: 'Forbidden' })
-  create(@Body() dto: CreateEventPlanDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
-    return this.service.create(dto, role, userId);
+  create(@Body() dto: CreateEventPlanDto, @UserRoleDecorator() role: UserRole) {
+    return this.service.create(dto, role);
   }
 
   @Get()
@@ -35,8 +35,8 @@ export class EventPlansController {
   @ApiOperation({ summary: 'Get event plan by ID' })
   @ApiResponse({ status: 200, description: 'Event plan details' })
   @ApiResponse({ status: 404, description: 'Event plan not found' })
-  findOne(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
-    return this.service.findOne(id, role, userId);
+  findOne(@Param('id') id: string) {
+    return this.service.findOne(id);
   }
 
   @Patch(':id/approval')

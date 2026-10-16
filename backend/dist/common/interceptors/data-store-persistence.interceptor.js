@@ -13,11 +13,6 @@ const data_store_1 = require("../data-store");
 let DataStorePersistenceInterceptor = class DataStorePersistenceInterceptor {
     intercept(context, next) {
         const request = context.switchToHttp().getRequest();
-        // Finance mutations persist inside their rollback boundary.
-        if (request.originalUrl?.startsWith('/api/finance/'))
-            return next.handle();
-        if (request.originalUrl?.startsWith('/api/workspace/'))
-            return next.handle();
         if (!['POST', 'PUT', 'PATCH', 'DELETE'].includes(request.method))
             return next.handle();
         return next.handle().pipe((0, operators_1.tap)(() => data_store_1.DataStore.getInstance().persist()));

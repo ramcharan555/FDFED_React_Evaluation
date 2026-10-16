@@ -66,8 +66,7 @@ export class StaffService {
 
     let staff = this.dataStore.staffProfiles.map((s) => {
       const user = this.dataStore.users.find((u) => u.userId === s.userId);
-      const { password, ...safe } = user || {};
-      return { ...s, ...safe };
+      return { ...s, ...user };
     });
 
     if (search) {
@@ -94,8 +93,7 @@ export class StaffService {
     }
 
     const user = this.dataStore.users.find((u) => u.userId === staff.userId);
-    const { password, ...safe } = user || {};
-    return { ...staff, ...safe };
+    return { ...staff, ...user };
   }
 
   // Update staff profile
@@ -119,10 +117,7 @@ export class StaffService {
     }
 
     // Update staff profile
-    if (updateStaffDto.availableDates) {
-      if (updateStaffDto.availableDates.some(v => typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v) || !Number.isFinite(+new Date(v)) || new Date(v).toISOString().slice(0, 10) !== v)) throw new BadRequestException('Availability must contain valid YYYY-MM-DD dates');
-      staff.availableDates = [...new Set(updateStaffDto.availableDates)];
-    }
+    if (updateStaffDto.availableDates) staff.availableDates = updateStaffDto.availableDates;
     if (updateStaffDto.status) staff.status = updateStaffDto.status;
 
     // Update user info
@@ -132,8 +127,7 @@ export class StaffService {
 
     user.updatedAt = new Date();
 
-    const { password, ...safe } = user;
-    return { ...staff, ...safe };
+    return { ...staff, ...user };
   }
 
   // Assign event to staff member

@@ -61,8 +61,7 @@ let StaffService = class StaffService {
         }
         let staff = this.dataStore.staffProfiles.map((s) => {
             const user = this.dataStore.users.find((u) => u.userId === s.userId);
-            const { password, ...safe } = user || {};
-            return { ...s, ...safe };
+            return { ...s, ...user };
         });
         if (search) {
             staff = staff.filter((s) => s.name?.toLowerCase().includes(search.toLowerCase()) ||
@@ -80,8 +79,7 @@ let StaffService = class StaffService {
             throw new common_1.NotFoundException(`Staff with ID ${staffId} not found`);
         }
         const user = this.dataStore.users.find((u) => u.userId === staff.userId);
-        const { password, ...safe } = user || {};
-        return { ...staff, ...safe };
+        return { ...staff, ...user };
     }
     // Update staff profile
     update(staffId, updateStaffDto, role, userId) {
@@ -101,11 +99,8 @@ let StaffService = class StaffService {
             throw new common_1.NotFoundException('Associated user not found');
         }
         // Update staff profile
-        if (updateStaffDto.availableDates) {
-            if (updateStaffDto.availableDates.some(v => typeof v !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(v) || !Number.isFinite(+new Date(v)) || new Date(v).toISOString().slice(0, 10) !== v))
-                throw new common_1.BadRequestException('Availability must contain valid YYYY-MM-DD dates');
-            staff.availableDates = [...new Set(updateStaffDto.availableDates)];
-        }
+        if (updateStaffDto.availableDates)
+            staff.availableDates = updateStaffDto.availableDates;
         if (updateStaffDto.status)
             staff.status = updateStaffDto.status;
         // Update user info
@@ -116,8 +111,7 @@ let StaffService = class StaffService {
         if (updateStaffDto.phone)
             user.phoneNo = updateStaffDto.phone;
         user.updatedAt = new Date();
-        const { password, ...safe } = user;
-        return { ...staff, ...safe };
+        return { ...staff, ...user };
     }
     // Assign event to staff member
     assignEvent(staffId, eventId, role) {

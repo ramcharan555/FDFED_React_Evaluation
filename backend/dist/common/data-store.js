@@ -1,7 +1,7 @@
 "use strict";
 /**
- * Single-process data store backed by atomic JSON snapshots.
- * Demo seed records initialize a new store; mutations persist to disk.
+ * In-memory data store for the application
+ * Simulates a database without actual persistence
  * Includes all entities from the ER diagram
  */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
@@ -66,13 +66,6 @@ const DATA_COLLECTIONS = [
     'activityLogs',
     'supportTickets',
     'supportAttachments',
-    'financeSettlements',
-    'commissionPolicies',
-    'financeAudit',
-    'financeGrants',
-    'financeReportSubmissions',
-    'employeeReports',
-    'operationTasks',
 ];
 const DATE_FIELDS = new Set([
     'createdAt',
@@ -121,14 +114,6 @@ class DataStore {
         // Customer support
         this.supportTickets = [];
         this.supportAttachments = [];
-        // Additive finance records; old snapshots safely initialize these empty.
-        this.financeSettlements = [];
-        this.commissionPolicies = [];
-        this.financeAudit = [];
-        this.financeGrants = [];
-        this.financeReportSubmissions = [];
-        this.employeeReports = [];
-        this.operationTasks = [];
         this.initializeSeedData();
         this.restoreFromDisk();
     }
@@ -175,21 +160,6 @@ class DataStore {
             if (Array.isArray(rows))
                 Object.assign(this, { [collection]: rows });
         }
-        // One-time correction of the original demo department mismatch. Other
-        // users, statuses, credentials and subsequently configured departments stay intact.
-        if (Number(parsed.workspaceDataVersion || 0) < 1) {
-            const legacyDepartments = [
-                { id: 'usr-emp-001', email: 'employee@example.com', department: constants_1.EmployeeType.EVENT_OPERATIONS },
-                { id: 'usr-emp-002', email: 'elena.coordinator@eventflow.com', department: constants_1.EmployeeType.EVENT_OPERATIONS },
-                { id: 'usr-emp-003', email: 'arjun.events@eventflow.com', department: constants_1.EmployeeType.REGISTRATION_VERIFICATION },
-            ];
-            for (const entry of legacyDepartments) {
-                const user = this.users.find(u => u.userId === entry.id && u.email === entry.email && u.userRole === constants_1.UserRole.EVENT_STAFF && u.employeeType === constants_1.EmployeeType.SUPPORT_EXECUTIVE);
-                if (user)
-                    user.employeeType = entry.department;
-            }
-            this.persist();
-        }
         if (Number(parsed.demoSeedVersion || 0) < 2) {
             const mergeSeedRows = (existing, seeds, key) => {
                 const existingIds = new Set(existing.map(row => row[key]));
@@ -219,7 +189,7 @@ class DataStore {
         const snapshot = {};
         for (const collection of DATA_COLLECTIONS)
             snapshot[collection] = this[collection];
-        Object.assign(snapshot, { demoSeedVersion: 2, workspaceDataVersion: 1 });
+        Object.assign(snapshot, { demoSeedVersion: 2 });
         const temporaryPath = `${this.persistencePath}.tmp`;
         fs.writeFileSync(temporaryPath, JSON.stringify(snapshot, null, 2), { encoding: 'utf8', mode: 0o600 });
         fs.renameSync(temporaryPath, this.persistencePath);
@@ -267,7 +237,7 @@ class DataStore {
                 email: 'employee@example.com',
                 password: 'Employee@123',
                 userRole: constants_1.UserRole.EVENT_STAFF,
-                employeeType: constants_1.EmployeeType.EVENT_OPERATIONS,
+                employeeType: constants_1.EmployeeType.SUPPORT_EXECUTIVE,
                 status: 'active',
                 phoneNo: '9876543220',
                 createdAt: new Date('2024-01-18'),
@@ -303,7 +273,7 @@ class DataStore {
                 email: 'elena.coordinator@eventflow.com',
                 password: 'Employee@123',
                 userRole: constants_1.UserRole.EVENT_STAFF,
-                employeeType: constants_1.EmployeeType.EVENT_OPERATIONS,
+                employeeType: constants_1.EmployeeType.SUPPORT_EXECUTIVE,
                 status: 'active',
                 phoneNo: '9876543221',
                 createdAt: new Date('2024-02-12'),
@@ -315,7 +285,7 @@ class DataStore {
                 email: 'arjun.events@eventflow.com',
                 password: 'Employee@123',
                 userRole: constants_1.UserRole.EVENT_STAFF,
-                employeeType: constants_1.EmployeeType.REGISTRATION_VERIFICATION,
+                employeeType: constants_1.EmployeeType.SUPPORT_EXECUTIVE,
                 status: 'active',
                 phoneNo: '9876543222',
                 createdAt: new Date('2024-03-08'),

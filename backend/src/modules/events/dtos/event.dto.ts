@@ -2,7 +2,6 @@ import { IsBoolean, IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-val
 import { ApiProperty } from '@nestjs/swagger';
 
 export class CreateEventDto {
-  @IsString() @IsOptional() description?: string;
   @ApiProperty({
     description: 'Event name/title',
     example: 'Tech Conference 2024',
@@ -84,7 +83,6 @@ export class CreateEventDto {
 }
 
 export class UpdateEventDto {
-  @IsString() @IsOptional() description?: string;
   @ApiProperty({
     description: 'Event name',
     required: false,

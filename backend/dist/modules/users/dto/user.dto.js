@@ -18,11 +18,6 @@ class CreateUserDto {
 }
 exports.CreateUserDto = CreateUserDto;
 __decorate([
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsEnum)(constants_1.EmployeeType),
-    __metadata("design:type", String)
-], CreateUserDto.prototype, "employeeType", void 0);
-__decorate([
     (0, swagger_1.ApiProperty)({ description: 'Full name', example: 'John Doe' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),

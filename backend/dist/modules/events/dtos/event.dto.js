@@ -16,11 +16,6 @@ class CreateEventDto {
 }
 exports.CreateEventDto = CreateEventDto;
 __decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], CreateEventDto.prototype, "description", void 0);
-__decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Event name/title',
         example: 'Tech Conference 2024',
@@ -126,11 +121,6 @@ __decorate([
 class UpdateEventDto {
 }
 exports.UpdateEventDto = UpdateEventDto;
-__decorate([
-    (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsOptional)(),
-    __metadata("design:type", String)
-], UpdateEventDto.prototype, "description", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Event name',

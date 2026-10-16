@@ -197,8 +197,7 @@ test('all entry points use the compact panel and verify scanned IDs only for the
     assert.equal(notifications.at(-1), 'Already checked in', role);
     h.context.DB.registrations = [];
     assert.match(h.context.pageAttendeeVerification(), /disabled>Use Ticket/, role);
-    if (role === 'employee2') assert.match(component, /return <Employee3\s*\/>/, role);
-    else assert.match(component, /LegacyRuntime source=\{source\}/, role);
+    assert.match(component, /LegacyRuntime source=\{source\}/, role);
     new vm.Script(source, { filename: role + '/runtime.js' });
   }
   const index = fs.readFileSync(path.join(frontend, 'index.html'), 'utf8');

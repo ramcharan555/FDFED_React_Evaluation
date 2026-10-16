@@ -26,7 +26,6 @@ export class StaffAssignmentsService {
     // Verify staff exists
     const staff = this.db.staffProfiles.find(s => s.staffId === dto.staffId);
     if (!staff) throw new NotFoundException(`Staff ${dto.staffId} not found`);
-    if (dto.organizerId !== event.organizerId) throw new BadRequestException('Assignment organizer must own the event');
 
     // ✅ NEW: Check staff availability
     if (staff.availableDates && staff.availableDates.length > 0) {
@@ -113,9 +112,6 @@ export class StaffAssignmentsService {
       }
     }
 
-    if (role === UserRole.EVENT_STAFF && !['accepted', 'declined'].includes(dto.status)) throw new ForbiddenException('Staff can only accept or decline an invitation');
-    const transitions: Record<string, string[]> = { pending: ['accepted', 'declined', 'cancelled'], accepted: ['completed', 'cancelled'], declined: ['cancelled'], completed: [], cancelled: [] };
-    if (!transitions[assignment.status]?.includes(dto.status)) throw new ConflictException('Invalid assignment state transition');
     assignment.status = dto.status;
     assignment.updatedAt = new Date();
 

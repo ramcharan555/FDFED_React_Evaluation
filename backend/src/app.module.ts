@@ -28,8 +28,6 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { SupportModule } from './modules/support/support.module';
-import { FinanceModule } from './modules/finance/finance.module';
-import { WorkspaceModule } from './modules/workspace/workspace.module';
 
 @Module({
   imports: [
@@ -55,8 +53,6 @@ import { WorkspaceModule } from './modules/workspace/workspace.module';
     AnalyticsModule,
     UploadsModule,
     SupportModule,
-    FinanceModule,
-    WorkspaceModule,
   ],
   controllers: [AppController],
   providers: [

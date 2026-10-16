@@ -77,7 +77,6 @@ export class RegistrationsService {
     const now = new Date();
     const registration: Registration = { registrationId: this.db.generateId('reg'), attendeeId: attendee.attendeeId, eventId: event.eventId, registrationDate: now.toISOString().slice(0, 10), status, additionalInfo: dto.additionalInfo, ticketType: dto.ticketType, reservationExpiresAt: status === 'pending_payment' ? new Date(now.getTime() + 15 * 60 * 1000) : undefined, createdAt: now, updatedAt: now };
     // Insert the reservation before asynchronous ticket generation so concurrent requests see occupied capacity.
-    registration.ticketPriceAtBooking = event.ticketPrice;
     this.db.registrations.push(registration);
     if (status === 'registered') {
       try { await this.issueTicket(registration); }
@@ -121,7 +120,6 @@ export class RegistrationsService {
     if (!event || event.status !== 'published') throw new BadRequestException('Event is no longer open');
     if (this.occupied(event.eventId) >= event.capacity) throw new ConflictException('The offered place is no longer available');
     registration.offerExpiresAt = undefined;
-    registration.ticketPriceAtBooking = event.ticketPrice;
     registration.status = event.ticketPrice > 0 ? 'pending_payment' : 'registered';
     registration.reservationExpiresAt = event.ticketPrice > 0 ? new Date(Date.now() + 15 * 60 * 1000) : undefined;
     if (!event.ticketPrice) await this.issueTicket(registration);
