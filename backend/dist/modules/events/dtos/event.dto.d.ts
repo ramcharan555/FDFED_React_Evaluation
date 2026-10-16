@@ -1,4 +1,12 @@
+import { EventPolicyAcknowledgementDto } from '../../../common/event-policy';
+export declare class CancelClientEventDto extends EventPolicyAcknowledgementDto {
+    reason: string;
+    expectedPaidAmount: number;
+}
 export declare class CreateEventDto {
+    status?: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
+    description?: string;
+    city?: string;
     name: string;
     category: string;
     date: string;
@@ -14,6 +22,8 @@ export declare class CreateEventDto {
     waitlistEnabled?: boolean;
 }
 export declare class UpdateEventDto {
+    description?: string;
+    city?: string;
     name?: string;
     category?: string;
     date?: string;

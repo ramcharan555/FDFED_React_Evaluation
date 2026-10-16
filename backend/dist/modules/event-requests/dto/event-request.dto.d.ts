@@ -1,4 +1,5 @@
-export declare class CreateEventRequestDto {
+import { EventPolicyAcknowledgementDto } from '../../../common/event-policy';
+export declare class CreateEventRequestDto extends EventPolicyAcknowledgementDto {
     clientId: string;
     organizerId: string;
     eventName: string;
@@ -6,6 +7,8 @@ export declare class CreateEventRequestDto {
     budget: number;
     capacity: number;
     requirements?: string;
+    eventType?: string;
+    venue?: string;
 }
 export declare class UpdateEventRequestStatusDto {
     status: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'confirmed' | 'approved' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';
@@ -28,11 +31,23 @@ export declare class ReviseProposalDto extends SendProposalDto {
     revisionReason?: string;
 }
 export declare class RejectRequestDto {
+    policyAccepted?: boolean;
+    acceptedPolicyVersion?: string;
     reason: string;
+    reasonType?: 'budget' | 'date' | 'both' | 'other' | 'permanent';
+    proposedBudget?: number;
+    proposedDate?: string;
 }
 export declare class ClientResponseDto {
-    decision: 'accept' | 'request_revision' | 'reject' | 'withdraw';
+    decision: 'accept' | 'request_revision' | 'reject' | 'withdraw' | 'accept_changes' | 'reject_changes' | 'counteroffer';
     notes?: string;
+    counterofferBudget?: number;
+    counterofferDate?: string;
+    counterofferEventName?: string;
+    counterofferEventType?: string;
+    counterofferCapacity?: number;
+    counterofferVenue?: string;
+    counterofferRequirements?: string;
 }
 export declare class UpdateAgreementStatusDto {
     agreementStatus: 'not_sent' | 'pending_signature' | 'agreed' | 'declined';

@@ -3,11 +3,28 @@ import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
+import { ChangePasswordDto, RegisterDto } from './dto/register.dto';
+import { RoleGuard } from '../../common/guards/role.guard';
+import { UserId } from '../../common/decorators/user-id.decorator';
 
 @ApiTags('auth')
 @Controller('api/auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('register')
+  @UseGuards(ThrottlerGuard)
+  @Throttle({ default: { limit: 5, ttl: 60000 } })
+  register(@Body() dto: RegisterDto) {
+    return this.authService.register(dto);
+  }
+
+  @Post('password')
+  @HttpCode(HttpStatus.OK)
+  @UseGuards(RoleGuard)
+  changePassword(@Body() dto: ChangePasswordDto, @UserId() userId: string) {
+    return this.authService.changePassword(dto, userId);
+  }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)

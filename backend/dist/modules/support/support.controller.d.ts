@@ -9,6 +9,7 @@ export declare class SupportController {
     listTickets(userId: string, role: UserRole): (import("../../common/data-store").SupportTicket & {
         requesterName?: string;
         requesterEmail?: string;
+        requesterRole?: string;
     })[];
     createTicket(userId: string, role: UserRole, dto: CreateSupportTicketDto): import("../../common/data-store").SupportTicket;
     addRequesterFollowUp(ticketId: string, userId: string, dto: CreateSupportFollowUpDto): import("../../common/data-store").SupportTicket;

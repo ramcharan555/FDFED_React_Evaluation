@@ -40,9 +40,7 @@ export class AttendeesService {
       throw new ForbiddenException('Only attendees and super admin can create attendee profiles');
     }
 
-    const existingUser = this.dataStore.users.find(
-      (u) => u.email.toLowerCase() === createAttendeeDto.email.toLowerCase(),
-    );
+    const existingUser = this.dataStore.findUserByEmail(createAttendeeDto.email);
 
     if (existingUser) {
       throw new BadRequestException('Email already registered');
@@ -54,7 +52,7 @@ export class AttendeesService {
     const user = {
       userId,
       name: createAttendeeDto.name,
-      email: createAttendeeDto.email,
+      email: createAttendeeDto.email.trim().toLowerCase(),
       password: createAttendeeDto.password || '',
       userRole: UserRole.ATTENDEE,
       status: 'active' as const,
@@ -154,8 +152,12 @@ export class AttendeesService {
     }
 
     const dto = updateAttendeeDto as any;
+    if (dto.email) {
+      const existing = this.dataStore.findUserByEmail(dto.email);
+      if (existing && existing.userId !== user.userId) throw new BadRequestException('Email already registered');
+    }
     if (dto.name) user.name = dto.name;
-    if (dto.email) user.email = dto.email;
+    if (dto.email) user.email = dto.email.trim().toLowerCase();
     if (dto.phone) user.phoneNo = dto.phone;
     if (dto.status) user.status = dto.status;
 

@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
 import { PaymentsService } from './payments.service';
-import { CreatePaymentDto } from './dto/payment.dto';
+import { CreateEventWorkflowPaymentDto, CreatePaymentDto } from './dto/payment.dto';
 import { RoleGuard } from '../../common/guards/role.guard';
 import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
 import { UserId } from '../../common/decorators/user-id.decorator';
@@ -23,6 +23,19 @@ export class PaymentsController {
   @ApiResponse({ status: 409, description: 'Payment already completed for this registration' })
   create(@Body() dto: CreatePaymentDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
     return this.service.create(dto, role, userId);
+  }
+
+  @Post('events/:eventId')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Pay the full agreed budget for an approved ongoing event (CLIENT only)' })
+  @ApiResponse({ status: 201, description: 'Full event payment verified' })
+  payForEvent(
+    @Param('eventId') eventId: string,
+    @Body() dto: CreateEventWorkflowPaymentDto,
+    @UserRoleDecorator() role: UserRole,
+    @UserId() userId: string,
+  ) {
+    return this.service.payForOngoingEvent(eventId, dto.paymentMethod, role, userId);
   }
 
   @Post('refunds/:id/process')

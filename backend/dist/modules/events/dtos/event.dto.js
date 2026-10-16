@@ -9,12 +9,46 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.EventResponseDto = exports.UpdateEventDto = exports.CreateEventDto = void 0;
+exports.EventResponseDto = exports.UpdateEventDto = exports.CreateEventDto = exports.CancelClientEventDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const class_transformer_1 = require("class-transformer");
+const event_policy_1 = require("../../../common/event-policy");
+class CancelClientEventDto extends event_policy_1.EventPolicyAcknowledgementDto {
+}
+exports.CancelClientEventDto = CancelClientEventDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Reason for cancelling the event (10–1000 characters)' }),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim() : value),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(10),
+    (0, class_validator_1.MaxLength)(1000),
+    __metadata("design:type", String)
+], CancelClientEventDto.prototype, "reason", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Amount paid shown in the cancellation preview; prevents accepting a stale fee quote' }),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    __metadata("design:type", Number)
+], CancelClientEventDto.prototype, "expectedPaidAmount", void 0);
 class CreateEventDto {
 }
 exports.CreateEventDto = CreateEventDto;
+__decorate([
+    (0, class_validator_1.IsIn)(['draft', 'published', 'ongoing', 'completed', 'cancelled']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventDto.prototype, "status", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventDto.prototype, "city", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Event name/title',
@@ -122,6 +156,16 @@ class UpdateEventDto {
 }
 exports.UpdateEventDto = UpdateEventDto;
 __decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateEventDto.prototype, "description", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateEventDto.prototype, "city", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Event name',
         required: false,
@@ -192,6 +236,7 @@ __decorate([
     }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsIn)(['draft', 'published', 'ongoing', 'completed', 'cancelled']),
     __metadata("design:type", String)
 ], UpdateEventDto.prototype, "status", void 0);
 __decorate([

@@ -32,6 +32,15 @@ export default function CustomerSupport() {
         if (!support || !content) {
           throw new Error('Customer Support could not be initialized.');
         }
+        if (!support.canRequestSupport(user)) {
+          const role = String(user.role || user.userRole || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+          const employeeType = String(user.employeeType || role).trim().toUpperCase().replace(/[\s-]+/g, '_');
+          const home = ['superuser', 'super_admin', 'superadmin', 'admin'].includes(role)
+            ? '/admin'
+            : ['FINANCE_EXECUTIVE', 'SUPPORT_FINANCE'].includes(employeeType) ? '/employee2' : '/employee1';
+          navigate(home, { replace: true });
+          return;
+        }
         content.innerHTML = await support.render(user, 'Sign out and return');
         support.bind(content, user, () => {
           sessionStorage.removeItem('ef_cu');

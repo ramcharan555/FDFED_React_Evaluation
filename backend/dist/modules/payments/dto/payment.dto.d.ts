@@ -4,4 +4,7 @@ export declare class CreatePaymentDto {
     paymentMethod: string;
     paymentDate: string;
 }
+export declare class CreateEventWorkflowPaymentDto {
+    paymentMethod: 'DEMO_PROVIDER';
+}
 //# sourceMappingURL=payment.dto.d.ts.map

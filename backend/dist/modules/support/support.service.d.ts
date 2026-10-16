@@ -6,12 +6,14 @@ import { SupportMailService } from './support-mail.service';
 type SupportTicketListItem = SupportTicket & {
     requesterName?: string;
     requesterEmail?: string;
+    requesterRole?: string;
 };
 export declare class SupportService {
     private readonly mailService;
     private readonly db;
     constructor(mailService: SupportMailService);
     private isSupportAgent;
+    private notifySupportAgents;
     listTickets(userId: string, role: UserRole): SupportTicketListItem[];
     createTicket(userId: string, role: UserRole, dto: CreateSupportTicketDto): SupportTicket;
     addRequesterFollowUp(ticketId: string, userId: string, dto: CreateSupportFollowUpDto): SupportTicket;

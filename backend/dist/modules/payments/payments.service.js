@@ -98,6 +98,89 @@ let PaymentsService = class PaymentsService {
             this.processingRegistrations.delete(registration.registrationId);
         }
     }
+    payForOngoingEvent(eventId, paymentMethod, role, userId) {
+        if (role !== constants_1.UserRole.CLIENT) {
+            throw new common_1.ForbiddenException('Only the event client can pay for this event');
+        }
+        if (paymentMethod !== 'DEMO_PROVIDER') {
+            throw new common_1.BadRequestException('Only the simulated demo payment provider is configured');
+        }
+        const event = this.db.events.find(item => item.eventId === eventId);
+        if (!event)
+            throw new common_1.NotFoundException(`Event ${eventId} not found`);
+        const client = this.db.clients.find(item => item.userId === userId);
+        if (!client || event.clientId !== client.clientId) {
+            throw new common_1.ForbiddenException('You can only pay for your own events');
+        }
+        if (event.status !== 'ongoing') {
+            throw new common_1.ConflictException('Only an ongoing approved event can be paid for');
+        }
+        const request = this.db.eventRequests.find(item => item.eventId === eventId && item.clientId === client.clientId);
+        if (!request || request.status !== 'confirmed') {
+            throw new common_1.ConflictException('The event does not have an approved event plan');
+        }
+        if (this.db.eventWorkflowPayments.some(payment => payment.eventId === eventId && payment.status === 'completed')) {
+            throw new common_1.ConflictException('This event has already been paid in full');
+        }
+        const approvedPlan = this.db.eventPlans.find(plan => plan.eventPlanId === request.activeEventPlanId && plan.approvalStatus === 'approved');
+        if (!approvedPlan || Number(approvedPlan.budget) <= 0 || Number(approvedPlan.budget) !== Number(request.budget)) {
+            throw new common_1.ConflictException('The final agreed event budget is unavailable');
+        }
+        const now = new Date();
+        const payment = {
+            paymentId: this.db.generateId('pay-event'),
+            eventId,
+            requestId: request.requestId,
+            clientId: client.clientId,
+            organizerId: request.organizerId,
+            amount: Number(approvedPlan.budget),
+            status: 'completed',
+            paymentDate: now.toISOString().slice(0, 10),
+            paymentMethod: 'DEMO_PROVIDER',
+            createdAt: now,
+            updatedAt: now,
+        };
+        this.db.eventWorkflowPayments.push(payment);
+        request.paymentStatus = 'fully_paid';
+        request.updatedAt = now;
+        request.auditHistory = request.auditHistory || [];
+        request.auditHistory.push({
+            id: this.db.generateId('aud'),
+            action: 'Full Event Payment Verified',
+            performedBy: userId || client.clientId,
+            role,
+            timestamp: now,
+            details: { eventId, paymentId: payment.paymentId, amount: payment.amount },
+        });
+        const organizer = this.db.organizers.find(item => item.organizerId === request.organizerId);
+        if (organizer) {
+            this.db.notifications.push({
+                notificationId: this.db.generateId('notif'),
+                userId: organizer.userId,
+                eventId,
+                registrationId: undefined,
+                paymentId: payment.paymentId,
+                message: `Full payment of ₹${payment.amount.toLocaleString()} has been verified for "${event.name}".`,
+                type: 'event_payment_confirmed',
+                read: false,
+                dateTime: now,
+                createdAt: now,
+            });
+        }
+        this.db.notifications.push({
+            notificationId: this.db.generateId('notif'),
+            userId: client.userId,
+            eventId,
+            registrationId: undefined,
+            paymentId: payment.paymentId,
+            message: `Your full payment of ₹${payment.amount.toLocaleString()} for "${event.name}" is confirmed.`,
+            type: 'event_payment_confirmed',
+            read: false,
+            dateTime: now,
+            createdAt: now,
+        });
+        return { success: true, message: 'Full event payment verified', data: payment };
+    }
     processRefund(refundId, role) {
         if (role !== constants_1.UserRole.SUPER_ADMIN)
             throw new common_1.ForbiddenException('Only SUPER_ADMIN can process refunds');

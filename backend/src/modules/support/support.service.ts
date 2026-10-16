@@ -20,6 +20,7 @@ import { SupportMailService } from './support-mail.service';
 type SupportTicketListItem = SupportTicket & {
   requesterName?: string;
   requesterEmail?: string;
+  requesterRole?: string;
 };
 
 @Injectable()
@@ -31,7 +32,17 @@ export class SupportService {
   private isSupportAgent(userId: string, role: UserRole): boolean {
     const user = this.db.findUserById(userId);
     return role === UserRole.SUPER_ADMIN
-      || (role === UserRole.EVENT_STAFF && String(user?.employeeType || '').toUpperCase() === 'SUPPORT_EXECUTIVE');
+      || (role === UserRole.EVENT_STAFF && ['SUPPORT_EXECUTIVE', 'REGISTRATION_VERIFICATION', 'EVENT_OPERATIONS']
+        .includes(String(user?.employeeType || '').trim().toUpperCase().replace(/[\s-]+/g, '_')));
+  }
+
+  private notifySupportAgents(ticket: SupportTicket, message: string): void {
+    this.db.users.filter(user => user.userRole === UserRole.EVENT_STAFF && user.status === 'active' &&
+      this.isSupportAgent(user.userId, user.userRole) && user.userId !== ticket.userId).forEach(user => {
+      this.db.notifications.push({ notificationId: this.db.generateId('notif'), userId: user.userId,
+        supportTicketId: ticket.ticketId, message, type: 'support_ticket_received', read: false,
+        dateTime: new Date(), createdAt: new Date() });
+    });
   }
 
   listTickets(userId: string, role: UserRole): SupportTicketListItem[] {
@@ -46,6 +57,7 @@ export class SupportService {
         ? {
             requesterName: this.db.findUserById(ticket.userId)?.name || 'Unknown user',
             requesterEmail: this.db.findUserById(ticket.userId)?.email || '',
+            requesterRole: this.db.findUserById(ticket.userId)?.userRole,
           }
         : {}),
     }));
@@ -99,6 +111,7 @@ export class SupportService {
     };
 
     this.db.supportTickets.push(ticket);
+    this.notifySupportAgents(ticket, `New Customer Support request ${ticket.ticketId}: ${ticket.concern}`);
     this.db.persist();
     return ticket;
   }
@@ -114,9 +127,10 @@ export class SupportService {
     const message = dto.message.trim();
     if (!message) throw new BadRequestException('Follow-up message is required');
     ticket.messages ||= [];
-    ticket.messages.push({ sender: 'requester', message, createdAt: new Date() });
+    ticket.messages.push({ sender: 'requester', message, createdAt: new Date(), senderId: userId });
     ticket.status = 'open';
     ticket.updatedAt = new Date();
+    this.notifySupportAgents(ticket, `A user replied to support request ${ticket.ticketId}: ${ticket.concern}`);
     this.db.persist();
     return ticket;
   }
@@ -179,36 +193,43 @@ export class SupportService {
     const ticket = this.db.supportTickets.find(item => item.ticketId === ticketId);
     if (!ticket) throw new NotFoundException('Support ticket not found');
 
-    const response = dto.response?.trim();
-    let emailNotificationSent = false;
-    if (dto.response !== undefined && response) ticket.response = response;
+    if (!['open', 'in_progress', 'resolved'].includes(dto.status)) throw new BadRequestException('Select a valid ticket status');
+    const response = typeof dto.response === 'string' ? dto.response.trim() : '';
+    if (response.length > 2000) throw new BadRequestException('A support reply cannot exceed 2000 characters');
+    if (dto.status === 'resolved' && !response) throw new BadRequestException('Add a reply explaining the resolution before resolving this ticket');
+
+    const previousStatus = ticket.status;
     const lastMessage = ticket.messages?.[ticket.messages.length - 1];
-    if (dto.response !== undefined && response && lastMessage?.sender !== 'support') {
-      ticket.messages ||= [];
-      ticket.messages.push({ sender: 'support', message: response, createdAt: new Date() });
-    } else if (dto.response !== undefined && response && lastMessage?.message !== response) {
-      ticket.messages ||= [];
-      ticket.messages.push({ sender: 'support', message: response, createdAt: new Date() });
-    }
+    const newReply = Boolean(response && (lastMessage?.sender !== 'support' || lastMessage.message !== response || previousStatus !== dto.status));
+    const statusChanged = previousStatus !== dto.status;
+    let emailNotificationSent = false;
+    if (!newReply && !statusChanged) return { ...ticket, emailNotificationSent };
 
-    if (dto.status === 'resolved' && ticket.status !== 'resolved') {
-      const requester = this.db.findUserById(ticket.userId);
-      if (!ticket.response) throw new BadRequestException('Add a reply before resolving this ticket');
-      ticket.status = dto.status;
-      ticket.updatedAt = new Date();
-      try {
-        emailNotificationSent = requester?.email
-          ? await this.mailService.sendResolvedEmail(ticket, requester)
-          : false;
-      } catch (_error) {
-        emailNotificationSent = false;
-      }
-      if (emailNotificationSent) ticket.resolutionEmailSentAt = new Date();
+    const now = new Date();
+    if (newReply) {
+      const agent = this.db.findUserById(userId);
+      ticket.response = response;
+      ticket.messages ||= [];
+      ticket.messages.push({ sender: 'support', message: response, createdAt: now, senderId: userId, senderName: agent?.name || 'Support' });
     }
-
     ticket.status = dto.status;
-    ticket.updatedAt = new Date();
+    ticket.updatedAt = now;
+    const label = { open: 'Open', in_progress: 'In progress', resolved: 'Resolved' }[dto.status];
+    this.db.notifications.push({ notificationId: this.db.generateId('notif'), userId: ticket.userId,
+      supportTicketId: ticket.ticketId, message: `Support request ${ticket.ticketId} - ${label}.${newReply ? ' ' + response : ''}`,
+      type: 'support_ticket_updated', read: false, dateTime: now, createdAt: now });
     this.db.persist();
+
+    if (dto.status === 'resolved' && previousStatus !== 'resolved') {
+      const requester = this.db.findUserById(ticket.userId);
+      try {
+        emailNotificationSent = requester?.email ? await this.mailService.sendResolvedEmail(ticket, requester) : false;
+      } catch (_error) { emailNotificationSent = false; }
+      if (emailNotificationSent) {
+        ticket.resolutionEmailSentAt = new Date();
+        this.db.persist();
+      }
+    }
     return { ...ticket, emailNotificationSent };
   }
 }

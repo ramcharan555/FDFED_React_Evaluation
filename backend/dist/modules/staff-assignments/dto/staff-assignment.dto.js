@@ -16,6 +16,24 @@ class CreateStaffAssignmentDto {
 }
 exports.CreateStaffAssignmentDto = CreateStaffAssignmentDto;
 __decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(200),
+    __metadata("design:type", String)
+], CreateStaffAssignmentDto.prototype, "role", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(0),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], CreateStaffAssignmentDto.prototype, "fee", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(2000),
+    __metadata("design:type", String)
+], CreateStaffAssignmentDto.prototype, "notes", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({ description: 'Event ID', example: 'evt-001' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),

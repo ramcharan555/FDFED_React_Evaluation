@@ -29,7 +29,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         this.dataStore = data_store_1.DataStore.getInstance();
     }
     validate(payload) {
-        const user = this.dataStore.findUserByEmail(payload.email);
+        const user = this.dataStore.findUserById(payload.userId);
         if (!user ||
             user.status !== 'active' ||
             user.userId !== payload.userId) {
@@ -38,7 +38,7 @@ let JwtStrategy = class JwtStrategy extends (0, passport_1.PassportStrategy)(pas
         // Return user info to be attached to request
         return {
             userId: payload.userId,
-            email: payload.email,
+            email: user.email,
             userRole: user.userRole,
         };
     }

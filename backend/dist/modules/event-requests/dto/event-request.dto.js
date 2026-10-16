@@ -12,7 +12,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ConfirmBookingDto = exports.UpdatePaymentStatusDto = exports.UpdateAgreementStatusDto = exports.ClientResponseDto = exports.RejectRequestDto = exports.ReviseProposalDto = exports.SendProposalDto = exports.ProvideMissingInfoDto = exports.RequestMissingInfoDto = exports.UpdateEventRequestStatusDto = exports.CreateEventRequestDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
-class CreateEventRequestDto {
+const event_policy_1 = require("../../../common/event-policy");
+class CreateEventRequestDto extends event_policy_1.EventPolicyAcknowledgementDto {
 }
 exports.CreateEventRequestDto = CreateEventRequestDto;
 __decorate([
@@ -37,6 +38,7 @@ __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Desired event date (YYYY-MM-DD)', example: '2026-09-01' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsDateString)(),
     __metadata("design:type", String)
 ], CreateEventRequestDto.prototype, "eventDate", void 0);
 __decorate([
@@ -57,6 +59,18 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateEventRequestDto.prototype, "requirements", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Event category', example: 'Corporate Events' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventRequestDto.prototype, "eventType", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Preferred venue' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventRequestDto.prototype, "venue", void 0);
 class UpdateEventRequestStatusDto {
 }
 exports.UpdateEventRequestStatusDto = UpdateEventRequestStatusDto;
@@ -140,21 +154,51 @@ class RejectRequestDto {
 }
 exports.RejectRequestDto = RejectRequestDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ description: 'Mandatory reason for rejection', example: 'Venue is booked for maintenance on requested dates.' }),
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], RejectRequestDto.prototype, "policyAccepted", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], RejectRequestDto.prototype, "acceptedPolicyVersion", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Reason for a permanent rejection or requested change', example: 'The requested date is unavailable.' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], RejectRequestDto.prototype, "reason", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: ['budget', 'date', 'both', 'other', 'permanent'] }),
+    (0, class_validator_1.IsEnum)(['budget', 'date', 'both', 'other', 'permanent']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], RejectRequestDto.prototype, "reasonType", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Proposed budget when requesting a budget change' }),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsPositive)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], RejectRequestDto.prototype, "proposedBudget", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Proposed date when requesting a date change' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], RejectRequestDto.prototype, "proposedDate", void 0);
 class ClientResponseDto {
 }
 exports.ClientResponseDto = ClientResponseDto;
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Client decision on the proposal or request',
-        enum: ['accept', 'request_revision', 'reject', 'withdraw'],
+        enum: ['accept', 'request_revision', 'reject', 'withdraw', 'accept_changes', 'reject_changes', 'counteroffer'],
         example: 'accept',
     }),
-    (0, class_validator_1.IsEnum)(['accept', 'request_revision', 'reject', 'withdraw']),
+    (0, class_validator_1.IsEnum)(['accept', 'request_revision', 'reject', 'withdraw', 'accept_changes', 'reject_changes', 'counteroffer']),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], ClientResponseDto.prototype, "decision", void 0);
@@ -164,6 +208,53 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], ClientResponseDto.prototype, "notes", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Client counteroffer budget' }),
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.IsPositive)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], ClientResponseDto.prototype, "counterofferBudget", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Client counteroffer date' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsDateString)(),
+    __metadata("design:type", String)
+], ClientResponseDto.prototype, "counterofferDate", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Counteroffer event title' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ClientResponseDto.prototype, "counterofferEventName", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Counteroffer event type' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ClientResponseDto.prototype, "counterofferEventType", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Counteroffer guest capacity' }),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Number)
+], ClientResponseDto.prototype, "counterofferCapacity", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Counteroffer preferred venue' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ClientResponseDto.prototype, "counterofferVenue", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Counteroffer event requirements' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], ClientResponseDto.prototype, "counterofferRequirements", void 0);
 class UpdateAgreementStatusDto {
 }
 exports.UpdateAgreementStatusDto = UpdateAgreementStatusDto;

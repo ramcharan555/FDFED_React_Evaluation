@@ -28,6 +28,9 @@ let PaymentsController = class PaymentsController {
     create(dto, role, userId) {
         return this.service.create(dto, role, userId);
     }
+    payForEvent(eventId, dto, role, userId) {
+        return this.service.payForOngoingEvent(eventId, dto.paymentMethod, role, userId);
+    }
     processRefund(id, role) {
         return this.service.processRefund(id, role);
     }
@@ -53,6 +56,19 @@ __decorate([
     __metadata("design:paramtypes", [payment_dto_1.CreatePaymentDto, String, String]),
     __metadata("design:returntype", void 0)
 ], PaymentsController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)('events/:eventId'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    (0, swagger_1.ApiOperation)({ summary: 'Pay the full agreed budget for an approved ongoing event (CLIENT only)' }),
+    (0, swagger_1.ApiResponse)({ status: 201, description: 'Full event payment verified' }),
+    __param(0, (0, common_1.Param)('eventId')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, payment_dto_1.CreateEventWorkflowPaymentDto, String, String]),
+    __metadata("design:returntype", void 0)
+], PaymentsController.prototype, "payForEvent", null);
 __decorate([
     (0, common_1.Post)('refunds/:id/process'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),
