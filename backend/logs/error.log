@@ -1144,3 +1144,45 @@
   "message": "Support email is not configured. Set SMTP_HOST, SMTP_PORT, and SMTP_FROM before resolving tickets.",
   "stack": "ServiceUnavailableException: Support email is not configured. Set SMTP_HOST, SMTP_PORT, and SMTP_FROM before resolving tickets.\n    at SupportMailService.sendResolvedEmail (C:\\Users\\panth\\Downloads\\Penguin_10_React\\backend\\src\\modules\\support\\support-mail.service.ts:25:13)\n    at SupportService.updateStatus (C:\\Users\\panth\\Downloads\\Penguin_10_React\\backend\\src\\modules\\support\\support.service.ts:202:32)\n    at SupportController.updateStatus (C:\\Users\\panth\\Downloads\\Penguin_10_React\\backend\\src\\modules\\support\\support.controller.ts:160:25)\n    at C:\\Users\\panth\\Downloads\\Penguin_10_React\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)"
 }
+{
+  "timestamp": "2026-10-15T22:22:10.480Z",
+  "method": "GET",
+  "url": "/api/event-plans",
+  "statusCode": 500,
+  "message": "Internal server error",
+  "stack": "ReferenceError: plans is not defined\n    at EventPlansService.findAll (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\src\\modules\\event-plans\\event-plans.service.ts:202:24)\n    at EventPlansController.findAll (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\src\\modules\\event-plans\\event-plans.controller.ts:101:25)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+}
+{
+  "timestamp": "2026-10-15T22:22:10.757Z",
+  "method": "GET",
+  "url": "/api/reviews/client-organizer",
+  "statusCode": 500,
+  "message": "Internal server error",
+  "stack": "TypeError: this.service.findClientOrganizerReviews is not a function\n    at ReviewsController.findClientOrganizerReviews (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\src\\modules\\reviews\\reviews.controller.ts:52:25)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+}
+{
+  "timestamp": "2026-10-15T22:23:02.895Z",
+  "method": "GET",
+  "url": "/api/event-plans",
+  "statusCode": 500,
+  "message": "Internal server error",
+  "stack": "ReferenceError: plans is not defined\n    at EventPlansService.findAll (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\src\\modules\\event-plans\\event-plans.service.ts:202:24)\n    at EventPlansController.findAll (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\src\\modules\\event-plans\\event-plans.controller.ts:101:25)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+}
+{
+  "timestamp": "2026-10-16T10:40:29.187Z",
+  "method": "PATCH",
+  "url": "/api/registrations/reg-att-201/review",
+  "statusCode": 400,
+  "message": [
+    "reason must be longer than or equal to 10 characters"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-16T10:44:53.210Z",
+  "method": "PATCH",
+  "url": "/api/registrations/reg-001/decline-viewed",
+  "statusCode": 409,
+  "message": "This registration has not been declined",
+  "stack": "ConflictException: This registration has not been declined\n    at RegistrationsService.markDeclineViewed (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\src\\modules\\registrations\\registrations.service.ts:109:51)\n    at RegistrationsController.markDeclineViewed (C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\src\\modules\\registrations\\registrations.controller.ts:56:25)\n    at C:\\Users\\Mithin Reddy\\Downloads\\FDFED_React_Evaluation\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:38:29\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)"
+}

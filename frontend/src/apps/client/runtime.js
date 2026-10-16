@@ -9650,12 +9650,15 @@ window.EventFlowModules['shared'] = true;
     <div style="margin-bottom:20px">
       <div class="h4 mb-12">Client Reviews</div>
       ${profileReviewsError ? `<p style="color:var(--danger);font-size:13px">${workflowHtml(profileReviewsError)}</p>` : reviews.length ? `<div style="display:flex;flex-direction:column;gap:10px">${reviews.map(review => `
-        <article style="padding:12px;background:var(--surface3);border-radius:8px">
-          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center">
-            <strong aria-label="${review.rating} out of 5 stars">${'★'.repeat(Number(review.rating))}${'☆'.repeat(5 - Number(review.rating))}</strong>
+        <article style="padding:16px;background:var(--surface3);border:1px solid var(--border);border-radius:8px">
+          <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Event name</div>
+          <div style="font-size:14px;color:var(--text);font-weight:600;overflow-wrap:anywhere">${workflowHtml(review.eventName || 'Past event')}</div>
+          <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
+            <span style="display:flex;align-items:center;gap:8px"><strong style="color:var(--yellow);letter-spacing:2px" aria-label="${review.rating} out of 5 stars">${'★'.repeat(Number(review.rating))}${'☆'.repeat(5 - Number(review.rating))}</strong><span style="font-size:12px;font-weight:600;color:var(--text)">${review.rating}/5</span></span>
             <time style="font-size:12px;color:var(--text3)">${workflowHtml(String(review.createdAt || '').slice(0, 10))}</time>
           </div>
-          <p style="margin:8px 0 0;color:var(--text2);font-size:13px;line-height:1.6;white-space:pre-wrap">${workflowHtml(review.comment)}</p>
+          <p style="margin:10px 0 12px;color:var(--text2);font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere">${workflowHtml(review.comment)}</p>
+          <div style="font-size:12px;color:var(--text2)">Given by <strong style="color:var(--text)">${workflowHtml(review.reviewerName || 'Client')}</strong></div>
         </article>`).join('')}</div>` : '<p style="color:var(--text3);font-size:13px">No client reviews yet.</p>'}
     </div>
     

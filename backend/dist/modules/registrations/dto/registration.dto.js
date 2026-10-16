@@ -9,8 +9,9 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateRegistrationDetailsDto = exports.CancelRegistrationDto = exports.CreateRegistrationDto = void 0;
+exports.ReviewRegistrationDto = exports.UpdateRegistrationDetailsDto = exports.CancelRegistrationDto = exports.CreateRegistrationDto = void 0;
 const class_validator_1 = require("class-validator");
+const class_transformer_1 = require("class-transformer");
 const swagger_1 = require("@nestjs/swagger");
 class CreateRegistrationDto {
 }
@@ -63,4 +64,21 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], UpdateRegistrationDetailsDto.prototype, "additionalInfo", void 0);
+class ReviewRegistrationDto {
+}
+exports.ReviewRegistrationDto = ReviewRegistrationDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ enum: ['approved', 'rejected'], description: 'Organizer registration decision' }),
+    (0, class_validator_1.IsIn)(['approved', 'rejected']),
+    __metadata("design:type", String)
+], ReviewRegistrationDto.prototype, "decision", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Required when declining; shared with the attendee', minLength: 10, maxLength: 1000 }),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim() : value),
+    (0, class_validator_1.ValidateIf)(dto => dto.decision === 'rejected' || dto.reason !== undefined),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(10),
+    (0, class_validator_1.MaxLength)(1000),
+    __metadata("design:type", String)
+], ReviewRegistrationDto.prototype, "reason", void 0);
 //# sourceMappingURL=registration.dto.js.map

@@ -51,6 +51,8 @@ const DATE_FIELDS = new Set([
   'reservationExpiresAt',
   'offerExpiresAt',
   'resolutionEmailSentAt',
+  'reviewedAt',
+  'declineViewedAt',
 ]);
 
 // ==================== USER ENTITIES ====================
@@ -292,7 +294,11 @@ export interface Registration {
   attendeeId: string;
   eventId: string;
   registrationDate: string;
-  status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'no-show' | 'attended';
+  status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'rejected' | 'no-show' | 'attended';
+  reviewStatus?: 'approved' | 'rejected';
+  rejectionReason?: string;
+  reviewedAt?: Date;
+  declineViewedAt?: Date;
   additionalInfo?: string;
   ticketType: string;
   qrCode?: string;
@@ -538,6 +544,8 @@ export class DataStore {
 
     const demoSeeds = {
       events: this.events.filter(event => event.eventId.startsWith('evt-demo-')),
+      historicalClientEvents: this.events.filter(event => ['evt-001', 'evt-002'].includes(event.eventId)),
+      clientOrganizerReviews: this.clientOrganizerReviews,
       registrations: this.registrations.filter(registration => registration.registrationId.startsWith('reg-demo-')),
       payments: this.payments.filter(payment => payment.paymentId.startsWith('pay-demo-')),
       refunds: this.refunds.filter(refund => refund.refundId.startsWith('ref-demo-')),
@@ -566,12 +574,20 @@ export class DataStore {
       if (Array.isArray(rows)) Object.assign(this, { [collection]: rows });
     }
 
-    if (Number(parsed.demoSeedVersion || 0) < 2) {
+    if (Number(parsed.demoSeedVersion || 0) < 3) {
       const mergeSeedRows = <T>(existing: T[], seeds: T[], key: keyof T): T[] => {
         const existingIds = new Set(existing.map(row => row[key]));
         return [...existing, ...seeds.filter(row => !existingIds.has(row[key]))];
       };
+      for (const seedEvent of demoSeeds.historicalClientEvents) {
+        const event = this.events.find(item => item.eventId === seedEvent.eventId);
+        if (event && event.date === seedEvent.date && event.date < new Date().toISOString().slice(0, 10)) {
+          event.status = 'completed';
+          event.clientId = seedEvent.clientId;
+        }
+      }
       this.events = mergeSeedRows(this.events, demoSeeds.events, 'eventId');
+      this.clientOrganizerReviews = mergeSeedRows(this.clientOrganizerReviews, demoSeeds.clientOrganizerReviews, 'reviewId');
       this.registrations = mergeSeedRows(this.registrations, demoSeeds.registrations, 'registrationId');
       this.payments = mergeSeedRows(this.payments, demoSeeds.payments, 'paymentId');
       this.refunds = mergeSeedRows(this.refunds, demoSeeds.refunds, 'refundId');
@@ -597,7 +613,7 @@ export class DataStore {
     fs.mkdirSync(directory, { recursive: true });
     const snapshot: Partial<Record<DataCollection, unknown>> = {};
     for (const collection of DATA_COLLECTIONS) snapshot[collection] = this[collection];
-    Object.assign(snapshot, { demoSeedVersion: 2 });
+    Object.assign(snapshot, { demoSeedVersion: 3 });
 
     const temporaryPath = `${this.persistencePath}.tmp`;
     fs.writeFileSync(temporaryPath, JSON.stringify(snapshot, null, 2), { encoding: 'utf8', mode: 0o600 });
@@ -1128,7 +1144,7 @@ export class DataStore {
         location: 'Grand Ballroom, Chennai',
         capacity: 500,
         ticketPrice: 1500,
-        status: 'published',
+        status: 'completed',
         createdAt: new Date('2024-01-20'),
         updatedAt: new Date('2024-01-20'),
         description: 'Join Sarah Chen for the biggest AI summit of the year. Featuring speakers from Google, Meta, and OpenAI.',
@@ -1137,6 +1153,7 @@ export class DataStore {
       {
         eventId: 'evt-002',
         organizerId: 'org-001',
+        clientId: 'cli-001',
         name: 'Yoga & Wellness Retreat 2024',
         category: 'Health',
         date: '2024-07-20',
@@ -1144,7 +1161,7 @@ export class DataStore {
         location: 'Zen Gardens, Bangalore',
         capacity: 100,
         ticketPrice: 500,
-        status: 'published',
+        status: 'completed',
         createdAt: new Date('2024-01-21'),
         updatedAt: new Date('2024-01-21'),
         description: 'A relaxing weekend retreat focusing on mental health and physical well-being.',
@@ -1858,6 +1875,29 @@ export class DataStore {
         comment: 'Good event overall. Could improve on timing.',
         date: '2024-06-21',
         createdAt: new Date('2024-06-21'),
+      },
+    ];
+
+    this.clientOrganizerReviews = [
+      {
+        reviewId: 'rev-org-demo-001',
+        eventId: 'evt-001',
+        requestId: 'req-001',
+        clientId: 'cli-001',
+        organizerId: 'org-001',
+        rating: 5,
+        comment: 'Sarah and her team delivered a polished summit from planning through event day. Communication was clear, the speakers and schedule were well coordinated, and our guests had a great experience.',
+        createdAt: new Date('2024-06-20'),
+      },
+      {
+        reviewId: 'rev-org-demo-002',
+        eventId: 'evt-002',
+        requestId: 'req-002',
+        clientId: 'cli-001',
+        organizerId: 'org-001',
+        rating: 5,
+        comment: 'The wellness retreat was thoughtfully organized and ran smoothly. The venue, session timing, and on-site coordination made the day relaxing for everyone.',
+        createdAt: new Date('2024-07-23'),
       },
     ];
 

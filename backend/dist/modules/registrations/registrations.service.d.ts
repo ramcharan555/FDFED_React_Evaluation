@@ -1,5 +1,5 @@
 import { UserRole } from '../../common/constants';
-import { CreateRegistrationDto, UpdateRegistrationDetailsDto } from './dto/registration.dto';
+import { CreateRegistrationDto, ReviewRegistrationDto, UpdateRegistrationDetailsDto } from './dto/registration.dto';
 export declare class RegistrationsService {
     private db;
     private attendeeForUser;
@@ -12,7 +12,9 @@ export declare class RegistrationsService {
     create(dto: CreateRegistrationDto, role: UserRole, userId?: string): Promise<any>;
     findAll(role: UserRole, userId?: string): any[];
     findOne(id: string, role: UserRole, userId?: string): any;
+    markDeclineViewed(id: string, role: UserRole, userId?: string): any;
     updateDetails(id: string, dto: UpdateRegistrationDetailsDto, role: UserRole, userId?: string): any;
+    review(id: string, dto: ReviewRegistrationDto, role: UserRole, userId?: string): any;
     confirmWaitlist(id: string, role: UserRole, userId?: string): Promise<any>;
     cancel(id: string, reason: string, role: UserRole, userId?: string): any;
     private offerNext;

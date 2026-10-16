@@ -71,6 +71,7 @@ export class EventsService {
       ...event,
       // Frontend-compatible aliases
       id: event.eventId,
+      organizerUserId: this.dataStore.organizers.find(organizer => organizer.organizerId === event.organizerId)?.userId,
       clientUserId: event.clientId
         ? this.dataStore.clients.find(client => client.clientId === event.clientId)?.userId
         : undefined,

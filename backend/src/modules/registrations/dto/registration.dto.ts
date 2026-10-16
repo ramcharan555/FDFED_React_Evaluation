@@ -1,4 +1,5 @@
-import { IsBoolean, IsString, IsNotEmpty, IsOptional } from 'class-validator';
+import { IsBoolean, IsString, IsNotEmpty, IsOptional, IsIn, MinLength, MaxLength, ValidateIf } from 'class-validator';
+import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateRegistrationDto {
@@ -40,4 +41,18 @@ export class UpdateRegistrationDetailsDto {
   @IsString()
   @IsOptional()
   additionalInfo?: string;
+}
+
+export class ReviewRegistrationDto {
+  @ApiProperty({ enum: ['approved', 'rejected'], description: 'Organizer registration decision' })
+  @IsIn(['approved', 'rejected'])
+  decision!: 'approved' | 'rejected';
+
+  @ApiPropertyOptional({ description: 'Required when declining; shared with the attendee', minLength: 10, maxLength: 1000 })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @ValidateIf(dto => dto.decision === 'rejected' || dto.reason !== undefined)
+  @IsString()
+  @MinLength(10)
+  @MaxLength(1000)
+  reason?: string;
 }

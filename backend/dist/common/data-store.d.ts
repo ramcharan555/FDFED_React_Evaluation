@@ -220,7 +220,11 @@ export interface Registration {
     attendeeId: string;
     eventId: string;
     registrationDate: string;
-    status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'no-show' | 'attended';
+    status: 'pending_payment' | 'registered' | 'waitlisted' | 'cancelled' | 'rejected' | 'no-show' | 'attended';
+    reviewStatus?: 'approved' | 'rejected';
+    rejectionReason?: string;
+    reviewedAt?: Date;
+    declineViewedAt?: Date;
     additionalInfo?: string;
     ticketType: string;
     qrCode?: string;

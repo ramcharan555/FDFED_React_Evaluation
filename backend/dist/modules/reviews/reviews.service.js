@@ -114,7 +114,17 @@ let ReviewsService = class ReviewsService {
                 organizerId: organizer.organizerId,
                 averageRating,
                 totalReviews: reviews.length,
-                reviews: reviews.map(({ rating, comment, createdAt }) => ({ rating, comment, createdAt })),
+                reviews: reviews.map(({ eventId, clientId, rating, comment, createdAt }) => {
+                    const client = this.db.clients.find(item => item.clientId === clientId);
+                    return {
+                        eventId,
+                        eventName: this.db.events.find(event => event.eventId === eventId)?.name || 'Past event',
+                        reviewerName: client ? this.db.findUserById(client.userId)?.name || 'Client' : 'Client',
+                        rating,
+                        comment,
+                        createdAt,
+                    };
+                }),
             },
         };
     }

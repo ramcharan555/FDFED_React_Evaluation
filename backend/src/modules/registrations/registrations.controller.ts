@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Patch, Body, Param, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
 import { RegistrationsService } from './registrations.service';
-import { CancelRegistrationDto, CreateRegistrationDto, UpdateRegistrationDetailsDto } from './dto/registration.dto';
+import { CancelRegistrationDto, CreateRegistrationDto, ReviewRegistrationDto, UpdateRegistrationDetailsDto } from './dto/registration.dto';
 import { RoleGuard } from '../../common/guards/role.guard';
 import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
 import { UserId } from '../../common/decorators/user-id.decorator';
@@ -42,6 +42,18 @@ export class RegistrationsController {
   @Patch(':id/details')
   updateDetails(@Param('id') id: string, @Body() dto: UpdateRegistrationDetailsDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
     return this.service.updateDetails(id, dto, role, userId);
+  }
+
+  @Patch(':id/review')
+  @ApiOperation({ summary: 'Approve or decline a registration for your event; declines require an attendee-visible reason' })
+  review(@Param('id') id: string, @Body() dto: ReviewRegistrationDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.review(id, dto, role, userId);
+  }
+
+  @Patch(':id/decline-viewed')
+  @ApiOperation({ summary: 'Mark your declined registration as viewed so it moves to Other Tickets' })
+  markDeclineViewed(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.markDeclineViewed(id, role, userId);
   }
 
   @Post(':id/waitlist/confirm')

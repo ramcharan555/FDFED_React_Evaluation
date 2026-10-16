@@ -262,6 +262,11 @@ async function apiCancelRegistration(registrationId, reason) {
   return response.data || response;
 }
 
+async function apiMarkDeclineViewed(registrationId) {
+  const response = await apiRequest(`/registrations/${encodeURIComponent(registrationId)}/decline-viewed`, { method: 'PATCH' });
+  return response.data || response;
+}
+
 // ─── STAFF ASSIGNMENTS ───────────────────────────────────────────
 async function apiGetStaffAssignments(staffId) {
   return apiRequest('/staff-assignments');
@@ -7062,6 +7067,10 @@ function openViewEventDrawer(id, registrationId = null) {
         seat: registration.ticketType || 'General Admission',
         verificationId: registration.verificationId || '',
         cancelledAt: registration.cancelledAt,
+        reviewStatus: registration.reviewStatus,
+        rejectionReason: registration.rejectionReason || '',
+        reviewedAt: registration.reviewedAt,
+        declineViewedAt: registration.declineViewedAt,
       };
       const index = DB.registrations.findIndex(r => r.registrationId === registration.registrationId);
       if (index >= 0) DB.registrations[index] = normalized;
@@ -7091,7 +7100,7 @@ function openViewEventDrawer(id, registrationId = null) {
       const regs = attendeeRegistrationCatalog.filter(r => r.status !== 'waitlisted');
       const activeTab = sessionStorage.getItem('ticket_tab') === 'other' ? 'other' : 'upcoming';
       const savedFilter = sessionStorage.getItem('ticket_filter') || 'all';
-      const activeFilter = savedFilter === 'waitlisted' || (activeTab === 'upcoming' && !['all', 'registered', 'pending_payment'].includes(savedFilter)) ? 'all' : savedFilter;
+      const activeFilter = savedFilter === 'waitlisted' || (activeTab === 'upcoming' && !['all', 'registered', 'pending_payment', 'rejected'].includes(savedFilter)) ? 'all' : savedFilter;
       const activeSort = sessionStorage.getItem('ticket_sort') === 'earliest' ? 'earliest' : 'latest';
 
       function ticketEvent(registration) {
@@ -7102,6 +7111,7 @@ function openViewEventDrawer(id, registrationId = null) {
 
       const now = new Date();
       function isUpcomingTicket(registration) {
+        if (registration.status === 'rejected') return !registration.declineViewedAt;
         if (!['confirmed', 'registered', 'booked', 'pending_payment'].includes(registration.status) || registration.checkedIn) return false;
         const event = ticketEvent(registration);
         if (['cancelled', 'completed'].includes(event.status)) return false;
@@ -7123,6 +7133,7 @@ function openViewEventDrawer(id, registrationId = null) {
         (r.status === 'cancelled' && (r.amount > 0 || r.refundStatus))
       ).length;
       const cancelledCount = tabRegs.filter(r => r.status === 'cancelled').length;
+      const declinedTabCount = tabRegs.filter(r => r.status === 'rejected').length;
       const checkedInCount = tabRegs.filter(r => r.checkedIn || r.status === 'attended').length;
 
       let filtered = tabRegs;
@@ -7140,6 +7151,8 @@ function openViewEventDrawer(id, registrationId = null) {
         );
       } else if (activeFilter === 'cancelled') {
         filtered = tabRegs.filter(r => r.status === 'cancelled');
+      } else if (activeFilter === 'rejected') {
+        filtered = tabRegs.filter(r => r.status === 'rejected');
       } else if (activeFilter === 'checked-in') {
         filtered = tabRegs.filter(r => r.checkedIn || r.status === 'attended');
       }
@@ -7157,6 +7170,7 @@ function openViewEventDrawer(id, registrationId = null) {
       else if (activeFilter === 'pending_payment') emptyLabel = 'tickets awaiting payment';
       else if (activeFilter === 'refund') emptyLabel = 'refund-required or refunded event tickets';
       else if (activeFilter === 'cancelled') emptyLabel = 'cancelled event tickets';
+      else if (activeFilter === 'rejected') emptyLabel = 'declined registrations';
       else if (activeFilter === 'checked-in') emptyLabel = 'checked-in event tickets';
 
       return `
@@ -7180,6 +7194,7 @@ function openViewEventDrawer(id, registrationId = null) {
           : `<option value="checked-in" ${activeFilter === 'checked-in' ? 'selected' : ''}>Checked In / Attended (${checkedInCount})</option>
              <option value="cancelled" ${activeFilter === 'cancelled' ? 'selected' : ''}>Cancelled Tickets (${cancelledCount})</option>
              <option value="refund" ${activeFilter === 'refund' ? 'selected' : ''}>Refund Status (${refundCount})</option>`}
+        <option value="rejected" ${activeFilter === 'rejected' ? 'selected' : ''}>Declined Registrations (${declinedTabCount})</option>
       </select>
     </div>
   </div>
@@ -7192,7 +7207,7 @@ function openViewEventDrawer(id, registrationId = null) {
       <div class="empty" style="padding:40px 20px">
         <div class="empty-icon">🎟️</div>
         <div class="empty-title">No ${activeFilter === 'all' ? activeTab === 'upcoming' ? 'upcoming tickets' : 'other tickets' : emptyLabel} found</div>
-        <p class="empty-desc">${activeFilter === 'all' ? activeTab === 'upcoming' ? 'Browse events to book your next ticket.' : 'Attended, cancelled, and past tickets will appear here.' : 'Try choosing a different filter.'}</p>
+        <p class="empty-desc">${activeFilter === 'all' ? activeTab === 'upcoming' ? 'Browse events to book your next ticket.' : 'Attended, declined, cancelled, and past registrations will appear here.' : 'Try choosing a different filter.'}</p>
         ${activeTab === 'upcoming' && activeFilter === 'all' ? `<button class="btn btn-primary mt-16" onclick="goNav('browse-events')">Browse Events</button>` : ''}
       </div>
     `}
@@ -7201,11 +7216,14 @@ function openViewEventDrawer(id, registrationId = null) {
 
     function ticketCard(r, e, compact = false) {
       const isCancelled = r.status === 'cancelled';
-      const hasValidTicket = !isCancelled && r.status === 'confirmed' && !!r.verificationId;
+      const isDeclined = r.status === 'rejected';
+      const isInactive = isCancelled || isDeclined;
+      const declineNotice = isDeclined ? `<div style="margin-top:12px;padding:12px;background:var(--red-dim);border:1px solid var(--red);border-radius:8px"><strong style="color:var(--red)">Registration declined${r.reviewedAt ? ' on ' + new Date(r.reviewedAt).toLocaleDateString() : ''}</strong><div class="small mt-8" style="color:var(--text2)">Reason from organizer</div><p style="margin:4px 0 0;white-space:pre-wrap;overflow-wrap:anywhere;font-size:13px;line-height:1.6">${escapeHtml(r.rejectionReason || 'Please contact the organizer for more information.')}</p></div>` : '';
+      const hasValidTicket = !isInactive && r.status === 'confirmed' && !!r.verificationId;
       const qr = hasValidTicket
         ? renderTicketQRCode(r.verificationId)
-        : isCancelled
-          ? `<div style="text-align:center;padding:12px 8px;border:1px dashed var(--red);border-radius:8px;background:var(--red-dim, rgba(239,68,68,0.08))"><div style="font-size:24px">🚫</div><div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.5px">Cancelled</div><div class="small" style="font-size:10px;color:var(--text3)">QR Disabled</div></div>`
+        : isInactive
+          ? `<div style="text-align:center;padding:12px 8px;border:1px dashed var(--red);border-radius:8px;background:var(--red-dim, rgba(239,68,68,0.08))"><div style="font-size:24px">🚫</div><div style="font-size:11px;font-weight:700;color:var(--red);text-transform:uppercase;letter-spacing:0.5px">${isDeclined ? 'Declined' : 'Cancelled'}</div><div class="small" style="font-size:10px;color:var(--text3)">QR Disabled</div></div>`
             : `<span class="small">No valid ticket</span>`;
 
       const paymentLabel = r.refundStatus === 'completed' || r.payment === 'refunded'
@@ -7232,26 +7250,28 @@ function openViewEventDrawer(id, registrationId = null) {
       }
 
       if (compact) {
-        return `<div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border-left:4px solid ${isCancelled ? 'var(--red)' : 'var(--accent)'};flex-wrap:wrap">
+        return `<div class="card" style="display:flex;align-items:center;justify-content:space-between;gap:16px;padding:14px 18px;border-left:4px solid ${isInactive ? 'var(--red)' : 'var(--accent)'};flex-wrap:wrap">
           <div style="display:flex;align-items:center;gap:12px;min-width:0;flex:1">
             <span style="font-size:28px;flex-shrink:0">${e.emoji || '🎟️'}</span>
             <div style="min-width:0;flex:1">
-              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><strong style="font-size:14px">${e.title}</strong><span class="badge badge-${r.status === 'cancelled' ? 'red' : r.status === 'confirmed' || r.status === 'attended' ? 'green' : 'yellow'}">${r.status}</span>${refundBadge}</div>
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px"><strong style="font-size:14px">${e.title}</strong><span class="badge badge-${isInactive ? 'red' : r.status === 'confirmed' || r.status === 'attended' ? 'green' : 'yellow'}">${isDeclined ? 'Declined' : r.status}</span>${refundBadge}</div>
               <div class="small muted">📅 ${e.date || 'Date TBD'} · 📍 ${e.venue || 'Venue TBD'} · Ticket ${r.ticketId || '—'}</div>
+              ${declineNotice}
+              ${isDeclined && !r.declineViewedAt ? '<div class="small mt-8" style="color:var(--text2)">View Details to move this ticket to Other Tickets.</div>' : ''}
             </div>
           </div>
           <button class="btn btn-ghost btn-sm" onclick="openViewTicketModal('${r.registrationId || r.id}')">View Details</button>
         </div>`;
       }
 
-      return `<div class="ticket" style="${isCancelled ? 'opacity:0.85;border-color:var(--border);' : ''}">
+      return `<div class="ticket" style="${isInactive ? 'opacity:0.85;border-color:var(--border);' : ''}">
     <div class="ticket-top">
       <div class="flex justify-between items-start">
         <div style="flex:1;min-width:0">
           <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;flex-wrap:wrap">
             <span style="font-size:28px">${e.emoji || '🎟️'}</span>
             <span class="badge badge-${evStatBadge(e.status)}">${e.status}</span>
-            <span class="badge badge-${r.status === 'confirmed' || r.status === 'attended' ? 'green' : r.status === 'cancelled' ? 'red' : 'yellow'}">${r.status}</span>
+            <span class="badge badge-${r.status === 'confirmed' || r.status === 'attended' ? 'green' : isInactive ? 'red' : 'yellow'}">${isDeclined ? 'Declined' : r.status}</span>
             ${(r.checkedIn || r.status === 'attended') ? '<span class="badge badge-green">✅ Checked In</span>' : ''}
             ${refundBadge}
           </div>
@@ -7268,15 +7288,16 @@ function openViewEventDrawer(id, registrationId = null) {
         <div><div class="label mb-4">Attendee</div><div style="font-weight:500;font-size:13.5px">${CU.name}</div></div>
         <div>
           <div class="label mb-4">Ticket ID</div>
-          <div class="mono" style="${isCancelled ? 'text-decoration:line-through;color:var(--text3);' : ''}">${r.ticketId || '—'}</div>
+          <div class="mono" style="${isInactive ? 'text-decoration:line-through;color:var(--text3);' : ''}">${r.ticketId || '—'}</div>
         </div>
         <div><div class="label mb-4">Seat / Zone</div><div style="font-weight:500;font-size:13.5px">${r.seat || 'GA'}</div></div>
         <div><div class="label mb-4">Amount</div><div style="font-weight:700;font-size:15px;color:var(--green)">${r.amount === 0 ? 'Free' : '₹' + r.amount}</div></div>
       </div>
       <div class="flex justify-between items-center mt-12 flex-wrap gap-8">
-        <span class="badge badge-${r.checkedIn || r.status === 'attended' ? 'green' : isCancelled ? 'red' : 'purple'}">${r.checkedIn || r.status === 'attended' ? '✅ Checked In' : isCancelled ? '🚫 Ticket Invalidated' : '⏳ Not Yet Checked In'}</span>
+        <span class="badge badge-${r.checkedIn || r.status === 'attended' ? 'green' : isInactive ? 'red' : 'purple'}">${r.checkedIn || r.status === 'attended' ? '✅ Checked In' : isInactive ? '🚫 Ticket Invalidated' : '⏳ Not Yet Checked In'}</span>
         <span class="badge badge-${r.payment === 'completed' || r.payment === 'free' ? 'green' : r.refundStatus === 'pending' ? 'yellow' : 'gray'}">${paymentLabel}</span>
       </div>
+      ${declineNotice}
       ${r.status === 'pending_payment' ? `<button class="btn btn-primary btn-sm mt-12" onclick="completeDemoPayment('${r.registrationId}')">Complete Demo Payment</button>` : ''}
       ${!r.checkedIn && !['attended', 'no-show', 'cancelled'].includes(r.status) && ['confirmed', 'pending_payment'].includes(r.status) ? `<button class="btn btn-danger btn-sm mt-12" onclick="cancelTicket('${r.registrationId || r.id}')">Cancel Registration</button>` : ''}
       ${isCancelled ? `<div class="small mt-12" style="color:var(--text3);font-style:italic">❌ Registration cancelled${r.cancelledAt ? ' on ' + new Date(r.cancelledAt).toLocaleDateString() : ''}. Ticket QR and seat capacity are invalidated.</div>` : ''}
@@ -7296,7 +7317,7 @@ function openViewEventDrawer(id, registrationId = null) {
       const cells = Array.from({ length: 25 }, () => Math.random() > 0.5);
       return cells.map(on => `<div class="qr-cell${on ? ' on' : ''}"></div>`).join('');
     }
-    function openViewTicketModal(regId) {
+    async function openViewTicketModal(regId) {
       const r = (attendeeRegistrationCatalog || []).find(reg => String(reg.id) === String(regId) || String(reg.registrationId) === String(regId))
         || (DB.registrations || []).find(reg => String(reg.id) === String(regId) || String(reg.registrationId) === String(regId));
       if (!r || r.status === 'waitlisted') return;
@@ -7304,6 +7325,18 @@ function openViewEventDrawer(id, registrationId = null) {
         || (DB.events || []).find(ev => String(ev.id) === String(r.eventId) || String(ev.eventId) === String(r.eventId))
         || { title: 'Event', emoji: '🎟️', venue: '', date: '', time: '' };
       openModal('Ticket Details', ticketCard(r, e), [], false);
+      if (r.status === 'rejected' && !r.declineViewedAt) {
+        try {
+          const updated = await apiMarkDeclineViewed(r.registrationId || r.id);
+          r.declineViewedAt = updated.declineViewedAt;
+          const stored = DB.registrations.find(reg => String(reg.registrationId || reg.id) === String(r.registrationId || r.id));
+          if (stored) stored.declineViewedAt = updated.declineViewedAt;
+          saveDB();
+          if (_currentPage === 'my-tickets') await renderPage('my-tickets');
+        } catch (error) {
+          toast('Unable to move this ticket to Other Tickets. Please open its details again to retry.', 'error');
+        }
+      }
     }
     window.openViewTicketModal = openViewTicketModal;
 
@@ -9863,12 +9896,12 @@ function openViewEventDrawer(id, registrationId = null) {
     // ════════════════════════════════════════════════
     let attendeeNotificationCatalog = [];
     function notificationTitle(type) {
-      return ({ registration_confirmed: 'Registration Confirmed', pending_payment: 'Payment Required', refund_completed: 'Refund Completed', event_changed: 'Event Updated', event_cancelled: 'Event Cancelled' })[type] || 'EventFlow Update';
+      return ({ registration_confirmed: 'Registration Confirmed', registration_approved: 'Registration Approved', registration_rejected: 'Registration Declined', pending_payment: 'Payment Required', refund_completed: 'Refund Completed', event_changed: 'Event Updated', event_cancelled: 'Event Cancelled' })[type] || 'EventFlow Update';
     }
     function notificationTone(type) {
-      if (['registration_confirmed', 'payment_confirmed', 'refund_completed'].includes(type)) return 'success';
+      if (['registration_confirmed', 'registration_approved', 'payment_confirmed', 'refund_completed'].includes(type)) return 'success';
       if (['pending_payment', 'event_changed'].includes(type)) return 'warning';
-      if (type === 'event_cancelled') return 'error';
+      if (['event_cancelled', 'registration_rejected'].includes(type)) return 'error';
       return 'info';
     }
     function visibleNotifications() {
@@ -9891,8 +9924,8 @@ function openViewEventDrawer(id, registrationId = null) {
       <div class="notif-item${n.read ? '' : ' unread'}" onclick="markNotifRead('${n.id}')">
         <div class="notif-icon" style="background:${n.type === 'success' ? 'var(--green-dim)' : n.type === 'warning' ? 'var(--yellow-dim)' : n.type === 'error' ? 'var(--red-dim)' : 'var(--accent-dim)'}">${n.icon || '🔔'}</div>
         <div class="notif-content">
-          <div class="notif-title" style="${n.read ? '' : 'font-weight:600'}">${n.title}</div>
-          <div class="notif-msg">${n.msg}</div>
+          <div class="notif-title" style="${n.read ? '' : 'font-weight:600'}">${escapeHtml(n.title || '')}</div>
+          <div class="notif-msg" style="white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(n.msg || '')}</div>
           <div class="notif-time">${n.time}</div>
         </div>
         ${!n.read ? `<div class="unread-dot"></div>` : ''}

@@ -11,4 +11,8 @@ export declare class CancelRegistrationDto {
 export declare class UpdateRegistrationDetailsDto {
     additionalInfo?: string;
 }
+export declare class ReviewRegistrationDto {
+    decision: 'approved' | 'rejected';
+    reason?: string;
+}
 //# sourceMappingURL=registration.dto.d.ts.map

@@ -37,6 +37,12 @@ let RegistrationsController = class RegistrationsController {
     updateDetails(id, dto, role, userId) {
         return this.service.updateDetails(id, dto, role, userId);
     }
+    review(id, dto, role, userId) {
+        return this.service.review(id, dto, role, userId);
+    }
+    markDeclineViewed(id, role, userId) {
+        return this.service.markDeclineViewed(id, role, userId);
+    }
     confirmWaitlist(id, role, userId) {
         return this.service.confirmWaitlist(id, role, userId);
     }
@@ -90,6 +96,27 @@ __decorate([
     __metadata("design:paramtypes", [String, registration_dto_1.UpdateRegistrationDetailsDto, String, String]),
     __metadata("design:returntype", void 0)
 ], RegistrationsController.prototype, "updateDetails", null);
+__decorate([
+    (0, common_1.Patch)(':id/review'),
+    (0, swagger_1.ApiOperation)({ summary: 'Approve or decline a registration for your event; declines require an attendee-visible reason' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, registration_dto_1.ReviewRegistrationDto, String, String]),
+    __metadata("design:returntype", void 0)
+], RegistrationsController.prototype, "review", null);
+__decorate([
+    (0, common_1.Patch)(':id/decline-viewed'),
+    (0, swagger_1.ApiOperation)({ summary: 'Mark your declined registration as viewed so it moves to Other Tickets' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String]),
+    __metadata("design:returntype", void 0)
+], RegistrationsController.prototype, "markDeclineViewed", null);
 __decorate([
     (0, common_1.Post)(':id/waitlist/confirm'),
     __param(0, (0, common_1.Param)('id')),
