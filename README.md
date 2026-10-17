@@ -77,7 +77,7 @@ Support and finance executives use department-specific employee types under the 
 - View attendance information and submit attendance summaries to the organizer.
 - Receive assignment notifications and maintain personal account details.
 
-The staff backend and workspace source are present. The current routing limitation for this workspace is described in Section 14.
+The event-staff workspace is available at `/staff`.
 
 ### 4.5 Support Executive
 
@@ -182,36 +182,28 @@ Organizer reviews and ratings are maintained within EventFlow. No external ratin
 
 The frontend combines React components with preserved DOM-driven role runtimes loaded through `LegacyRuntime`. The migration of those dynamic screens to React state is ongoing.
 
-## 8. Project Structure
+## 8. Project structure
 
 ```text
-FDFED_React_Evaluation/
-├── frontend/
-│   ├── public/                 # Images, vendor assets, and labeled demo report files
-│   ├── src/
-│   │   ├── app/                # Application shell and routes
-│   │   ├── apps/               # Role workspaces, styles, and legacy runtimes
-│   │   ├── components/         # Shared runtime loader and public event catalog
-│   │   ├── services/           # Data sync, support, reports, checkout, and QR scanning
-│   │   └── styles/             # Shared theme styles
-│   ├── tests/                  # Frontend workflow and rendering tests
-│   └── package.json
-├── backend/
-│   ├── src/
-│   │   ├── common/             # Data store, policies, guards, validation, and utilities
-│   │   ├── config/             # JWT configuration
-│   │   └── modules/            # Domain controllers, services, and DTOs
-│   ├── tests/                  # API, permission, persistence, and workflow tests
-│   ├── data/                   # Generated local data store
-│   ├── uploads/                # Uploaded documents and attachments
-│   ├── logs/                   # Access and error logs
-│   ├── docs/                   # Generated Swagger JSON
-│   └── package.json
-├── Database/
-│   ├── Dbschema.sql            # Relational database design
-│   └── ER Diagram.png          # Entity relationship diagram
-└── README.md
+Penguin_10_React/
+├── README.md
+├── Database/                    # Schema and ER diagram
+├── backend/                     # NestJS API
+└── React_frontend/
+    ├── index.html               # Vite page entry
+    ├── package.json             # Dependencies and scripts
+    ├── vite.config.js           # Build output in build/
+    ├── public/assets/           # Images, vendor scripts, demo reports
+    ├── tests/                   # Frontend tests
+    └── src/
+        ├── main.jsx             # React bootstrap
+        ├── app/                 # App shell and URL routes
+        ├── styles/global.css    # Shared stylesheet
+        ├── shared/              # APIs, components, utilities used by all roles
+        └── apps/                # One folder for each role interface
 ```
+
+Each role under `src/apps/` has `api/`, `app/`, `assets/`, `components/`, `context/`, `data/`, `hooks/`, `pages/`, `styles/`, `utils/`, and a README. The role page preserves the existing DOM-driven runtime; the app component is its route entry. Shared scripts stay in `src/shared/` because each role loads them through `LegacyRuntime`.
 
 The [SQL schema](Database/Dbschema.sql) and [ER diagram](<Database/ER Diagram.png>) document the database design. The current backend runs with JSON persistence and does not require importing the SQL schema.
 
@@ -236,7 +228,7 @@ npm run start:dev
 ### Terminal 2: Frontend
 
 ```sh
-cd frontend
+cd React_frontend
 npm ci
 npm run dev
 ```
@@ -268,7 +260,7 @@ JWT_SECRET=replace-with-a-local-secret
 
 The application can run without SMTP. Replies and ticket status changes are still saved when email delivery is unavailable.
 
-Frontend API URLs currently target `http://localhost:3001/api`. Changing only `PORT` does not update the frontend; update the corresponding URLs in frontend services, components, and role runtimes if the backend address changes.
+Frontend API URLs currently target `http://localhost:3001/api`. Changing only `PORT` does not update the frontend; update the corresponding URLs in React_frontend services, components, and role runtimes if the backend address changes.
 
 ## 10. Demo Accounts and Workspaces
 
@@ -284,7 +276,7 @@ These credentials are part of the development seed data.
 | Finance Executive | `marcus.ops@eventflow.com` | `Employee@123` | `/employee2` |
 | Event Staff | `staff@example.com` | `Staff@123` | Backend and staff workspace source; see Section 14. |
 
-Start at `/` or `/landing` to sign in. `/employee` aliases the support workspace, and `/employee3` exposes the finance workspace implementation also used by `/employee2`.
+Start at `/` or `/landing` to sign in. `/employee` aliases the support workspace. `/employee2` serves the Finance Executive workspace, and `/staff` serves the event-staff workspace.
 
 New attendee accounts become active after registration. New client, organizer, and ordinary staff accounts are saved with pending status and require activation before sign-in. Public registration cannot create administrator or department-executive accounts. Account email uniqueness is enforced across roles.
 
@@ -328,7 +320,7 @@ Use the Swagger UI for individual methods, request schemas, and response details
 ### Frontend
 
 ```sh
-cd frontend
+cd React_frontend
 npm test
 npm run build
 ```
@@ -347,11 +339,11 @@ After a backend build, `npm run start:prod` starts the compiled backend. After a
 
 ## 14. Current Implementation Notes
 
-- **Staff route:** `frontend/src/apps/staff/Staff.jsx` and its runtime exist, but `/staff` is not currently registered in `frontend/src/app/routes.jsx`. The staff API is implemented and covered by integration tests.
+- **Staff route:** `/staff` now serves the event-staff workspace.
 - **React migration:** Several workspaces still use preserved JavaScript runtimes through `LegacyRuntime`; the interface is not entirely managed by React state.
 - **Demo payments:** Checkout, refunds, and financial records are simulated. There is no live payment gateway or bank payout integration.
 - **Demo verification:** The registration interface displays a demo OTP. It is not an email-delivered verification service.
 - **Local storage design:** Runtime persistence uses a local JSON file and disk uploads. The relational schema is a design artifact, not the active storage engine.
 - **Deployment work:** Production database integration, password hashing, deployment-specific API configuration, and replacement of demo authentication/payment behavior remain separate implementation tasks.
 
-Possible extensions include completing the React migration, registering the staff workspace route, using a transactional database, adding server-pushed updates, and integrating real payment and email-verification providers.
+Possible extensions include completing the React migration, using a transactional database, adding server-pushed updates, and integrating real payment and email-verification providers.

@@ -1,0 +1,16 @@
+# finance-executive
+
+Finance Executive workspace for payments, revenue, refunds, and reports.
+
+Routes: /employee2.
+
+- `api/`: Backend request helpers.
+- `app/`: Role entry component and runtime.
+- `assets/`: Files used only by this role.
+- `components/`: Reusable role UI components.
+- `context/`: React context providers.
+- `data/`: Static lookups or seed data.
+- `hooks/`: Role-specific React hooks.
+- `pages/`: Role screens.
+- `styles/`: Role stylesheets.
+- `utils/`: Role helper functions.
