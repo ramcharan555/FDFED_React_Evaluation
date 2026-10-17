@@ -47,6 +47,38 @@ test('client and organizer complete the restored event workflow through the API'
   async function login(email, password) {
     return (await call(null, 'POST', '/auth/login', { email, password })).data.token;
   }
+  await t.test('workflow demo scenarios are idempotent, marked, and filtered from production restores', async () => {
+    const demoRequests = db.eventRequests.filter(item => item.demoScenario === 'event-request-workflow-v1');
+    assert.equal(demoRequests.length, 20);
+    assert.equal(new Set(demoRequests.map(item => item.requestId)).size, demoRequests.length);
+    for (const status of ['submitted', 'under_review', 'info_requested', 'proposal_sent', 'awaiting_client', 'planning', 'plan_submitted', 'confirmed', 'rejected', 'withdrawn', 'expired', 'cancelled', 'completed']) {
+      assert.ok(demoRequests.some(item => item.status === status), `Expected demo scenario ${status}`);
+    }
+    assert.ok(demoRequests.some(item => item.paymentStatus === 'failed'));
+    assert.ok(demoRequests.some(item => item.agreementStatus === 'agreed'));
+    const before = db.eventRequests.length;
+    const firstScenario = demoRequests[0];
+    db.applyEventRequestDemoScenario();
+    assert.equal(db.eventRequests.length, before);
+    assert.equal(db.eventRequests.find(item => item.requestId === firstScenario.requestId), firstScenario);
+
+    db.persist();
+    const previousNodeEnv = process.env.NODE_ENV;
+    try {
+      process.env.NODE_ENV = 'production';
+      const productionStore = new DataStore();
+      assert.equal(productionStore.eventRequests.some(item => item.demoScenario === 'event-request-workflow-v1'), false);
+      assert.equal(productionStore.eventPlans.some(item => item.demoScenario === 'event-request-workflow-v1'), false);
+      assert.equal(productionStore.events.some(item => item.demoScenario === 'event-request-workflow-v1'), false);
+      assert.ok(productionStore.eventRequests.some(item => item.requestId === 'req-orgdash-prep'), 'Non-workflow production records remain intact');
+      assert.equal(productionStore.users.some(item => item.demoScenario === 'event-request-workflow-v1'), false);
+      assert.ok(productionStore.clients.some(item => item.clientId === 'cli-001'), 'Existing client profiles remain intact');
+      assert.ok(productionStore.users.some(item => item.userId === 'usr-client-001'), 'Existing client users remain intact');
+    } finally {
+      if (previousNodeEnv === undefined) delete process.env.NODE_ENV;
+      else process.env.NODE_ENV = previousNodeEnv;
+    }
+  });
   const client = await login('client@example.com', 'Client@123');
   const organizer = await login('organizer@example.com', 'Organizer@123');
   for (const [role, suffix, password] of [['client', 'client', 'Client@123'], ['organizer', 'org', 'Organizer@123']]) {
@@ -65,7 +97,7 @@ test('client and organizer complete the restored event workflow through the API'
   async function createRequest(overrides = {}) {
     return (await call(client, 'POST', '/event-requests', {
       clientId: 'usr-client-001', organizerId: 'usr-org-001', eventName: `Workflow event ${++sequence}`,
-      eventDate: future(45 + sequence), eventType: 'Conference', venue: 'City Hall', budget: 50000,
+      eventDate: future(400 + sequence), eventType: 'Conference', venue: 'City Hall', budget: 50000,
       capacity: 80, requirements: 'A conference with catering and sound equipment.', ...acknowledgement, ...overrides,
     }, 201)).data;
   }
@@ -102,6 +134,10 @@ test('client and organizer complete the restored event workflow through the API'
     assert.equal(accepted.organizerPolicyAcceptedBy, 'usr-org-001');
     assert.ok(accepted.organizerPolicyAcceptedAt);
     assert.deepEqual(accepted.policySnapshot, pending.policySnapshot);
+    await call(organizer, 'PATCH', `/event-requests/${pending.requestId}/status`, { status: 'confirmed' }, 400);
+    await call(organizer, 'PATCH', `/event-requests/${pending.requestId}/status`, { status: 'rejected' }, 400);
+    await call(organizer, 'POST', `/event-requests/${pending.requestId}/payment`, { paymentStatus: 'deposit_paid' }, 403);
+    await call(client, 'POST', `/event-requests/${pending.requestId}/agreement`, { agreementStatus: 'agreed' }, 400);
   });
 
   await t.test('requests are shared between roles and acceptance starts planning without creating an event', async () => {
@@ -112,7 +148,9 @@ test('client and organizer complete the restored event workflow through the API'
     assert.equal(request.organizerId, 'org-001');
     assert.equal(request.status, 'submitted');
     const orgRequests = await call(organizer, 'GET', '/event-requests');
-    assert.ok(orgRequests.some(item => item.requestId === request.requestId && item.clientUserId === 'usr-client-001'));
+    const organizerRequest = orgRequests.find(item => item.requestId === request.requestId);
+    assert.equal(organizerRequest.clientUserId, 'usr-client-001');
+    assert.equal(organizerRequest.clientDetails.email, 'client@example.com');
     await call(otherOrganizer, 'POST', `/event-requests/${request.requestId}/accept`, acknowledgement, 403);
     await call(otherClient, 'GET', `/event-requests/${request.requestId}`, undefined, 403);
     request = (await call(organizer, 'POST', `/event-requests/${request.requestId}/accept`, acknowledgement, 201)).data;
@@ -143,12 +181,27 @@ test('client and organizer complete the restored event workflow through the API'
     plan = revised;
   });
 
-  await t.test('only client approval of the latest plan creates one shared event', async () => {
+  await t.test('plan approval awaits agreement and verified payment before creating a shared event', async () => {
     const approved = (await call(client, 'PATCH', `/event-plans/${plan.eventPlanId}/approval`, { approvalStatus: 'approved' })).data;
-    event = approved.event;
+    assert.equal(approved.plan.approvalStatus, 'approved');
+    assert.equal(approved.request.status, 'awaiting_client');
+    assert.equal(approved.request.agreementStatus, 'pending_signature');
+    assert.equal(db.events.filter(item => item.name === request.eventName).length, 0);
+    await call(otherClient, 'POST', `/event-requests/${request.requestId}/agreement`, { agreementStatus: 'agreed' }, 403);
+    await call(organizer, 'POST', `/event-requests/${request.requestId}/agreement`, { agreementStatus: 'agreed' }, 403);
+    await call(organizer, 'POST', `/event-requests/${request.requestId}/payment`, { paymentStatus: 'deposit_paid' }, 403);
+    await call(organizer, 'POST', `/event-requests/${request.requestId}/confirm`, { agreementConfirmed: true, depositConfirmed: true }, 400);
+    await call(client, 'POST', `/event-requests/${request.requestId}/agreement`, { agreementStatus: 'agreed' }, 201);
+    await call(organizer, 'POST', `/event-requests/${request.requestId}/confirm`, {}, 400);
+    const liveRequest = db.eventRequests.find(item => item.requestId === request.requestId);
+    liveRequest.paymentStatus = 'deposit_paid'; // Represents a verified processor update; no public API can set this value.
+    const confirmation = await call(organizer, 'POST', `/event-requests/${request.requestId}/confirm`, {}, 201);
+    event = db.events.find(item => item.eventId === confirmation.eventId);
     assert.equal(event.status, 'ongoing');
     assert.equal(event.clientId, 'cli-001');
     assert.equal(event.organizerId, 'org-001');
+    assert.equal(liveRequest.paymentStatus, 'deposit_paid');
+    assert.equal(liveRequest.agreementStatus, 'agreed');
     for (const token of [client, organizer]) {
       const events = await call(token, 'GET', '/events');
       assert.ok(events.some(item => item.eventId === event.eventId && item.clientUserId === 'usr-client-001' && item.organizerUserId === 'usr-org-001'));
@@ -160,15 +213,15 @@ test('client and organizer complete the restored event workflow through the API'
 
   await t.test('budget and date changes, counteroffers, and rejection reasons reach the correct role', async () => {
     const negotiation = await createRequest();
-    await call(organizer, 'POST', `/event-requests/${negotiation.requestId}/reject`, { ...acknowledgement, reasonType: 'both', reason: 'The venue needs a larger budget and a different date.', proposedBudget: 65000, proposedDate: future(75) }, 201);
+    await call(organizer, 'POST', `/event-requests/${negotiation.requestId}/reject`, { ...acknowledgement, reasonType: 'both', reason: 'The venue needs a larger budget and a different date.', proposedBudget: 65000, proposedDate: future(475) }, 201);
     let record = await call(client, 'GET', `/event-requests/${negotiation.requestId}`);
     assert.equal(record.status, 'changes_requested');
     assert.match(record.negotiations.at(-1).reason, /larger budget/);
-    await call(client, 'POST', `/event-requests/${negotiation.requestId}/client-response`, { decision: 'counteroffer', counterofferBudget: 60000, counterofferDate: future(80), counterofferCapacity: 70 }, 201);
+    await call(client, 'POST', `/event-requests/${negotiation.requestId}/client-response`, { decision: 'counteroffer', counterofferBudget: 60000, counterofferDate: future(480), counterofferCapacity: 70 }, 201);
     record = (await call(organizer, 'POST', `/event-requests/${negotiation.requestId}/accept-counteroffer`, acknowledgement, 201)).data;
     assert.equal(record.status, 'planning');
     assert.equal(record.budget, 60000);
-    assert.equal(record.eventDate, future(80));
+    assert.equal(record.eventDate, future(480));
     assert.equal(record.capacity, 70);
     const changes = await createRequest();
     await call(organizer, 'POST', `/event-requests/${changes.requestId}/reject`, { ...acknowledgement, reasonType: 'budget', reason: 'Catering requires a higher budget.', proposedBudget: 55000 }, 201);
@@ -183,7 +236,7 @@ test('client and organizer complete the restored event workflow through the API'
     await call(organizer, 'POST', `/event-requests/${rejected.requestId}/accept`, acknowledgement, 400);
   });
 
-  await t.test('a rejected plan never creates an event and a booked date is rechecked at approval', async () => {
+  await t.test('a rejected plan never creates an event and availability is rechecked at confirmation', async () => {
     const revised = await createRequest();
     await call(organizer, 'POST', `/event-requests/${revised.requestId}/accept`, acknowledgement, 201);
     const revisionPlan = await submitPlan(revised);
@@ -193,8 +246,11 @@ test('client and organizer complete the restored event workflow through the API'
     const collision = await createRequest();
     await call(organizer, 'POST', `/event-requests/${collision.requestId}/accept`, acknowledgement, 201);
     const collisionPlan = await submitPlan(collision);
+    await call(client, 'PATCH', `/event-plans/${collisionPlan.eventPlanId}/approval`, { approvalStatus: 'approved' });
+    await call(client, 'POST', `/event-requests/${collision.requestId}/agreement`, { agreementStatus: 'agreed' }, 201);
+    db.eventRequests.find(item => item.requestId === collision.requestId).paymentStatus = 'deposit_paid';
     db.events.push({ ...event, eventId: 'evt-conflict-test', name: 'A later booking', date: collision.eventDate });
-    await call(client, 'PATCH', `/event-plans/${collisionPlan.eventPlanId}/approval`, { approvalStatus: 'approved' }, 400);
+    await call(organizer, 'POST', `/event-requests/${collision.requestId}/confirm`, {}, 409);
     assert.equal(db.events.filter(item => item.name === collision.eventName).length, 0);
   });
 
@@ -202,7 +258,11 @@ test('client and organizer complete the restored event workflow through the API'
     const pending = await createRequest(overrides);
     await call(organizer, 'POST', `/event-requests/${pending.requestId}/accept`, acknowledgement, 201);
     const submitted = await submitPlan(pending);
-    return (await call(client, 'PATCH', `/event-plans/${submitted.eventPlanId}/approval`, { approvalStatus: 'approved' })).data.event;
+    await call(client, 'PATCH', `/event-plans/${submitted.eventPlanId}/approval`, { approvalStatus: 'approved' });
+    await call(client, 'POST', `/event-requests/${pending.requestId}/agreement`, { agreementStatus: 'agreed' }, 201);
+    db.eventRequests.find(item => item.requestId === pending.requestId).paymentStatus = 'deposit_paid';
+    await call(organizer, 'POST', `/event-requests/${pending.requestId}/confirm`, {}, 201);
+    return db.events.find(item => item.eventId === db.eventRequests.find(record => record.requestId === pending.requestId).eventId);
   }
 
   let cancelledEvent;
@@ -235,7 +295,7 @@ test('client and organizer complete the restored event workflow through the API'
     assert.equal(preview.paidAmount, 50000.25);
     assert.equal(preview.cancellationFee, 5000.03);
     assert.equal(preview.refundAmount, 45000.22);
-    const scheduled = new Date(`${cancelledEvent.date}T10:00:00+05:30`);
+    const scheduled = new Date(`${cancelledEvent.date}T${cancelledEvent.time}+05:30`);
     assert.equal(preview.cancellationDeadline, new Date(scheduled.getTime() - 14 * 86400000).toISOString());
     const registration = { ...db.registrations[0], registrationId: 'reg-client-cancel', eventId: id, attendeeId: db.attendees[0].attendeeId, status: 'registered', qrCode: 'valid-before-cancellation', verificationId: 'verify-before-cancellation' };
     const declined = { ...registration, registrationId: 'reg-already-declined', status: 'rejected', rejectionReason: 'Eligibility requirements were not met.' };
@@ -373,5 +433,44 @@ test('client and organizer complete the restored event workflow through the API'
     assert.ok(reloaded.eventRequests.find(item => item.requestId === request.requestId).organizerPolicyAcceptedAt instanceof Date);
     assert.ok(reloaded.events.find(item => item.eventId === cancelledEvent.eventId).cancellation.cancelledAt instanceof Date);
     assert.ok(reloaded.eventReports.some(item => item.eventReportId === uploadedReport.eventReportId && item.clientId === 'cli-001' && item.documentName === 'event-summary.pdf'));
+  });
+
+  await t.test('client request creation rejects startTime, endTime, and budgetFlexibility and accepts supported fields', async () => {
+    const invalidWithExtraProps = {
+      clientId: 'usr-client-001', organizerId: 'usr-org-001', eventName: `Timing event ${++sequence}`,
+      eventDate: future(500 + sequence), eventType: 'Corporate Events', venue: 'Convention Center',
+      budget: 60000, capacity: 150, city: 'Bangalore', requirements: 'Complete setup',
+      startTime: '10:00', endTime: '19:00', budgetFlexibility: 'fixed',
+      ...acknowledgement,
+    };
+    const errorResponse = await call(client, 'POST', '/event-requests', invalidWithExtraProps, 400);
+    assert.ok(errorResponse.message.some(msg => msg.includes('property startTime should not exist')));
+    assert.ok(errorResponse.message.some(msg => msg.includes('property endTime should not exist')));
+    assert.ok(errorResponse.message.some(msg => msg.includes('property budgetFlexibility should not exist')));
+
+    const validPayload = {
+      clientId: 'usr-client-001', organizerId: 'usr-org-001', eventName: `Supported event ${++sequence}`,
+      eventDate: future(500 + sequence), eventType: 'Corporate Events', venue: 'Convention Center',
+      budget: 75000, capacity: 200, city: 'Bangalore', requirements: 'Complete corporate setup with audio and dining',
+      ...acknowledgement,
+    };
+    const created = (await call(client, 'POST', '/event-requests', validPayload, 201)).data;
+    assert.equal(created.startTime, undefined);
+    assert.equal(created.endTime, undefined);
+    assert.equal(created.budgetFlexibility, undefined);
+    assert.equal(created.budget, 75000);
+    assert.equal(created.capacity, 200);
+    assert.equal(created.city, 'Bangalore');
+    assert.equal(created.venue, 'Convention Center');
+    assert.equal(created.requirements, 'Complete corporate setup with audio and dining');
+
+    // Duplicate submission should be blocked with 409 Conflict
+    await call(client, 'POST', '/event-requests', validPayload, 409);
+
+    // Verify organizer can see the created request with its details
+    const orgReqs = await call(organizer, 'GET', '/event-requests');
+    const orgFound = orgReqs.find(item => item.requestId === created.requestId);
+    assert.ok(orgFound, 'Organizer must be able to view the newly created event request');
+    assert.equal(orgFound.eventName, `Supported event ${sequence}`);
   });
 });

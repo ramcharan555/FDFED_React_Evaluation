@@ -273,7 +273,8 @@
     });
     patch('saveEditEvent', id => mutate(`event:${id}`, () => send(eventRoute(id), isSupport() ? 'PATCH' : 'PUT', {
       name: field('ee-title'), date: field('ee-date'), time: field('ee-time'), location: field('ee-venue'),
-      capacity: Number(field('ee-cap')), ticketPrice: Number(field('ee-price')), status: eventStatus(field('ee-status')), description: field('ee-desc'),
+      category: field('ee-category') || undefined, capacity: Number(field('ee-cap')), ticketPrice: Number(field('ee-price')),
+      ...(field('ee-status') ? { status: eventStatus(field('ee-status')) } : {}), description: field('ee-desc'),
     }), 'Event updated'));
     for (const name of ['deleteEvent', 'deleteEventOps']) patch(name, id => confirm2('Delete Event', 'Permanently delete this event?', () => mutate(`event:${id}`, () => send(`/events/${encodeURIComponent(id)}`, 'DELETE'), 'Event deleted', { close: false })));
     patch('respondAssign', (id, status) => mutate(`assignment:${id}`, () => send(`/staff-assignments/${encodeURIComponent(id)}/status`, 'PATCH', { status }), 'Assignment response saved', { close: false }));

@@ -257,10 +257,53 @@ async function apiCancelClientEvent(eventId, payload) {
   return apiRequest(`/events/${encodeURIComponent(eventId)}/cancel`, { method: 'POST', body: JSON.stringify(payload) });
 }
 
+async function apiPreviewClientRequestCancellation(id) {
+  try {
+    return await apiRequest(`/event-requests/${encodeURIComponent(id)}/cancellation-preview`);
+  } catch (err) {
+    return await apiRequest(`/events/${encodeURIComponent(id)}/cancellation-preview`);
+  }
+}
+
+async function apiCancelClientRequest(id, payload) {
+  try {
+    return await apiRequest(`/event-requests/${encodeURIComponent(id)}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  } catch (err) {
+    return await apiRequest(`/events/${encodeURIComponent(id)}/cancel`, {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    });
+  }
+}
+
 async function apiUpdateRequestStatus(requestId, status) {
   return apiRequest(`/event-requests/${requestId}/status`, {
     method: 'PATCH',
     body: JSON.stringify({ status }),
+  });
+}
+
+async function apiPayDeposit(requestId, payload = {}) {
+  return apiRequest(`/event-requests/${requestId}/pay-deposit`, {
+    method: 'POST',
+    body: JSON.stringify({ paymentMethod: 'DEMO_PROVIDER', ...payload }),
+  });
+}
+
+async function apiRequestEventModification(requestId, payload) {
+  return apiRequest(`/event-requests/${requestId}/modifications`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
+  });
+}
+
+async function apiRespondToEventModification(requestId, modId, payload) {
+  return apiRequest(`/event-requests/${requestId}/modifications/${modId}/respond`, {
+    method: 'POST',
+    body: JSON.stringify(payload),
   });
 }
 
@@ -2247,6 +2290,9 @@ window.EventFlowModules['shared'] = true;
       toast('Signed out successfully', 'info');
     }
     function openRegisterModal() {
+      if (window.EventFlowOrganizerRegistration && typeof window.EventFlowOrganizerRegistration.openRegisterModal === 'function') {
+        return window.EventFlowOrganizerRegistration.openRegisterModal();
+      }
       openModal('Create New Account', `
     <div class="grid-2">
       <div class="form-group"><label class="form-label">Full Name *</label><input class="form-control" id="rg-name" placeholder="John Doe"></div>
@@ -4990,6 +5036,14 @@ window.EventFlowModules['shared'] = true;
     <div class="stat-card"><div class="stat-icon" style="background:var(--green-dim);color:var(--green)">✅</div><div class="stat-value" style="color:var(--green)">${myReqs.filter(r => r.status === 'approved').length}</div><div class="stat-label">Approved</div></div>
     <div class="stat-card"><div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">⏳</div><div class="stat-value" style="color:var(--yellow)">${myReqs.filter(r => r.status === 'pending' || r.status === 'in_review').length}</div><div class="stat-label">In Progress</div></div>
   </div>
+  ${myReqs.filter(r => r.status === 'proposal_sent').length > 0 ? `
+  <div style="background:rgba(99,102,241,0.12);border:1px solid var(--accent);border-radius:12px;padding:16px 20px;margin-bottom:20px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+    <div>
+      <div style="font-weight:700;font-size:15px;color:var(--text)">📝 Proposal Received!</div>
+      <div style="font-size:13px;color:var(--text2)">You have ${myReqs.filter(r => r.status === 'proposal_sent').length} event proposal(s) awaiting your review.</div>
+    </div>
+    <button class="btn btn-primary" onclick="goNav('request-status')">Review Proposals</button>
+  </div>` : ''}
   <div class="card" id="client-upcoming-events" aria-live="polite" style="margin-bottom:20px">
     <div class="h4 mb-12">Upcoming Events</div>
     <div class="small" style="color:var(--text3)">Loading your upcoming events…</div>
@@ -5047,11 +5101,30 @@ window.EventFlowModules['shared'] = true;
     }
 
     function clientActivityLabel(activity) {
+      if (activity.description) return escapeHtml(activity.description);
       const action = String(activity.action || 'Activity update')
         .replace(/[_-]+/g, ' ')
         .replace(/\b\w/g, char => char.toUpperCase());
       return escapeHtml(action);
     }
+
+    async function openClientRequestFromActivity(requestId) {
+      try {
+        await syncClientEventRequests();
+      } catch (e) {
+        console.warn('Sync requests error:', e);
+      }
+      goNav('request-status');
+      if (requestId) {
+        setTimeout(() => {
+          const req = DB.eventRequests.find(r => String(r.id) === String(requestId) || String(r.requestId) === String(requestId));
+          if (req) {
+            viewRequestDrawer(req.id || requestId);
+          }
+        }, 80);
+      }
+    }
+    if (typeof window !== "undefined") window.openClientRequestFromActivity = openClientRequestFromActivity;
 
     async function loadClientRecentActivity() {
       const container = g('client-recent-activity');
@@ -5068,8 +5141,27 @@ window.EventFlowModules['shared'] = true;
         }
 
         container.innerHTML = `<div class="h4 mb-12">Recent Activity</div><div style="display:flex;flex-direction:column;gap:0">${activities.map(activity => {
-          const [page, linkLabel] = clientActivityPage(activity);
-          return `<div class="flex justify-between items-center gap-10" style="padding:12px 0;border-bottom:1px solid var(--border)"><div style="min-width:0"><div style="font-weight:600;font-size:13.5px">${clientActivityLabel(activity)}</div><time class="small" datetime="${escapeHtml(String(activity.timestamp || ''))}" style="color:var(--text3)">${escapeHtml(clientActivityTime(activity.timestamp))}</time></div><button class="btn btn-ghost btn-xs" onclick="goNav('${page}')">${linkLabel}</button></div>`;
+          const desc = activity.description || clientActivityLabel(activity);
+          const eventName = activity.eventName || '';
+          const status = activity.status || 'Active';
+          const badgeClass = reqBadge(status);
+          const reqId = activity.requestId || '';
+          const amountStr = activity.amount ? ` · ₹${Number(activity.amount).toLocaleString()}` : '';
+
+          return `<div class="flex justify-between items-center gap-10" style="padding:12px 0;border-bottom:1px solid var(--border)">
+            <div style="min-width:0;flex:1">
+              <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
+                <span style="font-weight:600;font-size:13.5px;color:var(--text)">${escapeHtml(desc)}</span>
+                <span class="badge badge-${badgeClass}" style="font-size:10.5px;padding:2px 6px">${escapeHtml(status.replace(/_/g, ' '))}</span>
+              </div>
+              <div class="small" style="color:var(--text2);margin-top:2px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+                ${eventName ? `<span>${escapeHtml(eventName)}</span>` : ''}
+                ${amountStr ? `<span>${escapeHtml(amountStr)}</span>` : ''}
+                <time datetime="${escapeHtml(String(activity.timestamp || ''))}" style="color:var(--text3)">${escapeHtml(clientActivityTime(activity.timestamp))}</time>
+              </div>
+            </div>
+            <button class="btn btn-ghost btn-xs" style="white-space:nowrap;margin-left:8px" onclick="${reqId ? `openClientRequestFromActivity('${escapeHtml(reqId)}')` : `goNav('request-status')`}">${escapeHtml('View Request Status')}</button>
+          </div>`;
         }).join('')}</div>`;
       } catch (error) {
         if (!g('client-recent-activity')) return;
@@ -7922,6 +8014,226 @@ window.EventFlowModules['shared'] = true;
       runWorkflowAction(() => apiSubmitPrivateOrganizerReview({ eventId, rating, comment }), 'Review submitted and published to the organizer profile', requestId);
     }
 
+
+    function openClientPaymentModal(requestId, eventId) {
+      const r = DB.eventRequests.find(x => String(x.id) === String(requestId) || String(x.requestId) === String(requestId) || (eventId && String(x.eventId) === String(eventId)));
+      if (!r) return;
+      const proposal = r.proposals?.[r.proposals.length - 1];
+      const totalAmount = Number(proposal?.amount || r.budget || 25000);
+      const depositRequired = proposal?.depositRequired !== undefined ? Number(proposal.depositRequired) : Math.round(totalAmount * 0.3);
+      const isAlreadyPaid = r.paymentStatus === 'fully_paid';
+      const isDepositPaid = r.paymentStatus === 'deposit_paid';
+      const bookingId = r.eventId ? `BKG-${r.eventId.toUpperCase()}` : `BKG-${r.requestId.toUpperCase()}`;
+      const outstandingBalance = isAlreadyPaid ? 0 : isDepositPaid ? Math.max(0, totalAmount - depositRequired) : totalAmount;
+
+      openModal('Payment & Booking Confirmation', `
+        <div style="background:rgba(59,130,246,0.1);border:1px solid rgba(59,130,246,0.3);padding:10px 14px;border-radius:8px;font-size:12px;color:var(--accent);font-weight:700;display:flex;align-items:center;gap:8px;margin-bottom:16px">
+          <span>🛡️</span> DEMO PAYMENT PROVIDER · SIMULATED TRANSACTION
+        </div>
+
+        <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:16px;border:1px solid var(--border)">
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:12px;color:var(--text3)">BOOKING ID</span>
+            <strong style="font-family:monospace;font-size:13px">${bookingId}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:12px;color:var(--text3)">EVENT TITLE</span>
+            <strong>${escapeHtml(r.title || r.eventName)}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:12px;color:var(--text3)">TOTAL PROPOSAL AMOUNT</span>
+            <strong style="color:var(--green)">₹${totalAmount.toLocaleString()}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between;margin-bottom:8px">
+            <span style="font-size:12px;color:var(--text3)">OUTSTANDING BALANCE</span>
+            <strong style="color:var(--yellow)">₹${outstandingBalance.toLocaleString()}</strong>
+          </div>
+          <div style="display:flex;justify-content:space-between">
+            <span style="font-size:12px;color:var(--text3)">PAYMENT STATUS</span>
+            <span class="badge badge-${r.paymentStatus === 'fully_paid' ? 'green' : r.paymentStatus === 'deposit_paid' ? 'blue' : 'yellow'}">${(r.paymentStatus || 'unpaid').replace('_', ' ').toUpperCase()}</span>
+          </div>
+        </div>
+
+        ${isAlreadyPaid ? `
+          <div style="background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.3);border-radius:8px;padding:14px;text-align:center;color:var(--green);font-weight:700;margin-bottom:16px">
+            ✅ Event is Fully Paid — Booking Confirmed!
+          </div>
+        ` : `
+          <div class="form-group mb-12">
+            <label class="form-label" style="font-weight:700">Choose Payment Amount</label>
+            <div style="display:flex;gap:10px">
+              ${!isDepositPaid ? `
+                <label style="flex:1;padding:12px;border:2px solid var(--accent);border-radius:8px;background:var(--surface);cursor:pointer;display:flex;flex-direction:column;gap:4px">
+                  <input type="radio" name="pay_option" value="deposit" checked>
+                  <span style="font-size:12px;font-weight:700">Advance Deposit</span>
+                  <span style="font-size:15px;font-weight:800;color:var(--accent)">₹${depositRequired.toLocaleString()}</span>
+                </label>
+              ` : ''}
+              <label style="flex:1;padding:12px;border:2px solid ${isDepositPaid ? 'var(--accent)' : 'var(--border)'};border-radius:8px;background:var(--surface);cursor:pointer;display:flex;flex-direction:column;gap:4px">
+                <input type="radio" name="pay_option" value="full" ${isDepositPaid ? 'checked' : ''}>
+                <span style="font-size:12px;font-weight:700">${isDepositPaid ? 'Pay Remaining Balance' : 'Pay Full Amount (100%)'}</span>
+                <span style="font-size:15px;font-weight:800;color:var(--green)">₹${outstandingBalance.toLocaleString()}</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group mb-12">
+            <label class="form-label">Simulated Payment Method</label>
+            <select class="form-control" id="mock-pay-method">
+              <option value="UPI">⚡ Simulated UPI (Instant Verification)</option>
+              <option value="NetBanking">🏦 Simulated Net Banking (State Bank / HDFC)</option>
+              <option value="CorporateCard">💳 Simulated Corporate Card (Visa/Mastercard)</option>
+            </select>
+          </div>
+        `}
+
+        <!-- TRANSACTION RECEIPT & AUDIT HISTORY -->
+        <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px">
+          <div style="font-size:12px;font-weight:700;margin-bottom:8px">📜 Transaction History & Receipts</div>
+          <div style="font-size:11.5px;color:var(--text3)">
+            ${(r.auditHistory || []).filter(a => String(a.action).toLowerCase().includes('payment') || String(a.action).toLowerCase().includes('deposit')).map(p => `
+              <div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border2)">
+                <span>${p.action}</span>
+                <strong style="color:var(--green)">Verified</strong>
+              </div>
+            `).join('') || '<div style="font-style:italic">Initial payment will record receipt and verify booking confirmation.</div>'}
+          </div>
+        </div>
+        <div id="pay-modal-err" style="color:var(--red);font-size:12px;display:none;margin-top:6px"></div>
+      `, isAlreadyPaid ? [
+        { lbl: 'Close', cls: 'btn-ghost', fn: 'closeModal()' }
+      ] : [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: `Pay via Demo Provider`, cls: 'btn-success', fn: `submitClientMockPayment('${r.id}', '${r.eventId || ''}')` }
+      ]);
+    }
+
+    async function submitClientMockPayment(requestId, eventId) {
+      const option = document.querySelector('input[name="pay_option"]:checked')?.value || 'deposit';
+      const method = v('mock-pay-method') || 'UPI';
+      const errEl = g('pay-modal-err');
+
+      try {
+        if (option === 'deposit') {
+          await apiPayDeposit(requestId, { paymentMethod: 'DEMO_PROVIDER', methodDetails: method });
+        } else {
+          if (eventId) {
+            await apiPayForWorkflowEvent(eventId);
+          } else {
+            await apiPayDeposit(requestId, { paymentMethod: 'DEMO_PROVIDER', methodDetails: method });
+          }
+        }
+        await syncWorkflowData();
+        closeModal();
+        toast('Payment simulated successfully! Booking confirmed.', 'success');
+        if (typeof _workflowRequestId !== 'undefined') renderWorkflowRequestDetails(_workflowRequestId);
+        else renderPage('request-status');
+      } catch (err) {
+        if (errEl) { errEl.textContent = err.message || 'Payment simulation failed.'; errEl.style.display = 'block'; }
+        else toast(err.message, 'error');
+      }
+    }
+
+    function openUpdateConfirmedEventModal(requestId, eventId) {
+      const r = DB.eventRequests.find(x => String(x.id) === String(requestId) || String(x.eventId) === String(eventId));
+      if (!r) return;
+      const ev = DB.events.find(e => String(e.id || e.eventId) === String(eventId || r.eventId)) || {};
+      const currentDate = r.eventDate || r.date || ev.date || '2026-11-20';
+      const currentVenue = r.venue || ev.location || '';
+      const currentCapacity = r.capacity || r.guests || ev.capacity || 50;
+      const currentBudget = r.budget || ev.budget || 50000;
+      const currentReqs = r.requirements || r.desc || ev.description || '';
+
+      openModal('Update Confirmed Event', `
+        <div style="font-size:12.5px;color:var(--text2);margin-bottom:14px">
+          Submit requested changes to this confirmed booking. Changes affecting dates, attendee count, or scope require organizer approval.
+        </div>
+        <div class="form-group mb-12">
+          <label class="form-label">Event Date *</label>
+          <input type="date" class="form-control" id="mod-date" value="${currentDate}">
+        </div>
+        <div class="form-group mb-12">
+          <label class="form-label">Venue / Location</label>
+          <input type="text" class="form-control" id="mod-venue" value="${escapeHtml(currentVenue)}">
+        </div>
+        <div class="form-group mb-12">
+          <label class="form-label">Expected Attendee Count</label>
+          <input type="number" class="form-control" id="mod-capacity" value="${currentCapacity}" min="1" oninput="calculateModCostClient(${currentCapacity}, ${currentBudget})">
+          <div id="mod-cost-hint-client" style="font-size:11.5px;color:var(--accent);margin-top:4px">Current budget: ₹${currentBudget.toLocaleString()}</div>
+        </div>
+        <div class="form-group mb-12">
+          <label class="form-label">Requirements / Scope Changes</label>
+          <textarea class="form-control" id="mod-reqs" rows="3">${escapeHtml(currentReqs)}</textarea>
+        </div>
+        <div class="form-group mb-12">
+          <label class="form-label">Reason for Change (Mandatory) *</label>
+          <textarea class="form-control" id="mod-reason" rows="2" placeholder="Explain why this change is requested (e.g. Schedule adjustment, increased team size)..."></textarea>
+        </div>
+        <div id="mod-err-msg-client" style="color:var(--red);font-size:12px;display:none;margin-top:6px"></div>
+      `, [
+        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: 'Submit Update Request', cls: 'btn-primary', fn: `submitEventModificationClient('${r.id}')` }
+      ]);
+    }
+
+    function calculateModCostClient(oldCap, oldBudget) {
+      const newCap = parseInt(g('mod-capacity')?.value, 10);
+      const hint = g('mod-cost-hint-client');
+      if (!hint) return;
+      if (newCap && oldCap && oldBudget) {
+        const recalc = Math.round((oldBudget / oldCap) * newCap);
+        hint.innerHTML = `Recalculated estimated cost: <strong>₹${recalc.toLocaleString()}</strong> (was ₹${oldBudget.toLocaleString()})`;
+      }
+    }
+
+    async function submitEventModificationClient(requestId) {
+      const date = v('mod-date');
+      const venue = v('mod-venue');
+      const capacity = parseInt(v('mod-capacity'), 10);
+      const requirements = v('mod-reqs');
+      const reason = v('mod-reason');
+      const errEl = g('mod-err-msg-client');
+
+      if (!reason || !reason.trim()) {
+        if (errEl) { errEl.textContent = 'A reason for the modification is mandatory.'; errEl.style.display = 'block'; }
+        return;
+      }
+
+      try {
+        await apiRequestEventModification(requestId, {
+          date,
+          venue,
+          capacity,
+          requirements,
+          reason: reason.trim(),
+        });
+        closeModal();
+        await syncWorkflowData();
+        toast('Modification request submitted for organizer review!', 'success');
+        if (typeof _workflowRequestId !== 'undefined') renderWorkflowRequestDetails(_workflowRequestId);
+        else renderPage('request-status');
+      } catch (err) {
+        if (errEl) { errEl.textContent = err.message || 'Unable to submit update request.'; errEl.style.display = 'block'; }
+        else toast(err.message, 'error');
+      }
+    }
+
+    async function respondToEventModificationClient(requestId, modId, action) {
+      let reason = '';
+      if (action === 'reject') {
+        reason = prompt('Enter a reason for declining the modification:') || 'Declined';
+        if (!reason.trim()) return;
+      }
+      try {
+        await apiRespondToEventModification(requestId, modId, { action, reason });
+        await syncWorkflowData();
+        toast(`Modification ${action === 'approve' ? 'approved' : 'declined'} successfully!`, 'success');
+        if (typeof _workflowRequestId !== 'undefined') renderWorkflowRequestDetails(_workflowRequestId);
+        else renderPage('request-status');
+      } catch (err) {
+        toast(err.message || 'Unable to respond to modification.', 'error');
+      }
+    }
     function viewWorkflowRequestDrawer(id) {
       _workflowRequestId = String(id);
       _workflowReturnPage = ['event-requests', 'request-status', 'dashboard', 'my-events', 'ongoing-events', 'completed-events'].includes(_currentPage) ? _currentPage : 'request-status';
@@ -7952,15 +8264,23 @@ window.EventFlowModules['shared'] = true;
       const plan = (DB.eventPlans || []).find(item => item.eventPlanId === r.activeEventPlanId)
         || (DB.eventPlans || []).filter(item => item.requestId === r.requestId).sort((a, b) => (b.revision || 0) - (a.revision || 0))[0];
       const organizerRole = CU.role === 'organizer';
+      const isNegotiating = ['counteroffer_received', 'changes_requested', 'plan_revision_requested'].includes(r.status) || (r.negotiations && r.negotiations.length > 0);
+      const isAccepted = ['awaiting_client', 'confirmed', 'completed'].includes(r.status) || (r.proposals && r.proposals.some(p => p.status === 'accepted'));
+      const isPaymentPending = ['awaiting_client'].includes(r.status) || r.paymentStatus === 'deposit_pending' || r.paymentStatus === 'deposit_paid';
+      const isConfirmed = ['confirmed', 'completed'].includes(r.status);
+      const isCompleted = r.status === 'completed';
+
       const timeline = [
-        ['Request sent', true],
-        ['Organizer review', !['submitted', 'pending'].includes(r.status)],
-        ['Budget and date agreed', ['planning', 'plan_submitted', 'plan_revision_requested', 'confirmed'].includes(r.status)],
-        ['Event plan submitted', ['plan_submitted', 'plan_revision_requested', 'confirmed'].includes(r.status)],
-        ['Plan approved', ['confirmed', 'approved', 'completed'].includes(r.status)],
-        ['Ongoing event', ['confirmed', 'approved', 'completed'].includes(r.status)],
-        ['Event completed', r.status === 'completed'],
+        ['1. Submitted', true],
+        ['2. Under Review', !['submitted', 'pending'].includes(r.status)],
+        ['3. Proposal Sent', ['proposal_sent', 'planning', 'awaiting_client', 'confirmed', 'completed'].includes(r.status) || (r.proposals && r.proposals.length > 0)],
+        ['4. Negotiation', isNegotiating],
+        ['5. Accepted', isAccepted],
+        ['6. Payment Pending', isPaymentPending || isConfirmed],
+        ['7. Confirmed', isConfirmed],
+        ['8. Completed', isCompleted],
       ];
+
       const currentChange = [...(r.negotiations || [])].reverse().find(item => item.action === 'changes_requested');
       const plans = (DB.eventPlans || []).filter(item => item.requestId === r.requestId).sort((a, b) => (a.revision || 0) - (b.revision || 0));
       const organizerActions = ['submitted', 'pending', 'under_review', 'info_requested'].includes(r.status)
@@ -7970,11 +8290,14 @@ window.EventFlowModules['shared'] = true;
         : ['planning', 'plan_revision_requested'].includes(r.status)
         ? `<button class="btn btn-primary w-full" style="margin-top:16px" onclick="openWorkflowPlanModal('${r.id}')">${r.status === 'plan_revision_requested' ? 'Edit and Resubmit Plan' : 'Create Event Plan'}</button>`
         : '';
-      const clientActions = r.status === 'changes_requested'
-        ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px"><button class="btn btn-success" onclick="respondToWorkflowChanges('${r.id}','accept_changes')">Accept Changes</button><button class="btn btn-danger" onclick="respondToWorkflowChanges('${r.id}','reject_changes')">Reject Changes</button><button class="btn btn-primary" onclick="openWorkflowCounterofferModal('${r.id}')">Send Counteroffer</button></div>`
-        : r.status === 'plan_submitted' && plan?.approvalStatus === 'pending'
-        ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px"><button class="btn btn-success" onclick="reviewWorkflowPlan('${plan.eventPlanId}','approved','${r.id}')">Accept Plan</button><button class="btn btn-primary" onclick="openWorkflowPlanRevisionModal('${plan.eventPlanId}','${r.id}')">Request New Plan</button></div>`
+      const clientCancelBtn = (CU.role === 'client' && !['cancelled', 'withdrawn', 'rejected', 'completed'].includes(r.status) && !r.eventId)
+        ? `<button class="btn btn-danger btn-sm" onclick="openClientCancelRequestModal('${r.id}')">Cancel Request</button>`
         : '';
+      const clientActions = r.status === 'changes_requested'
+        ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px"><button class="btn btn-success" onclick="respondToWorkflowChanges('${r.id}','accept_changes')">Accept Changes</button><button class="btn btn-danger" onclick="respondToWorkflowChanges('${r.id}','reject_changes')">Reject Changes</button><button class="btn btn-primary" onclick="openWorkflowCounterofferModal('${r.id}')">Send Counteroffer</button>${clientCancelBtn}</div>`
+        : r.status === 'plan_submitted' && plan?.approvalStatus === 'pending'
+        ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px"><button class="btn btn-success" onclick="reviewWorkflowPlan('${plan.eventPlanId}','approved','${r.id}')">Accept Plan</button><button class="btn btn-primary" onclick="openWorkflowPlanRevisionModal('${plan.eventPlanId}','${r.id}')">Request New Plan</button>${clientCancelBtn}</div>`
+        : clientCancelBtn ? `<div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px">${clientCancelBtn}</div>` : '';
       const negotiationHtml = (r.negotiations || []).map(item => `<div style="padding:10px;border-left:3px solid var(--accent);background:var(--surface2);border-radius:6px;margin-top:8px"><strong>${workflowHtml(String(item.action || '').replaceAll('_', ' '))}</strong><div style="font-size:12px;color:var(--text2);margin-top:4px">${workflowHtml(item.reason)}${item.budget ? ` · Budget ₹${Number(item.budget).toLocaleString()}` : ''}${item.eventDate ? ` · Date ${workflowHtml(item.eventDate)}` : ''}</div></div>`).join('');
       const planHtml = plan ? `<div style="margin-top:12px;padding:14px;background:var(--surface2);border-radius:10px">
         <div style="display:flex;justify-content:space-between;gap:8px"><strong>${workflowHtml(plan.title)} · Revision ${plan.revision || 1}</strong><span class="badge badge-${plan.approvalStatus === 'approved' ? 'green' : plan.approvalStatus === 'revision_requested' ? 'yellow' : 'blue'}">${workflowHtml(String(plan.approvalStatus || 'pending').replaceAll('_', ' '))}</span></div>
@@ -8013,8 +8336,33 @@ window.EventFlowModules['shared'] = true;
         <h3 style="margin:0 0 10px">Ongoing Event Workflow</h3>
         <div class="info-row"><span class="info-label">Event status</span><span class="info-value">${workflowHtml(event.status)}</span></div>
         <div class="info-row"><span class="info-label">Payment status</span><span class="info-value" style="color:${isPaid ? 'var(--green)' : 'var(--yellow)'}">${isPaid ? 'Paid' : 'Unpaid'}</span></div>
-        ${event.status === 'ongoing' && !isPaid ? `<div style="margin-top:10px"><strong>Final agreed amount: ₹${Number(plan?.budget || r.budget || 0).toLocaleString()}</strong><div><button class="btn btn-primary" style="margin-top:8px" onclick="payWorkflowEvent('${eventId}','${r.id}',${Number(plan?.budget || r.budget || 0)})">Pay Now</button></div></div>` : ''}
-        ${event.status === 'ongoing' && CU.role === 'client' ? `<button class="btn btn-danger" style="margin-top:14px" onclick="openWorkflowCancellation('${eventId}')">Cancel Event</button><p class="small mt-8">Cancellation requires at least 14 days’ notice. The fee and refund are shown before confirmation.</p>` : ''}
+        ${event.status === 'ongoing' && !isPaid ? `<div style="margin-top:10px"><strong>Final agreed amount: ₹${Number(plan?.budget || r.budget || 0).toLocaleString()}</strong><div style="display:flex;gap:10px;margin-top:8px"><button class="btn btn-primary" onclick="openClientPaymentModal(r.id, eventId)">💳 Pay Now / Booking Confirmation</button></div></div>` : ''}
+        ${isPaid ? `<div style="margin-top:10px"><button class="btn btn-ghost btn-sm" onclick="openClientPaymentModal(r.id, eventId)">📜 View Payment Receipt & Transactions</button></div>` : ''}
+        <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap">
+          ${event.status === 'ongoing' ? `<button class="btn btn-primary btn-sm" onclick="openUpdateConfirmedEventModal(r.id, eventId)">✏️ Update Event</button>` : ''}
+          ${event.status === 'ongoing' && CU.role === 'client' ? `<button class="btn btn-danger btn-sm" onclick="openWorkflowCancellation('${eventId}')">🚫 Cancel Event</button>` : ''}
+        </div>
+        ${(r.eventModifications && r.eventModifications.length > 0) ? `
+          <div style="background:var(--surface);border-radius:10px;padding:14px;border:1px solid var(--border);margin-top:14px">
+            <div style="font-weight:700;font-size:13px;margin-bottom:8px">📝 Event Modifications (${r.eventModifications.length})</div>
+            ${r.eventModifications.map(mod => `
+              <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px;margin-bottom:8px;font-size:12px">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                  <span style="font-weight:600">Requested by ${mod.requesterRole === 'client' ? 'Client' : 'Organizer'}</span>
+                  <span class="badge badge-${mod.status === 'approved' ? 'green' : mod.status === 'rejected' ? 'red' : 'yellow'}">${mod.status.replace('_', ' ')}</span>
+                </div>
+                <div style="color:var(--text2);margin-bottom:4px"><strong>Reason:</strong> ${escapeHtml(mod.reason || '—')}</div>
+                <div style="font-size:11px;color:var(--text3);margin-bottom:6px">Date: ${mod.newValues?.date || '—'} · Capacity: ${mod.newValues?.capacity || '—'} · Budget: ₹${(mod.newValues?.budget || 0).toLocaleString()}</div>
+                ${mod.status === 'pending_approval' && mod.requesterRole === 'organizer' ? `
+                  <div style="display:flex;gap:8px;margin-top:8px">
+                    <button class="btn btn-success btn-xs" onclick="respondToEventModificationClient(r.id, '${mod.id}', 'approve')">✓ Approve Changes</button>
+                    <button class="btn btn-danger btn-xs" onclick="respondToEventModificationClient(r.id, '${mod.id}', 'reject')">✕ Decline Changes</button>
+                  </div>
+                ` : mod.status === 'pending_approval' ? '<div style="font-size:11px;color:var(--accent)">Awaiting organizer review</div>' : ''}
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
         ${renderWorkflowCancellation(r.cancellation || event.cancellation)}
         ${renderWorkflowFileReports(eventId)}
         ${completionReportHtml}
@@ -8039,7 +8387,7 @@ window.EventFlowModules['shared'] = true;
           <div class="info-row"><span class="info-label">Event type</span><span class="info-value">${workflowHtml(r.eventType || r.type)}</span></div>
         </div>
         <div style="margin:12px 0"><strong>Event details</strong><p style="white-space:pre-wrap;color:var(--text2);line-height:1.6">${workflowHtml(r.requirements || r.desc || '—')}</p></div>
-        ${r.status === 'rejected' && r.rejectionReason ? `<div style="padding:12px;background:var(--red-dim);margin:12px 0"><strong>Reason for declining</strong><p style="margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere">${workflowHtml(r.rejectionReason)}</p></div>` : ''}
+        ${r.status === 'rejected' && r.rejectionReason ? `<div style="padding:12px;background:var(--red-dim);margin:12px 0;border-radius:8px"><strong style="color:var(--red)">&#10005; Reason for declining</strong><p style="margin:6px 0 0;white-space:pre-wrap;overflow-wrap:anywhere">${workflowHtml(r.rejectionReason)}</p>${r.rejectionComments ? `<p style="margin:6px 0 0;font-size:12px;color:var(--text2)"><strong>Additional comments:</strong> ${workflowHtml(r.rejectionComments)}</p>` : ''}</div>` : ''}
         ${currentChange ? `<div style="padding:12px;border-radius:8px;background:rgba(245,158,11,.1);margin:12px 0"><strong>Organizer requested changes</strong><div style="font-size:13px;margin-top:5px">${workflowHtml(currentChange.reason)}</div>${currentChange.budget ? `<div>Proposed budget: ₹${Number(currentChange.budget).toLocaleString()}</div>` : ''}${currentChange.eventDate ? `<div>Proposed date: ${workflowHtml(currentChange.eventDate)}</div>` : ''}</div>` : ''}
         <div style="margin-top:16px"><strong>Event plan</strong>${planHtml}</div>
         ${renderWorkflowEventPolicy(r.policySnapshot || workflowEventPolicy)}
@@ -8305,6 +8653,7 @@ window.EventFlowModules['shared'] = true;
     <div class="label mb-8">Description</div>
     <p style="font-size:13.5px;color:var(--text2);line-height:1.7">${r.desc}</p>
     ${r.status === 'pending' ? `<div class="flex gap-8 mt-20"><button class="btn btn-success w-full" onclick="closeDrawer();approveReq(${r.id})">✓ Accept Event</button><button class="btn btn-danger w-full" onclick="closeDrawer();rejectReq(${r.id})">✕ Decline</button></div>` : ''}
+    ${CU.role === 'client' && !['cancelled', 'withdrawn', 'rejected', 'completed'].includes(r.status) ? `<div class="mt-20"><button class="btn btn-danger w-full" onclick="closeDrawer();openClientCancelRequestModal('${r.id}')">Cancel Request</button></div>` : ''}
   `);
     }
     function approveReq(id) {
@@ -8452,6 +8801,7 @@ window.EventFlowModules['shared'] = true;
           <div class="small mb-8">${r.type} &middot; ${r.guests} guests &middot; ${r.date}</div>
           <p style="font-size:13px;color:var(--text2);line-height:1.6;margin-bottom:12px">${r.desc}</p>
           <span class="badge badge-${reqBadge(r.status)}">${r.status === 'approved' ? 'Accepted' : r.status}</span>
+          ${r.status === 'rejected' && r.rejectionReason ? `<div style="margin-top:8px;padding:8px 12px;background:var(--red-dim);border-radius:6px;font-size:12.5px"><strong style="color:var(--red)">Declined:</strong> ${escapeHtml(r.rejectionReason)}${r.rejectionComments ? `<div class="small mt-4" style="color:var(--text2)">${escapeHtml(r.rejectionComments)}</div>` : ''}</div>` : ''}
         </div>
         <div style="text-align:right;flex-shrink:0;margin-left:20px">
           <div style="font-size:22px;font-weight:800;color:var(--green)">&#8377;${r.budget.toLocaleString()}</div>
@@ -8460,8 +8810,8 @@ window.EventFlowModules['shared'] = true;
       </div>
       <div class="flex gap-8 mt-14">
         <button class="btn btn-ghost btn-sm" onclick="viewRequestDrawer('${r.id}')">View Details</button>
-        ${r.status === 'proposal_sent' && r.proposals?.[r.proposals.length - 1]?.status === 'pending_client' ? `<button class="btn btn-primary btn-sm" onclick="openClientPlanReview('${r.id}')">Review Plan</button>` : ''}
-        ${r.status === 'pending' ? `<button class="btn btn-danger btn-sm" onclick="cancelReq('${r.id}')">Cancel</button>` : ''}
+        ${r.status === 'proposal_sent' ? `<button class="btn btn-primary btn-sm" onclick="openClientPlanReview('${r.id}')">Review Plan</button>` : ''}
+        ${!['cancelled', 'withdrawn', 'rejected', 'completed'].includes(r.status) ? `<button class="btn btn-danger btn-sm" onclick="openClientCancelRequestModal('${r.id}')">Cancel</button>` : ''}
       </div>
     </div>`).join('')}</div>`}`;
       }
@@ -8469,37 +8819,151 @@ window.EventFlowModules['shared'] = true;
 
     function openClientPlanReview(id) {
       const request = DB.eventRequests.find(item => String(item.id) === String(id));
-      const proposal = request?.proposals?.[request.proposals.length - 1];
-      if (!request || !proposal || request.status !== 'proposal_sent' || proposal.status !== 'pending_client') {
-        toast('This plan is no longer available for review.', 'error');
+      if (!request || request.status !== 'proposal_sent') {
+        toast('This proposal is no longer available for review.', 'error');
         return;
       }
+      let proposal = request.proposals?.[request.proposals.length - 1];
+      if (!proposal) {
+        proposal = {
+          version: request.currentProposalVersion || 1,
+          amount: request.budget || 25000,
+          depositRequired: Math.round((request.budget || 25000) * 0.3),
+          status: 'pending_client',
+          terms: request.desc || 'Standard event terms apply.',
+        };
+      }
+      if (!proposal.eventPlan && proposal.terms) {
+        proposal.eventPlan = proposal.terms;
+      }
 
-      openModal('Review Proposed Plan', `
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;font-size:13px">
-          <div><div class="small">PROPOSED PRICE</div><strong style="color:var(--green)">&#8377;${Number(proposal.amount || 0).toLocaleString()}</strong></div>
-          <div><div class="small">REQUIRED DEPOSIT</div><strong>&#8377;${Number(proposal.depositRequired || 0).toLocaleString()}</strong></div>
-          <div><div class="small">EVENT DATE</div><strong>${escapeHtml(proposal.proposedDate || request.date || '—')}</strong></div>
-          <div><div class="small">VALID UNTIL</div><strong>${escapeHtml(proposal.validUntil || '—')}</strong></div>
+      const totalAmount = Number(proposal.amount || 0);
+      const depositRequired = Number(proposal.depositRequired || 0);
+      const fee = Number(proposal.organizerFee || Math.round(totalAmount * 0.2));
+      const taxes = Number(proposal.taxes || Math.round(totalAmount * 0.18));
+
+      openModal(`Review Proposed Plan (v${proposal.version || 1})`, `
+        <div style="max-height:65vh;overflow-y:auto;padding-right:6px">
+          <!-- PRICE & BREAKDOWN -->
+          <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid var(--border)">
+            <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Cost & Payment Breakdown</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:13px;margin-bottom:10px">
+              <div><div class="small">TOTAL PROPOSAL PRICE</div><strong style="color:var(--green);font-size:16px">&#8377;${totalAmount.toLocaleString()}</strong></div>
+              <div><div class="small">REQUIRED ADVANCE DEPOSIT</div><strong style="color:var(--accent);font-size:16px">&#8377;${depositRequired.toLocaleString()}</strong></div>
+              <div><div class="small">ORGANIZER FEE</div><strong>&#8377;${fee.toLocaleString()}</strong></div>
+              <div><div class="small">TAXES & GST</div><strong>&#8377;${taxes.toLocaleString()}</strong></div>
+            </div>
+            ${proposal.itemizedCosts ? `<div style="font-size:12px;color:var(--text2);padding-top:8px;border-top:1px solid var(--border2)"><strong>Itemized Costs:</strong> ${escapeHtml(proposal.itemizedCosts)}</div>` : ''}
+          </div>
+
+          <!-- PLAN & TIMELINE -->
+          <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid var(--border);font-size:13px;line-height:1.6">
+            <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Event Scope & Timeline</div>
+            <div style="margin-bottom:8px"><strong>Event Plan:</strong><br>${escapeHtml(proposal.eventPlan || proposal.terms || 'Standard deliverables apply.')}</div>
+            ${proposal.timeline ? `<div style="margin-bottom:8px"><strong>Execution Timeline:</strong><br>${escapeHtml(proposal.timeline)}</div>` : ''}
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px;font-size:12px">
+              ${proposal.includedServices ? `<div style="background:var(--surface);padding:8px 10px;border-radius:6px"><strong>Included:</strong> ${escapeHtml(proposal.includedServices)}</div>` : ''}
+              ${proposal.excludedServices ? `<div style="background:var(--surface);padding:8px 10px;border-radius:6px"><strong>Excluded:</strong> ${escapeHtml(proposal.excludedServices)}</div>` : ''}
+            </div>
+          </div>
+
+          <!-- CONSTRAINTS & CAPACITY -->
+          <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid var(--border);font-size:12.5px">
+            <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Capacity & Constraints</div>
+            <div><strong>Attendee Limit:</strong> ${proposal.attendeeCapacity || request.capacity || request.guests || 'Standard capacity'} guests</div>
+            ${proposal.constraints ? `<div style="margin-top:4px"><strong>Constraints:</strong> ${escapeHtml(proposal.constraints)}</div>` : ''}
+          </div>
+
+          <!-- PAYMENT SCHEDULE & CANCELLATION -->
+          <div style="background:var(--surface2);border-radius:10px;padding:14px;margin-bottom:14px;border:1px solid var(--border);font-size:12.5px">
+            <div style="font-size:11px;font-weight:700;color:var(--accent);text-transform:uppercase;letter-spacing:0.05em;margin-bottom:8px">Payment Schedule & Cancellation Terms</div>
+            <div style="margin-bottom:6px"><strong>Payment Schedule:</strong> ${escapeHtml(proposal.paymentSchedule || '30% Advance Deposit on Approval, 70% Final Balance upon Completion')}</div>
+            <div style="margin-bottom:6px"><strong>Cancellation Terms:</strong> ${escapeHtml(proposal.cancellationTerms || '14+ days notice: 10% cancellation fee, 90% refund, 5-7 business days processing')}</div>
+            <div><strong>Proposal Valid Until:</strong> ${escapeHtml(proposal.validUntil || '14 days')}</div>
+          </div>
+
+          ${(request.proposals && request.proposals.length > 1) ? `
+            <details style="font-size:12px;color:var(--text3);margin-bottom:12px">
+              <summary style="cursor:pointer;font-weight:600">Proposal Version History (${request.proposals.length - 1} prior versions)</summary>
+              <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+                ${request.proposals.slice(0, -1).map(p => `
+                  <div style="background:var(--surface);padding:6px 10px;border-radius:6px;display:flex;justify-content:space-between">
+                    <span>v${p.version}: ₹${Number(p.amount || 0).toLocaleString()} (Deposit ₹${Number(p.depositRequired || 0).toLocaleString()})</span>
+                    <span class="badge badge-gray">${p.status}</span>
+                  </div>
+                `).join('')}
+              </div>
+            </details>
+          ` : ''}
         </div>
-        <div style="background:var(--surface2);border-radius:10px;padding:14px;font-size:13px;line-height:1.6"><strong>Plan details</strong><br>${escapeHtml(proposal.terms || 'No additional plan details provided.')}</div>
       `, [
-        { lbl: 'Cancel', cls: 'btn-ghost', fn: 'closeModal()' },
-        { lbl: 'Request Reproposal', cls: 'btn-ghost', fn: `openReproposalReasonModal('${id}')` },
-        { lbl: 'Approve Plan', cls: 'btn-success', fn: `submitClientPlanDecision('${id}', 'accept')` },
+        { lbl: 'Withdraw Request', cls: 'btn-ghost', fn: `confirmWithdrawRequest('${id}')` },
+        { lbl: 'Decline', cls: 'btn-danger', fn: `openClientDeclineModal('${id}')` },
+        { lbl: 'Request Revision', cls: 'btn-ghost', fn: `openReproposalReasonModal('${id}')` },
+        { lbl: 'Accept & Proceed to Payment', cls: 'btn-success', fn: `acceptAndProceedToPayment('${id}')` },
       ]);
     }
 
+    function confirmWithdrawRequest(id) {
+      confirm2('Withdraw Request', 'Are you sure you want to withdraw this event request before booking? This will cancel the workflow.', () => {
+        submitClientPlanDecision(id, 'withdraw');
+      });
+    }
+
+    function openClientDeclineModal(id) {
+      openModal('Decline Event Proposal', `
+        <div class="form-group mb-12">
+          <label class="form-label" style="font-weight:700">Reason for Declining Proposal (Mandatory) *</label>
+          <textarea id="client-decline-reason" class="form-control" rows="4" placeholder="Explain why the proposal is declined (e.g. Budget constraints, deliverables don't meet needs, scheduled date change)..."></textarea>
+          <div id="client-decline-error" style="display:none;color:var(--red);font-size:12px;margin-top:6px"></div>
+        </div>
+      `, [
+        { lbl: 'Back', cls: 'btn-ghost', fn: `openClientPlanReview('${id}')` },
+        { lbl: 'Decline Proposal', cls: 'btn-danger', fn: `submitClientDeclineProposal('${id}')` },
+      ]);
+    }
+
+    async function submitClientDeclineProposal(id) {
+      const reason = (v('client-decline-reason') || '').trim();
+      const errEl = g('client-decline-error');
+      if (!reason) {
+        if (errEl) { errEl.textContent = 'Please provide a reason for declining.'; errEl.style.display = 'block'; }
+        return;
+      }
+      try {
+        await apiRespondToEventProposal(id, 'reject', reason);
+        closeModal();
+        await syncClientEventRequests();
+        renderPage('request-status');
+        toast('Proposal declined with feedback.', 'success');
+      } catch (err) {
+        if (errEl) { errEl.textContent = err.message; errEl.style.display = 'block'; }
+        else toast(err.message, 'error');
+      }
+    }
+
+    async function acceptAndProceedToPayment(id) {
+      try {
+        await apiRespondToEventProposal(id, 'accept', 'Accepted proposal and proceeding to payment.');
+        await syncClientEventRequests();
+        closeModal();
+        toast('Proposal accepted! Opening payment confirmation...', 'success');
+        openClientPaymentModal(id);
+      } catch (err) {
+        toast(err.message || 'Unable to accept proposal', 'error');
+      }
+    }
+
     function openReproposalReasonModal(id) {
-      openModal('Request Reproposal', `
+      openModal('Request Proposal Revision', `
         <div class="form-group">
-          <label class="form-label">Reason for changes <span style="color:var(--red)">*</span></label>
-          <textarea id="client-reproposal-reason" class="form-control" rows="4" placeholder="For example: change venue to Chennai, reduce the price, or change the date."></textarea>
+          <label class="form-label">Requested Changes & Counter-terms <span style="color:var(--red)">*</span></label>
+          <textarea id="client-reproposal-reason" class="form-control" rows="4" placeholder="Detail the modifications required (e.g. Reduce total price by 10%, change date to next Friday, include lighting package)..."></textarea>
           <div id="client-reproposal-error" style="display:none;color:var(--red);font-size:12px;margin-top:6px"></div>
         </div>
       `, [
         { lbl: 'Back', cls: 'btn-ghost', fn: `openClientPlanReview('${id}')` },
-        { lbl: 'Submit Request', cls: 'btn-primary', fn: `submitClientPlanDecision('${id}', 'request_revision')` },
+        { lbl: 'Submit Revision Request', cls: 'btn-primary', fn: `submitClientPlanDecision('${id}', 'request_revision')` },
       ]);
     }
 
@@ -8516,7 +8980,7 @@ window.EventFlowModules['shared'] = true;
         closeModal();
         await syncClientEventRequests();
         renderPage('request-status');
-        toast(decision === 'accept' ? 'Plan approved.' : 'Your reproposal request was sent to the organizer.', 'success');
+        toast(decision === 'accept' ? 'Plan approved.' : decision === 'withdraw' ? 'Request withdrawn.' : 'Your revision request was sent to the organizer.', 'success');
       } catch (error) {
         const message = error?.message || 'Unable to save your plan decision.';
         if (errorEl) { errorEl.textContent = message; errorEl.style.display = 'block'; }
@@ -8673,12 +9137,209 @@ window.EventFlowModules['shared'] = true;
   `);
     }
 
-    function cancelReq(id) {
-      confirm2('Cancel Request', 'Are you sure you want to cancel this event request?', () => {
-        const i = DB.eventRequests.findIndex(r => String(r.id) === String(id));
-        if (i > -1) { DB.eventRequests.splice(i, 1); renderPage('request-status'); toast('Request cancelled', 'info'); }
-      });
+    let _clientCancelPreview = null;
+    let _clientCancelReason = '';
+    let _clientCancelExplanation = '';
+    let _clientCancelSubmitting = false;
+
+    async function openClientCancelRequestModal(requestId) {
+      if (_clientCancelSubmitting) return;
+      _clientCancelPreview = null;
+      _clientCancelReason = '';
+      _clientCancelExplanation = '';
+
+      openModal('Cancel Event Request', `
+        <div style="padding:24px 0;text-align:center">
+          <div class="small" style="color:var(--text2)">Loading cancellation details…</div>
+        </div>
+      `, [{ lbl: 'Keep Request', cls: 'btn-ghost', fn: 'closeModal()' }], false);
+
+      try {
+        const res = await apiPreviewClientRequestCancellation(requestId);
+        const preview = workflowPayload(res);
+        _clientCancelPreview = preview;
+
+        const request = DB.eventRequests.find(r => String(r.id) === String(requestId) || String(r.requestId) === String(requestId));
+        const eventName = preview.eventName || request?.title || 'Event Request';
+        const currentStatus = preview.status || request?.status || 'Unknown';
+        const isPermitted = Boolean(preview.canCancel);
+        const paidAmount = Number(preview.paidAmount || 0);
+        const feePercent = Number(preview.cancellationFeePercent || 10);
+        const cancellationFee = Number(preview.cancellationFee || 0);
+        const refundAmount = Number(preview.refundAmount || 0);
+        const timeline = preview.refundProcessingTimeline || (paidAmount > 0 ? '5–7 business days (pending review)' : 'Not applicable (no payment charged)');
+        const deadlineText = preview.cancellationDeadline ? workflowPolicyDate(preview.cancellationDeadline) : (preview.isConfirmed ? '14 days prior to event start' : 'Prior to booking confirmation');
+
+        const modalBody = `
+          <div style="max-height:65vh;overflow-y:auto;padding-right:4px">
+            <div style="margin-bottom:14px">
+              <div style="font-size:16px;font-weight:700;color:var(--text);margin-bottom:4px">${workflowHtml(eventName)}</div>
+              <div><span class="badge badge-${reqBadge(currentStatus)}">${workflowHtml(currentStatus)}</span></div>
+            </div>
+
+            <!-- CANCELLATION POLICY & WINDOW -->
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;font-size:12.5px;line-height:1.6">
+              <div style="font-weight:700;color:var(--text);margin-bottom:4px">Cancellation Policy & Window</div>
+              <div><strong>Notice window:</strong> At least ${preview.minimumNoticeDays || 14} days before scheduled event start.</div>
+              <div><strong>Cancellation deadline:</strong> ${workflowHtml(deadlineText)}</div>
+              <div><strong>Policy terms:</strong> 10% fee applies to amount paid. 90% net refund. No fee if no payment was made.</div>
+            </div>
+
+            <!-- PERMITTED STATUS -->
+            ${isPermitted
+              ? `<div style="padding:8px 12px;border-radius:6px;background:rgba(34,197,94,0.12);color:var(--green);font-size:13px;font-weight:600;margin-bottom:14px">✓ Cancellation is currently permitted.</div>`
+              : `<div style="padding:8px 12px;border-radius:6px;background:rgba(239,68,68,0.12);color:var(--red);font-size:13px;font-weight:600;margin-bottom:14px">✕ Cancellation prohibited: ${workflowHtml(preview.unavailableReason || 'Cancellation window closed.')}</div>`}
+
+            <!-- FINANCIAL BREAKDOWN -->
+            <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:12px;margin-bottom:14px;display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px">
+              <div><div class="small" style="color:var(--text2)">AMOUNT PAID</div><strong>₹${paidAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></div>
+              <div><div class="small" style="color:var(--text2)">CANCELLATION FEE (${feePercent}%)</div><strong style="color:var(--red)">₹${cancellationFee.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></div>
+              <div><div class="small" style="color:var(--text2)">ESTIMATED REFUND</div><strong style="color:var(--green)">₹${refundAmount.toLocaleString(undefined, {minimumFractionDigits: 2})}</strong></div>
+              <div><div class="small" style="color:var(--text2)">REFUND TIMELINE</div><span>${workflowHtml(timeline)}</span></div>
+            </div>
+
+            <!-- REQUIRED REASON DROPDOWN -->
+            <div class="form-group mb-12">
+              <label class="form-label" style="font-weight:600" for="client-cancel-reason">Cancellation Reason *</label>
+              <select class="form-control" id="client-cancel-reason" required>
+                <option value="">Select a cancellation reason (Required)...</option>
+                <option value="Change of Plans">Change of Plans</option>
+                <option value="Budget Constraints">Budget Constraints</option>
+                <option value="Event Postponed">Event Postponed</option>
+                <option value="Organizer Issue">Organizer Issue</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+
+            <!-- OPTIONAL EXPLANATION -->
+            <div class="form-group mb-12">
+              <label class="form-label" style="font-weight:600" for="client-cancel-explanation">Additional Explanation (Optional)</label>
+              <textarea class="form-control" id="client-cancel-explanation" rows="2" placeholder="Provide any additional explanation or details..."></textarea>
+            </div>
+            <div id="client-cancel-error" role="alert" style="display:none;color:var(--red);font-size:12.5px;margin-top:6px;margin-bottom:8px"></div>
+          </div>
+        `;
+
+        const modalActions = isPermitted ? [
+          { lbl: 'Keep Request', cls: 'btn-ghost', fn: 'closeModal()' },
+          { lbl: 'Continue to Cancel', cls: 'btn-danger', fn: `proceedClientCancelStep2('${escapeHtml(requestId)}')` },
+        ] : [
+          { lbl: 'Keep Request', cls: 'btn-ghost', fn: 'closeModal()' },
+        ];
+
+        openModal('Cancel Event Request', modalBody, modalActions, false);
+      } catch (err) {
+        openModal('Cancellation Error', `
+          <div style="padding:16px 0;color:var(--red)">
+            <p>${workflowHtml(err.message || 'Unable to load cancellation details.')}</p>
+          </div>
+        `, [{ lbl: 'Close', cls: 'btn-ghost', fn: 'closeModal()' }], false);
+      }
     }
+    if (typeof window !== "undefined") window.openClientCancelRequestModal = openClientCancelRequestModal;
+
+    function proceedClientCancelStep2(requestId) {
+      const preview = _clientCancelPreview;
+      if (!preview || !preview.canCancel) return;
+
+      const reasonSelect = g('client-cancel-reason');
+      const reason = reasonSelect ? reasonSelect.value.trim() : '';
+      const explanationInput = g('client-cancel-explanation');
+      const explanation = explanationInput ? explanationInput.value.trim() : '';
+      const errEl = g('client-cancel-error');
+
+      if (!reason) {
+        if (errEl) {
+          errEl.textContent = 'Please select a required cancellation reason from the dropdown.';
+          errEl.style.display = 'block';
+        }
+        return;
+      }
+      if (errEl) errEl.style.display = 'none';
+
+      _clientCancelReason = reason;
+      _clientCancelExplanation = explanation;
+
+      const paidAmount = Number(preview.paidAmount || 0);
+      const cancellationFee = Number(preview.cancellationFee || 0);
+      const refundAmount = Number(preview.refundAmount || 0);
+
+      const confirmBody = `
+        <div style="max-height:65vh;overflow-y:auto;padding-right:4px">
+          <div class="alert alert-warning mb-14" style="background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.4);border-radius:8px;padding:12px;color:var(--text);font-size:13px;line-height:1.5">
+            <strong>⚠️ Final Confirmation:</strong> Cancelling this event request is permanent and cannot be undone.
+          </div>
+          <div style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:14px;margin-bottom:14px;font-size:13px;line-height:1.7">
+            <div style="font-weight:700;color:var(--accent);text-transform:uppercase;font-size:11px;letter-spacing:0.05em;margin-bottom:6px">Summary of Consequences</div>
+            <div><strong>Event / Request:</strong> ${workflowHtml(preview.eventName)}</div>
+            <div><strong>Current Status:</strong> <span class="badge badge-${reqBadge(preview.status)}">${workflowHtml(preview.status)}</span></div>
+            <div><strong>Selected Reason:</strong> ${workflowHtml(reason)}</div>
+            ${explanation ? `<div><strong>Explanation:</strong> ${workflowHtml(explanation)}</div>` : ''}
+            <div style="border-top:1px solid var(--border2);margin-top:8px;padding-top:8px">
+              <div>Amount Paid: <strong>₹${paidAmount.toFixed(2)}</strong></div>
+              <div>Cancellation Fee Deducted: <strong>₹${cancellationFee.toFixed(2)}</strong></div>
+              <div>Estimated Refund: <strong style="color:var(--green)">₹${refundAmount.toFixed(2)}</strong></div>
+              <div class="small" style="color:var(--text2);margin-top:4px">Refund Timeline: <em>${paidAmount > 0 ? '5–7 business days (pending review)' : 'No refund applicable (no payment charged)'}</em></div>
+            </div>
+          </div>
+          <p style="font-size:12.5px;color:var(--text2)">The organizer will be notified immediately upon cancellation.</p>
+          <div id="client-cancel-final-error" role="alert" style="display:none;color:var(--red);font-size:12.5px;margin-top:8px"></div>
+        </div>
+      `;
+
+      openModal('Confirm Cancellation', confirmBody, [
+        { lbl: 'Keep Request', cls: 'btn-ghost', fn: 'closeModal()' },
+        { lbl: 'Confirm Cancellation', cls: 'btn-danger', fn: `submitClientFinalCancellation('${escapeHtml(requestId)}')` },
+      ], false);
+    }
+    if (typeof window !== "undefined") window.proceedClientCancelStep2 = proceedClientCancelStep2;
+
+    async function submitClientFinalCancellation(requestId) {
+      const preview = _clientCancelPreview;
+      if (_clientCancelSubmitting || !preview) return;
+
+      _clientCancelSubmitting = true;
+      const buttons = g('modal-foot')?.querySelectorAll('button') || [];
+      buttons.forEach(b => { b.disabled = true; });
+      const errEl = g('client-cancel-final-error');
+      if (errEl) errEl.style.display = 'none';
+
+      try {
+        const payload = {
+          reason: _clientCancelReason,
+          explanation: _clientCancelExplanation,
+          expectedPaidAmount: preview.paidAmount,
+          policyAccepted: true,
+          acceptedPolicyVersion: preview.policy?.version || '2026-10-17.1',
+        };
+        const res = await apiCancelClientRequest(requestId, payload);
+        _clientCancelPreview = null;
+        closeModal();
+        closeDrawer();
+        const successMsg = res?.message || (preview.refundAmount > 0
+          ? `Event cancelled. Refund of ₹${preview.refundAmount.toFixed(2)} is pending review.`
+          : 'Event request cancelled successfully.');
+        toast(successMsg, 'success');
+        await syncClientEventRequests();
+        loadClientRecentActivity();
+        renderPage(_currentPage);
+      } catch (err) {
+        if (errEl) {
+          errEl.textContent = err.message || 'Unable to cancel event request. Please try again.';
+          errEl.style.display = 'block';
+        }
+        toast(err.message || 'Unable to cancel event request', 'error');
+      } finally {
+        _clientCancelSubmitting = false;
+        buttons.forEach(b => { b.disabled = false; });
+      }
+    }
+    if (typeof window !== "undefined") window.submitClientFinalCancellation = submitClientFinalCancellation;
+
+    function cancelReq(id) {
+      openClientCancelRequestModal(id);
+    }
+    if (typeof window !== "undefined") window.cancelReq = cancelReq;
 
     async function submitRequest() {
       const title = v('nr-title'), date = v('nr-date'), guests = v('nr-guests'), budget = v('nr-budget'), desc = v('nr-desc');
@@ -9968,6 +10629,8 @@ window.EventFlowModules['shared'] = true;
       const q = (sessionStorage.getItem('search_org_q') || '').trim().toLowerCase();
       const rating = sessionStorage.getItem('search_org_rating') || 'all';
       const category = sessionStorage.getItem('search_org_category') || 'all';
+      const city = sessionStorage.getItem('search_org_city') || 'all';
+      const pricing = sessionStorage.getItem('search_org_pricing') || 'all';
 
       let organizers = DB.users.filter(u => u.role === 'organizer');
 
@@ -9982,11 +10645,25 @@ window.EventFlowModules['shared'] = true;
         ].filter(Boolean).some(value => String(value).toLowerCase().includes(q)));
       }
       if (category !== 'all') {
-        organizers = organizers.filter(o => o.service === category || o.eventTypes?.includes(category));
+        organizers = organizers.filter(o => o.service === category || o.eventTypes?.includes(category) || (o.specializations && o.specializations.includes(category)));
+      }
+      if (city !== 'all') {
+        organizers = organizers.filter(o => (o.city || '').toLowerCase() === city.toLowerCase() || (o.location || '').toLowerCase() === city.toLowerCase());
       }
       if (rating !== 'all') {
         const minRating = parseFloat(rating);
         organizers = organizers.filter(o => (o.rating || 0) >= minRating);
+      }
+      if (pricing !== 'all') {
+        organizers = organizers.filter(o => {
+          const prices = (o.packages || []).map(p => Number(String(p.price || '').replace(/[^0-9]/g, ''))).filter(n => !isNaN(n) && n > 0);
+          const minPrice = prices.length ? Math.min(...prices) : 35000;
+          if (pricing === 'under_50k') return minPrice < 50000;
+          if (pricing === '50k_100k') return minPrice >= 50000 && minPrice <= 100000;
+          if (pricing === '100k_250k') return minPrice >= 100000 && minPrice <= 250000;
+          if (pricing === 'above_250k') return minPrice >= 250000;
+          return true;
+        });
       }
 
       return `
@@ -9997,24 +10674,39 @@ window.EventFlowModules['shared'] = true;
     </div>
   </div>
   
-  <div class="filter-row">
-    <div class="search-box input-group" style="flex:1;max-width:400px">
+  <div class="filter-row" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:16px">
+    <div class="search-box input-group" style="flex:1;min-width:240px;max-width:320px">
       <span class="input-icon">🔍</span>
-      <input class="form-control" id="search-org-q" placeholder="Search by organizer name or specialization..." value="${q}" oninput="searchOrganizers(this.value)">
+      <input class="form-control" id="search-org-q" placeholder="Search by organizer or specialty..." value="${q}" oninput="searchOrganizers(this.value)">
     </div>
-    <select class="form-control filter-select" id="search-org-rating" onchange="filterOrganizers()">
-      <option value="all">All Ratings</option>
-      <option value="4.5">4.5+ stars</option>
-      <option value="4">4+ stars</option>
-      <option value="3.5">3.5+ stars</option>
-    </select>
     <select class="form-control filter-select" id="search-org-category" onchange="filterOrganizers()">
       <option value="all">All Categories</option>
-      <option>Corporate Events</option>
-      <option>Conferences</option>
-      <option>Weddings & Social Events</option>
-      <option>Workshops</option>
-      <option>Product Launches</option>
+      <option ${category === 'Corporate Events' ? 'selected' : ''}>Corporate Events</option>
+      <option ${category === 'Conferences' ? 'selected' : ''}>Conferences</option>
+      <option ${category === 'Weddings & Social Events' ? 'selected' : ''}>Weddings & Social Events</option>
+      <option ${category === 'Workshops' ? 'selected' : ''}>Workshops</option>
+      <option ${category === 'Product Launches' ? 'selected' : ''}>Product Launches</option>
+    </select>
+    <select class="form-control filter-select" id="search-org-city" onchange="filterOrganizers()">
+      <option value="all">All Locations</option>
+      <option ${city === 'Mumbai' ? 'selected' : ''}>Mumbai</option>
+      <option ${city === 'New Delhi' ? 'selected' : ''}>New Delhi</option>
+      <option ${city === 'Bangalore' ? 'selected' : ''}>Bangalore</option>
+      <option ${city === 'Hyderabad' ? 'selected' : ''}>Hyderabad</option>
+      <option ${city === 'Chennai' ? 'selected' : ''}>Chennai</option>
+    </select>
+    <select class="form-control filter-select" id="search-org-rating" onchange="filterOrganizers()">
+      <option value="all">All Ratings</option>
+      <option value="4.5" ${rating === '4.5' ? 'selected' : ''}>4.5+ stars</option>
+      <option value="4" ${rating === '4' ? 'selected' : ''}>4+ stars</option>
+      <option value="3.5" ${rating === '3.5' ? 'selected' : ''}>3.5+ stars</option>
+    </select>
+    <select class="form-control filter-select" id="search-org-pricing" onchange="filterOrganizers()">
+      <option value="all">All Pricing</option>
+      <option value="under_50k" ${pricing === 'under_50k' ? 'selected' : ''}>Under ₹50,000</option>
+      <option value="50k_100k" ${pricing === '50k_100k' ? 'selected' : ''}>₹50,000 – ₹1,00,000</option>
+      <option value="100k_250k" ${pricing === '100k_250k' ? 'selected' : ''}>₹1,00,000 – ₹2,50,000</option>
+      <option value="above_250k" ${pricing === 'above_250k' ? 'selected' : ''}>₹2,50,000+</option>
     </select>
   </div>
   
@@ -10024,6 +10716,8 @@ window.EventFlowModules['shared'] = true;
     ${organizers.length === 0 ? `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No organizers found</div><p>Try adjusting your search filters</p></div>` : organizers.map(o => {
         const rt = Number(o.rating) || 0;
         const rv = Number(o.reviewCount) || 0;
+        const prices = (o.packages || []).map(p => Number(String(p.price || '').replace(/[^0-9]/g, ''))).filter(n => !isNaN(n) && n > 0);
+        const startPrice = prices.length ? Math.min(...prices) : 35000;
         const orgAv = o.avatarImage ? `
           <div style="width:56px;height:56px;border-radius:50%;overflow:hidden;flex-shrink:0;border:2px solid ${o.color || 'var(--accent)'}40;position:relative">
             <img src="${o.avatarImage}" alt="${o.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -10044,8 +10738,9 @@ window.EventFlowModules['shared'] = true;
           </div>
         </div>
         <p style="font-size:12px;color:var(--text2);line-height:1.5;margin:0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden">${o.bio || 'Professional event organizer with extensive industry experience.'}</p>
-        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap">
           <span style="background:var(--surface3);padding:3px 10px;border-radius:6px;font-size:11px;color:var(--text2)"><strong style="color:var(--text)">${rv}</strong> reviews</span>
+          <span style="background:rgba(16,185,129,0.12);color:var(--green);padding:3px 10px;border-radius:6px;font-size:11.5px;font-weight:700">Starts at ₹${startPrice.toLocaleString()}</span>
         </div>
         <button class="btn btn-primary btn-sm w-full" onclick="event.stopPropagation();viewOrganizerProfile('${o.id}')" style="justify-content:center;padding:8px;font-size:12.5px">View Profile & Request Event</button>
       </div>`;
@@ -10061,15 +10756,17 @@ window.EventFlowModules['shared'] = true;
     function filterOrganizers() {
       const rating = g('search-org-rating')?.value || 'all';
       const category = g('search-org-category')?.value || 'all';
+      const city = g('search-org-city')?.value || 'all';
+      const pricing = g('search-org-pricing')?.value || 'all';
       sessionStorage.setItem('search_org_rating', rating);
       sessionStorage.setItem('search_org_category', category);
+      sessionStorage.setItem('search_org_city', city);
+      sessionStorage.setItem('search_org_pricing', pricing);
       renderPage('find-organizers');
     }
 
     function filterOrganizerCity() {
-      const city = g('search-org-city')?.value || 'all';
-      sessionStorage.setItem('search_org_city', city);
-      renderPage('find-organizers');
+      filterOrganizers();
     }
 
     async function viewOrganizerProfile(organizerId) {
@@ -10092,40 +10789,6 @@ window.EventFlowModules['shared'] = true;
       const completed = Number(org.completedEvents) || 0;
       const specs = org.specializations || [];
       const packages = org.packages || [];
-
-      // Build an availability calendar for the next 6 weeks (simulated)
-      const today = new Date();
-      const availCalendar = [];
-      for (let w = 0; w < 6; w++) {
-        const weekStart = new Date(today);
-        weekStart.setDate(today.getDate() + w * 7 - today.getDay() + 1);
-        const days = Array.from({ length: 7 }, (_, i) => {
-          const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
-          // Deterministically mark some days as booked based on organizer ID hash
-          const dayHash = (d.getDate() + d.getMonth() * 31 + (org.organizerId?.charCodeAt(4) || 0)) % 7;
-          const isBooked = dayHash < 2; // ~28% booked
-          const isPast = d < today;
-          return { d, isBooked, isPast };
-        });
-        availCalendar.push(days);
-      }
-      const calHtml = `
-        <div style="margin-bottom:20px">
-          <div class="h4 mb-12">📅 Availability Calendar <span style="font-size:11px;font-weight:400;color:var(--text3)">— next 6 weeks</span></div>
-          <div style="display:flex;gap:12px;margin-bottom:10px;font-size:11px">
-            <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--green);border-radius:3px;display:inline-block"></span> Available</span>
-            <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--surface3);border-radius:3px;display:inline-block;border:1px solid var(--border)"></span> Booked</span>
-          </div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap">
-            ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div style="width:36px;text-align:center;font-size:10px;color:var(--text3);font-weight:600">${d}</div>`).join('')}
-          </div>
-          ${availCalendar.map(week => `<div style="display:flex;gap:4px;margin-top:4px">${week.map(({ d, isBooked, isPast }) => {
-            const bg = isPast ? 'var(--surface2)' : isBooked ? 'var(--surface3)' : 'rgba(5,150,105,0.15)';
-            const color = isPast ? 'var(--text3)' : isBooked ? 'var(--text3)' : 'var(--green)';
-            const border = isBooked ? '1px solid var(--border)' : 'none';
-            return `<div style="width:36px;height:32px;border-radius:6px;background:${bg};color:${color};border:${border};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600" title="${isPast ? 'Past' : isBooked ? 'Booked' : 'Available'}">${d.getDate()}</div>`;
-          }).join('')}</div>`).join('')}
-        </div>`;
 
       const orgModalAv = org.avatarImage
         ? `<div style="width:80px;height:80px;border-radius:14px;overflow:hidden;flex-shrink:0;border:2px solid ${org.color || 'var(--accent)'}40"><img src="${org.avatarImage}" alt="${escapeHtml(org.name)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>`
@@ -10181,7 +10844,7 @@ window.EventFlowModules['shared'] = true;
       </div>
     </div>` : ''}
 
-    ${calHtml}
+
 
     <div style="margin-bottom:20px">
       <div class="h4 mb-12">💬 Client Reviews</div>
@@ -10218,6 +10881,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     let eventRequestDraft = null;
+    let isSubmittingEventRequest = false;
 
     async function openRequestModal(organizerId, keepDraft = false) {
       try { await loadWorkflowEventPolicy(); }
@@ -10233,14 +10897,7 @@ window.EventFlowModules['shared'] = true;
       <div class="form-group"><label class="form-label">Expected Guests *</label><input class="form-control" id="req-guests" type="number" min="1" value="${escapeHtml(String(draft.capacity || ''))}" placeholder="100"></div>
       <div class="form-group"><label class="form-label">Event Date *</label><input class="form-control" id="req-date" type="date" value="${escapeHtml(draft.eventDate || '')}"></div>
       <div class="form-group"><label class="form-label">City *</label><input class="form-control" id="req-city" value="${escapeHtml(draft.city || org.city || '')}" placeholder="e.g., Mumbai"></div>
-      <div class="form-group"><label class="form-label">Start Time</label><input class="form-control" id="req-start-time" type="time" value="${escapeHtml(draft.startTime || '09:00')}"></div>
-      <div class="form-group"><label class="form-label">End Time</label><input class="form-control" id="req-end-time" type="time" value="${escapeHtml(draft.endTime || '18:00')}"></div>
       <div class="form-group"><label class="form-label">Budget (INR) *</label><input class="form-control" id="req-budget" type="number" min="1000" value="${escapeHtml(String(draft.budget || ''))}" placeholder="50000"></div>
-      <div class="form-group"><label class="form-label">Budget Flexibility</label><select class="form-control" id="req-budget-flex">
-        <option value="fixed" ${draft.budgetFlexibility === 'fixed' ? 'selected' : ''}>Fixed — No flexibility</option>
-        <option value="some" ${draft.budgetFlexibility === 'some' ? 'selected' : ''}>Some Flexibility (±10%)</option>
-        <option value="flexible" ${draft.budgetFlexibility === 'flexible' ? 'selected' : ''}>Flexible — Open to discussion</option>
-      </select></div>
       <div class="form-group" style="grid-column:1/-1"><label class="form-label">Preferred Venue (optional)</label><input class="form-control" id="req-venue" value="${escapeHtml(draft.venue || '')}" placeholder="Venue name, landmark, or area"></div>
       <div class="form-group" style="grid-column:1/-1"><label class="form-label">Event Description &amp; Requirements *</label><textarea class="form-control" id="req-desc" rows="4" placeholder="Describe your event vision, key requirements, special arrangements, theme, guest profile...">${escapeHtml(draft.requirements || '')}</textarea></div>
     </div>
@@ -10249,6 +10906,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function reviewEventRequest(organizerId) {
+      isSubmittingEventRequest = false;
       const eventName = v('req-title').trim();
       const eventType = v('req-type');
       const eventDate = v('req-date');
@@ -10257,9 +10915,6 @@ window.EventFlowModules['shared'] = true;
       const venue = v('req-venue').trim();
       const budget = Number(v('req-budget'));
       const city = v('req-city').trim();
-      const startTime = v('req-start-time') || '09:00';
-      const endTime = v('req-end-time') || '18:00';
-      const budgetFlexibility = v('req-budget-flex') || 'fixed';
       const todayDate = new Date().toISOString().slice(0, 10);
 
       if (!eventName || !eventDate || !city || !Number.isInteger(capacity) || capacity < 1 || !Number.isFinite(budget) || budget < 1000 || !requirements) {
@@ -10280,25 +10935,19 @@ window.EventFlowModules['shared'] = true;
         eventName,
         eventType,
         eventDate,
-        eventTime: startTime,
         capacity,
         city,
         requirements,
         venue,
         budget,
-        budgetFlexibility,
-        dateFlexibility: 'exact',
-        startTime,
-        endTime,
       };
       const items = [
         ['Event Title', eventName],
         ['Event Type', eventType],
         ['Date', eventDate],
-        ['Time', `${startTime} – ${endTime}`],
         ['City', city],
         ['Expected Guests', capacity],
-        ['Budget', `₹${budget.toLocaleString()} (${budgetFlexibility === 'fixed' ? 'Fixed' : budgetFlexibility === 'some' ? 'Some flexibility' : 'Flexible'})`],
+        ['Budget', `₹${budget.toLocaleString()}`],
         ['Preferred Venue', venue || '—'],
         ['Description', requirements],
       ];
@@ -10308,15 +10957,36 @@ window.EventFlowModules['shared'] = true;
       ]);
     }
 
-    async function submitEventRequest() {
-      if (!eventRequestDraft) return;
+    async function submitEventRequest(organizerId) {
+      if (!eventRequestDraft || isSubmittingEventRequest) return;
+      isSubmittingEventRequest = true;
+      const foot = typeof g === 'function' ? g('modal-foot') : null;
+      const submitBtn = foot && foot.querySelector ? foot.querySelector('.btn-primary') : (typeof document !== 'undefined' && document.querySelector ? document.querySelector('#modal-foot .btn-primary') : null);
+      const originalText = submitBtn ? submitBtn.textContent : '';
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'Submitting...';
+      }
       try {
         const response = await apiCreateEventRequest(eventRequestDraft);
         eventRequestDraft = null;
+        if (typeof syncWorkflowData === 'function') {
+          await syncWorkflowData();
+        }
         closeModal();
         toast(response?.message || 'Request sent to organizer!', 'success');
+        if (typeof renderPage === 'function' && typeof _currentPage !== 'undefined') {
+          await renderPage(_currentPage);
+        }
       } catch (error) {
-        toast(error?.message || 'Unable to submit the event request', 'error');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          submitBtn.textContent = originalText || 'Submit Request';
+        }
+        const errorMsg = error?.message || (Array.isArray(error?.data?.message) ? error.data.message.join(', ') : 'Unable to submit the event request');
+        toast(errorMsg, 'error');
+      } finally {
+        isSubmittingEventRequest = false;
       }
     }
 

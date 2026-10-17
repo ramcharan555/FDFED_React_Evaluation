@@ -183,4 +183,5 @@ test('organizer profiles show the event, review, reviewer name and rating', asyn
   assert.match(html, /By <strong>Michael Torres<\/strong>/);
   assert.match(html, /Clear planning &amp; great coordination\./);
   assert.match(html, /5\/5/);
+  assert.doesNotMatch(html, /Availability Calendar/);
 });

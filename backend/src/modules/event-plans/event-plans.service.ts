@@ -291,45 +291,33 @@ export class EventPlansService {
     )) {
       throw new BadRequestException('The organizer already has an event on this date. Request a revised plan.');
     }
+    if (this.db.eventRequests.some(other =>
+      other.requestId !== request.requestId &&
+      other.organizerId === request.organizerId &&
+      other.eventDate === request.eventDate &&
+      !['rejected', 'withdrawn', 'cancelled', 'expired', 'completed'].includes(other.status),
+    )) {
+      throw new BadRequestException('The organizer has another active request on this date. Request a revised plan.');
+    }
 
     plan.approvalStatus = 'approved';
     plan.status = 'approved';
-    const eventId = this.db.generateId('evt');
-    const event = {
-      eventId,
-      organizerId: request.organizerId,
-      clientId: request.clientId,
-      name: request.eventName,
-      category: request.eventType || 'Event',
-      date: request.eventDate,
-      time: '10:00',
-      location: request.venue || '',
-      capacity: request.capacity,
-      ticketPrice: 0,
-      status: 'ongoing' as const,
-      description: request.requirements || plan.description,
-      policySnapshot: request.policySnapshot,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
-    this.db.events.push(event);
-    plan.eventId = eventId;
-    request.eventId = eventId;
-    request.status = 'confirmed';
+    request.status = 'awaiting_client';
+    if (['not_sent', 'declined'].includes(request.agreementStatus)) request.agreementStatus = 'pending_signature';
     request.auditHistory.push({
       id: this.db.generateId('aud'),
-      action: `Final Event Plan Approved (Revision ${plan.revision || 1}); Event Moved to Ongoing`,
+      action: `Final Event Plan Approved (Revision ${plan.revision || 1}); Awaiting Agreement and Verified Deposit`,
       performedBy: userId || request.clientId,
       role,
       timestamp: new Date(),
-      details: { eventPlanId: plan.eventPlanId, eventId },
+      details: { eventPlanId: plan.eventPlanId },
     });
 
     const organizer = this.db.organizers.find(o => o.organizerId === plan.organizerId);
-    if (organizer) this.notify(organizer.userId, eventId, `The client approved the final plan for "${request.eventName}". The event is now ongoing.`, 'plan_approved');
+    if (organizer) this.notify(organizer.userId, undefined, `The client approved the final plan for "${request.eventName}". Booking awaits the signed agreement and verified deposit.`, 'plan_approved');
     const client = this.db.clients.find(c => c.clientId === plan.clientId);
-    if (client) this.notify(client.userId, eventId, `Your approved event "${request.eventName}" has moved to Ongoing Events.`, 'event_ongoing');
-    return { success: true, message: 'Final plan approved and event moved to ongoing', data: { plan, event } };
+    if (client) this.notify(client.userId, undefined, `Your final plan for "${request.eventName}" is approved. Review the agreement and complete verified payment before the booking is confirmed.`, 'plan_approved');
+    return { success: true, message: 'Final plan approved; booking awaits agreement and verified deposit', data: { plan, request } };
   }
 
   private notify(userId: string, eventId: string | undefined, message: string, type: string): void {

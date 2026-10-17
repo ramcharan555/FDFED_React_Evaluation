@@ -258,7 +258,7 @@ export default function LandingPage() {
           <span style={{"color": "var(--accent)", "fontFamily": "monospace", "fontSize": "11px"}}>Admin@123</span>
         </div>
       </div>
-      <p style={{"textAlign": "center", "fontSize": "13px", "color": "var(--text2)"}}>Don't have an account? <a href="#" onClick={event => legacyEvent("openRegisterModal()", event)} style={{"color": "var(--accent)"}}>Create one</a></p>
+      <p style={{"textAlign": "center", "fontSize": "13px", "color": "var(--text2)"}}>Don't have an account? <a href="#" id="create-account-link" onClick={event => legacyEvent("openRegisterModal()", event)} style={{"color": "var(--accent)", "fontWeight": "600"}}>Create New Account</a></p>
       <p style={{"textAlign": "center", "fontSize": "13px", "color": "var(--text2)", "marginTop": "12px"}}><a href="#" style={{"color": "var(--text2)"}} onClick={event => legacyEvent("event.preventDefault();showPage('landing');", event)}>← Back to Home</a></p>
     </div>
   </div>

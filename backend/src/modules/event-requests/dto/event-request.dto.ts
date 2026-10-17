@@ -75,13 +75,13 @@ export class CreateEventRequestDto extends EventPolicyAcknowledgementDto {
 
 export class UpdateEventRequestStatusDto {
   @ApiProperty({
-    description: 'New status for the request',
-    enum: ['submitted', 'pending', 'under_review', 'info_requested', 'proposal_sent', 'awaiting_client', 'confirmed', 'approved', 'rejected', 'cancelled', 'withdrawn', 'expired'],
+    description: 'The only generic status transition supported; use dedicated workflow actions for all others',
+    enum: ['under_review'],
     example: 'under_review',
   })
-  @IsEnum(['submitted', 'pending', 'under_review', 'info_requested', 'proposal_sent', 'awaiting_client', 'confirmed', 'approved', 'rejected', 'cancelled', 'withdrawn', 'expired'])
+  @IsIn(['under_review'])
   @IsNotEmpty()
-  status!: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'confirmed' | 'approved' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';
+  status!: 'under_review';
 }
 
 export class RequestMissingInfoDto {
@@ -128,6 +128,66 @@ export class SendProposalDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Event plan and execution details' })
+  @IsString()
+  @IsOptional()
+  eventPlan?: string;
+
+  @ApiPropertyOptional({ description: 'Execution timeline' })
+  @IsString()
+  @IsOptional()
+  timeline?: string;
+
+  @ApiPropertyOptional({ description: 'Organizer management fee in INR' })
+  @IsNumber()
+  @IsOptional()
+  organizerFee?: number;
+
+  @ApiPropertyOptional({ description: 'Itemized costs description or breakdown' })
+  @IsString()
+  @IsOptional()
+  itemizedCosts?: string;
+
+  @ApiPropertyOptional({ description: 'Taxes in INR' })
+  @IsNumber()
+  @IsOptional()
+  taxes?: number;
+
+  @ApiPropertyOptional({ description: 'Included services' })
+  @IsString()
+  @IsOptional()
+  includedServices?: string;
+
+  @ApiPropertyOptional({ description: 'Excluded services' })
+  @IsString()
+  @IsOptional()
+  excludedServices?: string;
+
+  @ApiPropertyOptional({ description: 'Attendee capacity limit' })
+  @IsInt()
+  @IsOptional()
+  attendeeCapacity?: number;
+
+  @ApiPropertyOptional({ description: 'Venue, resource, and budget constraints' })
+  @IsString()
+  @IsOptional()
+  constraints?: string;
+
+  @ApiPropertyOptional({ description: 'Payment schedule and terms' })
+  @IsString()
+  @IsOptional()
+  paymentSchedule?: string;
+
+  @ApiPropertyOptional({ description: 'Cancellation deadline and refund terms' })
+  @IsString()
+  @IsOptional()
+  cancellationTerms?: string;
+
+  @ApiPropertyOptional({ description: 'Additional conditions' })
+  @IsString()
+  @IsOptional()
+  conditions?: string;
 }
 
 export class ReviseProposalDto extends SendProposalDto {
@@ -167,6 +227,11 @@ export class RejectRequestDto {
   @IsOptional()
   @IsDateString()
   proposedDate?: string;
+
+  @ApiPropertyOptional({ description: 'Optional additional comments or context for rejection' })
+  @IsString()
+  @IsOptional()
+  comments?: string;
 }
 
 export class ClientResponseDto {
@@ -248,13 +313,61 @@ export class UpdatePaymentStatusDto {
 }
 
 export class ConfirmBookingDto {
-  @ApiPropertyOptional({ description: 'Force confirm agreement if verified out-of-band', example: true })
-  @IsBoolean()
-  @IsOptional()
-  agreementConfirmed?: boolean;
+}
 
-  @ApiPropertyOptional({ description: 'Force confirm deposit if verified out-of-band', example: true })
-  @IsBoolean()
+export class PayDepositDto {
+  @ApiPropertyOptional({ description: 'Payment method', example: 'DEMO_PROVIDER' })
+  @IsString()
   @IsOptional()
-  depositConfirmed?: boolean;
+  paymentMethod?: string;
+}
+
+export class RequestEventModificationDto {
+  @ApiPropertyOptional({ description: 'New proposed event date' })
+  @IsString()
+  @IsOptional()
+  date?: string;
+
+  @ApiPropertyOptional({ description: 'New proposed venue' })
+  @IsString()
+  @IsOptional()
+  venue?: string;
+
+  @ApiPropertyOptional({ description: 'New expected attendee count' })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  capacity?: number;
+
+  @ApiPropertyOptional({ description: 'New budget' })
+  @IsNumber()
+  @IsOptional()
+  budget?: number;
+
+  @ApiPropertyOptional({ description: 'New or updated requirements/services' })
+  @IsString()
+  @IsOptional()
+  requirements?: string;
+
+  @ApiPropertyOptional({ description: 'Updated services' })
+  @IsString()
+  @IsOptional()
+  services?: string;
+
+  @ApiProperty({ description: 'Reason for the requested changes' })
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
+}
+
+export class RespondToEventModificationDto {
+  @ApiProperty({ description: 'Approval decision', enum: ['approve', 'reject'] })
+  @IsEnum(['approve', 'reject'])
+  @IsNotEmpty()
+  action!: 'approve' | 'reject';
+
+  @ApiPropertyOptional({ description: 'Reason for rejection or approval note' })
+  @IsString()
+  @IsOptional()
+  reason?: string;
 }

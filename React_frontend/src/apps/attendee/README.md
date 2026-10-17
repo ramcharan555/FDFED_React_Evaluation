@@ -13,4 +13,5 @@ Routes: /attendee.
 - `hooks/`: Role-specific React hooks.
 - `pages/`: Role screens.
 - `styles/`: Role stylesheets.
-- `utils/`: Role helper functions.
+- `utils/`: Role helper functions.                                                           
+       

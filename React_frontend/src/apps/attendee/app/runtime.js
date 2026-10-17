@@ -2134,6 +2134,9 @@ window.EventFlowModules['shared'] = true;
       toast('Signed out successfully', 'info');
     }
     function openRegisterModal() {
+      if (window.EventFlowOrganizerRegistration && typeof window.EventFlowOrganizerRegistration.openRegisterModal === 'function') {
+        return window.EventFlowOrganizerRegistration.openRegisterModal();
+      }
       openModal('Create New Account', `
     <div class="grid-2">
       <div class="form-group"><label class="form-label">Full Name *</label><input class="form-control" id="rg-name" placeholder="John Doe"></div>

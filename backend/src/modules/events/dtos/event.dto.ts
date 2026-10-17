@@ -1,6 +1,6 @@
-import { IsBoolean, IsString, IsNotEmpty, IsOptional, IsNumber, IsIn, Min, MinLength, MaxLength } from 'class-validator';
+import { ArrayMaxSize, IsArray, IsBoolean, IsString, IsNotEmpty, IsOptional, IsNumber, IsIn, Min, MinLength, MaxLength, ValidateNested } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
-import { Transform } from 'class-transformer';
+import { Transform, Type } from 'class-transformer';
 import { EventPolicyAcknowledgementDto } from '../../../common/event-policy';
 
 export class CancelClientEventDto extends EventPolicyAcknowledgementDto {
@@ -70,6 +70,7 @@ export class CreateEventDto {
     example: 500,
   })
   @IsNumber()
+  @Min(1)
   @IsNotEmpty()
   capacity!: number;
 
@@ -78,6 +79,7 @@ export class CreateEventDto {
     example: 99,
   })
   @IsNumber()
+  @Min(0)
   @IsNotEmpty()
   ticketPrice!: number;
 
@@ -105,6 +107,13 @@ export class CreateEventDto {
   @IsBoolean() @IsOptional() waitlistEnabled?: boolean;
 }
 
+export class EventPreparationTaskDto {
+  @IsString() @IsOptional() taskId?: string;
+  @IsString() @IsNotEmpty() @MaxLength(200) title!: string;
+  @IsString() @IsNotEmpty() deadline!: string;
+  @IsIn(['pending', 'in_progress', 'completed']) status!: 'pending' | 'in_progress' | 'completed';
+}
+
 export class UpdateEventDto {
   @IsString() @IsOptional() description?: string;
   @IsString() @IsOptional() city?: string;
@@ -115,6 +124,7 @@ export class UpdateEventDto {
   })
   @IsString()
   @IsOptional()
+  @IsNotEmpty()
   name?: string;
 
   @ApiProperty({
@@ -123,6 +133,7 @@ export class UpdateEventDto {
   })
   @IsString()
   @IsOptional()
+  @IsNotEmpty()
   category?: string;
 
   @ApiProperty({
@@ -131,6 +142,7 @@ export class UpdateEventDto {
   })
   @IsString()
   @IsOptional()
+  @IsNotEmpty()
   date?: string;
 
   @ApiProperty({
@@ -139,6 +151,7 @@ export class UpdateEventDto {
   })
   @IsString()
   @IsOptional()
+  @IsNotEmpty()
   time?: string;
 
   @ApiProperty({
@@ -147,6 +160,7 @@ export class UpdateEventDto {
   })
   @IsString()
   @IsOptional()
+  @IsNotEmpty()
   location?: string;
 
   @ApiProperty({
@@ -155,6 +169,7 @@ export class UpdateEventDto {
   })
   @IsNumber()
   @IsOptional()
+  @Min(1)
   capacity?: number;
 
   @ApiProperty({
@@ -163,6 +178,7 @@ export class UpdateEventDto {
   })
   @IsNumber()
   @IsOptional()
+  @Min(0)
   ticketPrice?: number;
 
   @ApiProperty({
@@ -179,6 +195,12 @@ export class UpdateEventDto {
   @IsString() @IsOptional() cancellationDeadline?: string;
   @IsString() @IsOptional() eligibility?: string;
   @IsBoolean() @IsOptional() waitlistEnabled?: boolean;
+
+  @IsString() @IsOptional() @MinLength(10) @MaxLength(1000) changeReason?: string;
+
+  @IsArray() @ArrayMaxSize(50) @ValidateNested({ each: true }) @Type(() => EventPreparationTaskDto)
+  @IsOptional()
+  preparationTasks?: EventPreparationTaskDto[];
 }
 
 export class EventResponseDto {

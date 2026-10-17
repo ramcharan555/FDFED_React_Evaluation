@@ -1,11 +1,14 @@
-import { Controller, Post, Body, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Body, Param, Query, HttpCode, HttpStatus, UseGuards } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { ThrottlerGuard, Throttle } from '@nestjs/throttler';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { ChangePasswordDto, RegisterDto } from './dto/register.dto';
+import { SubmitOrganizerApplicationDto, ReviewOrganizerApplicationDto } from './dto/organizer-application.dto';
 import { RoleGuard } from '../../common/guards/role.guard';
 import { UserId } from '../../common/decorators/user-id.decorator';
+import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
+import { UserRole } from '../../common/constants';
 
 @ApiTags('auth')
 @Controller('api/auth')
@@ -17,6 +20,38 @@ export class AuthController {
   @Throttle({ default: { limit: 5, ttl: 60000 } })
   register(@Body() dto: RegisterDto) {
     return this.authService.register(dto);
+  }
+
+  @Post('organizer-application')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Submit organizer application for verification' })
+  submitOrganizerApplication(@Body() dto: SubmitOrganizerApplicationDto) {
+    return this.authService.submitOrganizerApplication(dto);
+  }
+
+  @Get('organizer-application/:ref')
+  @ApiOperation({ summary: 'Track organizer application status by reference number or email' })
+  getOrganizerApplicationStatus(@Param('ref') ref: string) {
+    return this.authService.getOrganizerApplicationStatus(ref);
+  }
+
+  @Get('organizer-applications')
+  @UseGuards(RoleGuard)
+  @ApiOperation({ summary: 'List all organizer applications for review' })
+  getAllOrganizerApplications(@Query('status') status?: string) {
+    return this.authService.getAllOrganizerApplications(status);
+  }
+
+  @Post('organizer-application/:ref/review')
+  @UseGuards(RoleGuard)
+  @ApiOperation({ summary: 'Review organizer application (approve, reject, request info, etc.)' })
+  reviewOrganizerApplication(
+    @Param('ref') ref: string,
+    @Body() dto: ReviewOrganizerApplicationDto,
+    @UserId() userId: string,
+    @UserRoleDecorator() role: UserRole,
+  ) {
+    return this.authService.reviewOrganizerApplication(ref, dto, userId, role);
   }
 
   @Post('password')
@@ -59,3 +94,4 @@ export class AuthController {
     return this.authService.login(loginDto);
   }
 }
+

@@ -4,6 +4,7 @@ import scannerSource from '../utils/ticket-scanner.js?raw';
 import supportSource from '../api/support.js?raw';
 import supportReportsSource from '../api/support-reports.js?raw';
 import accountPolicySource from '../utils/account-policy.js?raw';
+import organizerRegSource from '../utils/organizer-registration.js?raw';
 import paymentCheckoutSource from '../api/paymentCheckout.js?raw';
 import dataSyncSource from '../api/data-sync.js?raw';
 
@@ -23,7 +24,7 @@ export default function LegacyRuntime({ source, role }) {
     }
     window.__eventFlowLegacyRuntime = { role, source };
     document.body.dataset.eventflowRole = role;
-    const scripts = [run(themeSource), run(scannerSource), run(supportSource), run(supportReportsSource), run(accountPolicySource), run(source), run(paymentCheckoutSource), run(dataSyncSource)];
+    const scripts = [run(themeSource), run(scannerSource), run(supportSource), run(supportReportsSource), run(accountPolicySource), run(organizerRegSource), run(source), run(paymentCheckoutSource), run(dataSyncSource)];
     document.dispatchEvent(new Event('DOMContentLoaded'));
     return () => scripts.forEach(script => script.remove());
   }, [source, role]);

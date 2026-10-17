@@ -55,10 +55,11 @@ export class EventsController {
   @ApiResponse({ status: 200, description: 'List of events' })
   findAll(
     @UserRoleDecorator() role: UserRole,
+    @UserId() userId: string,
     @Query('search') search?: string,
     @Query('status') status?: string,
   ) {
-    return this.eventsService.findAll(role, search, status);
+    return this.eventsService.findAll(role, search, status, userId);
   }
 
   @Get('admin')

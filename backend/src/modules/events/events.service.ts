@@ -12,6 +12,38 @@ export class EventsService {
     this.dataStore = DataStore.getInstance();
   }
 
+  private eventStart(date: string, time: string): Date {
+    const match = String(time || '').trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !match) return new Date(NaN);
+    let hour = Number(match[1]);
+    const minute = Number(match[2]);
+    if (match[3]) hour = hour % 12 + (match[3].toUpperCase() === 'PM' ? 12 : 0);
+    if (hour > 23 || minute > 59) return new Date(NaN);
+    return new Date(`${date}T${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}:00`);
+  }
+
+  private localDateKey(value = new Date()): string {
+    return `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
+  }
+
+  private assertScheduleAvailable(organizerId: string, date: string, time: string, excludeId?: string): void {
+    if (this.dataStore.events.some(event => event.eventId !== excludeId && event.organizerId === organizerId
+      && event.date === date && event.time === time && !['cancelled', 'completed'].includes(event.status))) {
+      throw new ConflictException('Another active event is already scheduled at this date and time');
+    }
+  }
+
+  private requireOrganizer(role: UserRole, userId: string | undefined, requestedOrganizerId?: string) {
+    if (role === UserRole.EVENT_ORGANIZER) {
+      const organizer = this.dataStore.organizers.find(item => item.userId === userId);
+      if (!organizer) throw new ForbiddenException('Organizer profile not found');
+      return organizer;
+    }
+    const organizer = this.dataStore.organizers.find(item => item.organizerId === requestedOrganizerId || item.userId === requestedOrganizerId);
+    if (!organizer) throw new BadRequestException('A valid organizer is required');
+    return organizer;
+  }
+
   private isActiveReservation(registration: DataStore['registrations'][number]): boolean {
     return registration.status !== 'pending_payment' || !registration.reservationExpiresAt || registration.reservationExpiresAt > new Date();
   }
@@ -27,12 +59,25 @@ export class EventsService {
       throw new BadRequestException('Event name, date, and time are required');
     }
 
-    const organizer = this.dataStore.organizers.find(o => o.userId === organizerId);
+    const organizer = this.requireOrganizer(role, organizerId, createEventDto.organizerId);
+    const start = this.eventStart(createEventDto.date, createEventDto.time);
+    if (Number.isNaN(start.getTime())) throw new BadRequestException('Enter a valid event date and time');
+    if (start.getTime() < Date.now()) throw new BadRequestException('A new event cannot be scheduled in the past');
+    if (role === UserRole.EVENT_ORGANIZER && !['draft', 'published', undefined].includes(createEventDto.status)) {
+      throw new BadRequestException('Organizers can create events only as draft or published');
+    }
+    if (role === UserRole.EVENT_ORGANIZER && createEventDto.status === 'published') {
+      const user = this.dataStore.users.find(u => u.userId === organizer.userId || u.userId === organizerId);
+      if ((user && user.status !== 'active') || ((organizer as any).verificationStatus && (organizer as any).verificationStatus !== 'Approved')) {
+        throw new ForbiddenException('Only approved organizers can publish events');
+      }
+    }
+    this.assertScheduleAvailable(organizer.organizerId, createEventDto.date, createEventDto.time);
 
     const eventId = this.dataStore.generateId('evt');
     const event: Event = {
       eventId,
-      organizerId: organizer ? organizer.organizerId : (createEventDto.organizerId || 'org-001'),
+      organizerId: organizer.organizerId,
       clientId: createEventDto.clientId,
       name,
       category: createEventDto.category || 'General',
@@ -53,6 +98,9 @@ export class EventsService {
     event.waitlistEnabled = createEventDto.waitlistEnabled ?? false;
 
     this.dataStore.events.push(event);
+    this.dataStore.eventChanges.push({ changeId: this.dataStore.generateId('chg'), eventId, type: 'status_changed',
+      summary: `Event created as ${event.status}`, newValue: event.status, createdAt: new Date() });
+    this.dataStore.persist();
     return this.mapEventToFrontend(event);
   }
 
@@ -64,9 +112,24 @@ export class EventsService {
       (locationParts.length > 1 ? locationParts[locationParts.length - 1].trim() : event.location);
 
     // Count registrations for this event
-    const registered = this.dataStore.registrations.filter(
+    const actualRegistrations = this.dataStore.registrations.filter(
       r => r.eventId === event.eventId && ['registered', 'attended', 'pending_payment'].includes(r.status) && this.isActiveReservation(r),
     ).length;
+    const registered = actualRegistrations;
+    const registrations = this.dataStore.registrations.filter(registration => registration.eventId === event.eventId);
+    const registrationIds = new Set(registrations.map(registration => registration.registrationId));
+    const payments = this.dataStore.payments.filter(payment => registrationIds.has(payment.registrationId));
+    const refunds = this.dataStore.refunds.filter(refund => registrationIds.has(refund.registrationId));
+    const tasks = event.preparationTasks || [];
+    const completedTasks = tasks.filter(task => task.status === 'completed').length;
+    const issues = this.dataStore.supportTickets.filter(ticket => ticket.eventId === event.eventId && ticket.status !== 'resolved');
+    const nowDate = this.localDateKey();
+    const attentionReasons = [
+      ...tasks.filter(task => task.status !== 'completed' && task.deadline < nowDate).map(task => `Overdue preparation: ${task.title}`),
+      ...issues.map(ticket => `Unresolved issue: ${ticket.concern}`),
+      ...(!event.name || !event.category || !event.location || !event.date || !event.time || event.capacity < 1 ? ['Required event information is missing'] : []),
+      ...(['published', 'ongoing'].includes(event.status) && event.date < nowDate ? ['Event date has passed but the event is not completed'] : []),
+    ];
 
     return {
       ...event,
@@ -81,6 +144,30 @@ export class EventsService {
       city,
       registered,
       remainingCapacity: Math.max(0, event.capacity - registered),
+      needsAttention: attentionReasons.length > 0,
+      attentionReasons,
+      preparationSummary: { total: tasks.length, completed: completedTasks,
+        progress: tasks.length ? Math.round(completedTasks / tasks.length * 100) : 0 },
+      registrationSummary: {
+        confirmed: registrations.filter(item => ['registered', 'attended'].includes(item.status)).length,
+        pendingPayment: registrations.filter(item => item.status === 'pending_payment' && this.isActiveReservation(item)).length,
+        waitlisted: registrations.filter(item => item.status === 'waitlisted').length,
+        cancelled: registrations.filter(item => item.status === 'cancelled').length,
+        attended: registrations.filter(item => item.status === 'attended').length,
+        payments: {
+          successful: payments.filter(item => item.status === 'completed').length,
+          pending: payments.filter(item => item.status === 'pending').length,
+          failed: payments.filter(item => item.status === 'failed').length,
+          refunded: payments.filter(item => item.status === 'refunded').length,
+        },
+        refunds: {
+          pending: refunds.filter(item => item.status === 'pending').length,
+          completed: refunds.filter(item => item.status === 'completed').length,
+          failed: refunds.filter(item => item.status === 'failed').length,
+        },
+      },
+      issues: issues.map(ticket => ({ id: ticket.ticketId, concern: ticket.concern, status: ticket.status,
+        description: ticket.description, updatedAt: ticket.updatedAt })),
       registrationDeadline: event.registrationDeadline || event.date,
       cancellationDeadline: event.cancellationDeadline || event.date,
       eligibility: event.eligibility || 'Open to all active attendees',
@@ -91,8 +178,14 @@ export class EventsService {
   }
 
   // Get all events - filtered based on role
-  findAll(role: UserRole, search?: string, status?: string): any[] {
+  findAll(role: UserRole, search?: string, status?: string, userId?: string): any[] {
     let events = [...this.dataStore.events];
+
+    if (role === UserRole.EVENT_ORGANIZER) {
+      const organizer = this.dataStore.organizers.find(item => item.userId === userId);
+      if (!organizer) throw new ForbiddenException('Organizer profile not found');
+      events = events.filter(event => event.organizerId === organizer.organizerId);
+    }
 
     if (search) {
       events = events.filter(
@@ -180,7 +273,9 @@ export class EventsService {
       throw new BadRequestException('A client-cancelled event cannot be edited. Its cancellation and refund record must be preserved.');
     }
 
-    const before = { date: event.date, time: event.time, location: event.location, status: event.status };
+    const before = { name: event.name, category: event.category, date: event.date, time: event.time, location: event.location,
+      capacity: event.capacity, ticketPrice: event.ticketPrice, description: event.description || '', status: event.status,
+      preparationTasks: JSON.stringify(event.preparationTasks || []) };
     if (event.clientId && updateEventDto.status === 'completed') {
       throw new BadRequestException('Client events must be completed through the payment-verified completion workflow');
     }
@@ -190,6 +285,38 @@ export class EventsService {
     if ((updateEventDto as any).capacity !== undefined && (updateEventDto as any).capacity < occupied) throw new BadRequestException(`Capacity cannot be lower than ${occupied} active registrations`);
     // Support both backend (name) and frontend (title) field names
     const dto = updateEventDto as any;
+    const proposedDate = dto.date || event.date, proposedTime = dto.time || event.time;
+    const proposedStart = this.eventStart(proposedDate, proposedTime);
+    if (Number.isNaN(proposedStart.getTime())) throw new BadRequestException('Enter a valid event date and time');
+    if ((dto.date || dto.time) && !['ongoing', 'completed', 'cancelled'].includes(event.status) && proposedStart.getTime() < Date.now()) {
+      throw new BadRequestException('An upcoming event cannot be moved into the past');
+    }
+    if (dto.date || dto.time) this.assertScheduleAvailable(event.organizerId, proposedDate, proposedTime, eventId);
+    if (dto.status && dto.status !== event.status) {
+      const validTransitions: Record<Event['status'], Event['status'][]> = {
+        draft: ['published', 'cancelled'], published: ['ongoing', 'completed', 'cancelled'],
+        ongoing: ['completed', 'cancelled'], completed: [], cancelled: [],
+      };
+      if (!validTransitions[event.status].includes(dto.status)) throw new BadRequestException(`Cannot change an event from ${event.status} to ${dto.status}`);
+      if (dto.status === 'published') {
+        const organizer = this.dataStore.organizers.find(o => o.organizerId === event.organizerId);
+        const user = organizer ? this.dataStore.users.find(u => u.userId === organizer.userId || u.userId === userId) : null;
+        if ((user && user.status !== 'active') || (organizer && (organizer as any).verificationStatus && (organizer as any).verificationStatus !== 'Approved')) {
+          throw new ForbiddenException('Only approved organizers can publish events');
+        }
+      }
+      if (dto.status === 'ongoing' && proposedStart.getTime() > Date.now()) throw new BadRequestException('An event cannot start before its scheduled date and time');
+      if (dto.status === 'completed' && proposedStart.getTime() > Date.now()) throw new BadRequestException('A future event cannot be marked completed');
+      if (dto.status === 'cancelled' && String(dto.changeReason || '').trim().length < 10) throw new BadRequestException('A cancellation reason of at least 10 characters is required');
+    }
+    const postponed = (dto.date && dto.date > before.date) || (dto.date === before.date && dto.time && dto.time > before.time);
+    if (postponed && event.status !== 'draft' && String(dto.changeReason || '').trim().length < 10) {
+      throw new BadRequestException('A postponement reason of at least 10 characters is required');
+    }
+    if (dto.preparationTasks !== undefined && dto.preparationTasks.some((task: any) => !/^\d{4}-\d{2}-\d{2}$/.test(task.deadline)
+      || Number.isNaN(new Date(`${task.deadline}T00:00:00`).getTime()))) {
+      throw new BadRequestException('Every preparation task requires a valid deadline');
+    }
     if (dto.name || dto.title) event.name = dto.name || dto.title;
     if (dto.category) event.category = dto.category;
     if (dto.date) event.date = dto.date;
@@ -199,36 +326,54 @@ export class EventsService {
     if (dto.ticketPrice !== undefined) event.ticketPrice = dto.ticketPrice;
     if (dto.price !== undefined) event.ticketPrice = dto.price;
     if (dto.status) event.status = dto.status;
+    if (dto.status === 'cancelled') event.cancellationReason = dto.changeReason;
     if (dto.description !== undefined) (event as any).description = dto.description;
     if (dto.city) (event as any).city = dto.city;
     if (dto.registrationDeadline !== undefined) event.registrationDeadline = dto.registrationDeadline;
     if (dto.cancellationDeadline !== undefined) event.cancellationDeadline = dto.cancellationDeadline;
     if (dto.eligibility !== undefined) event.eligibility = dto.eligibility;
     if (dto.waitlistEnabled !== undefined) event.waitlistEnabled = dto.waitlistEnabled;
+    if (dto.preparationTasks !== undefined) {
+      event.preparationTasks = dto.preparationTasks.map((task: any) => ({
+        taskId: task.taskId || this.dataStore.generateId('prep'), title: task.title.trim(), deadline: task.deadline,
+        status: task.status, updatedAt: new Date(),
+      }));
+    }
 
     event.updatedAt = new Date();
-    const changes: Array<{ type: 'cancelled' | 'postponed' | 'time_changed' | 'venue_changed'; summary: string; previousValue?: string; newValue?: string }> = [];
-    if (before.date !== event.date) changes.push({ type: new Date(event.date) > new Date(before.date) ? 'postponed' : 'time_changed', summary: `Event date changed from ${before.date} to ${event.date}`, previousValue: before.date, newValue: event.date });
+    const changes: Array<{ type: 'cancelled' | 'postponed' | 'date_changed' | 'time_changed' | 'venue_changed' | 'status_changed' | 'preparation_updated' | 'details_updated'; summary: string; previousValue?: string; newValue?: string }> = [];
+    if (before.date !== event.date) changes.push({ type: event.date > before.date ? 'postponed' : 'date_changed', summary: `Event date changed from ${before.date} to ${event.date}${dto.changeReason ? `: ${dto.changeReason}` : ''}`, previousValue: before.date, newValue: event.date });
     if (before.time !== event.time) changes.push({ type: 'time_changed', summary: `Event time changed from ${before.time} to ${event.time}`, previousValue: before.time, newValue: event.time });
     if (before.location !== event.location) changes.push({ type: 'venue_changed', summary: `Event venue changed from ${before.location} to ${event.location}`, previousValue: before.location, newValue: event.location });
-    if (before.status !== 'cancelled' && event.status === 'cancelled') changes.push({ type: 'cancelled', summary: 'Event cancelled by the organizer' });
+    const detailFields = [before.name !== event.name && 'title', before.category !== event.category && 'category',
+      before.capacity !== event.capacity && 'capacity', before.ticketPrice !== event.ticketPrice && 'ticket price',
+      before.description !== (event.description || '') && 'description'].filter(Boolean);
+    if (detailFields.length) changes.push({ type: 'details_updated', summary: `Updated ${detailFields.join(', ')}` });
+    if (before.status !== event.status) changes.push({ type: event.status === 'cancelled' ? 'cancelled' : 'status_changed',
+      summary: event.status === 'cancelled' ? `Event cancelled: ${dto.changeReason}` : `Status changed from ${before.status} to ${event.status}`,
+      previousValue: before.status, newValue: event.status });
+    if (before.preparationTasks !== JSON.stringify(event.preparationTasks || [])) changes.push({ type: 'preparation_updated', summary: 'Preparation checklist updated' });
     for (const change of changes) {
       this.dataStore.eventChanges.push({ changeId: this.dataStore.generateId('chg'), eventId, ...change, createdAt: new Date() });
       const affected = this.dataStore.registrations.filter(r => r.eventId === eventId && r.status !== 'cancelled');
       for (const registration of affected) {
         const attendee = this.dataStore.attendees.find(a => a.attendeeId === registration.attendeeId);
         if (change.type === 'cancelled') {
-          registration.status = 'cancelled'; registration.cancelledAt = new Date(); registration.cancellationReason = 'Event cancelled by organizer'; registration.qrCode = undefined; registration.verificationId = undefined; registration.updatedAt = new Date();
+          registration.status = 'cancelled'; registration.cancelledAt = new Date(); registration.cancellationReason = dto.changeReason; registration.qrCode = undefined; registration.verificationId = undefined; registration.updatedAt = new Date();
           const payment = this.dataStore.payments.find(p => p.registrationId === registration.registrationId && p.status === 'completed');
           if (payment && !this.dataStore.refunds.some(r => r.registrationId === registration.registrationId)) {
-            const refund = { refundId: this.dataStore.generateId('ref'), paymentId: payment.paymentId, registrationId: registration.registrationId, amount: payment.amount, status: 'pending' as const, reason: 'Event cancelled by organizer', requestedAt: new Date() };
+            const refund = { refundId: this.dataStore.generateId('ref'), paymentId: payment.paymentId, registrationId: registration.registrationId, amount: payment.amount, status: 'pending' as const, reason: dto.changeReason, requestedAt: new Date() };
             this.dataStore.refunds.push(refund);
             if (attendee) this.dataStore.notifications.push({ notificationId: this.dataStore.generateId('notif'), userId: attendee.userId, eventId, registrationId: registration.registrationId, paymentId: payment.paymentId, message: `Event cancelled. Simulated refund of ₹${refund.amount} is pending.`, type: 'refund_pending', read: false, dateTime: new Date(), createdAt: new Date() });
           }
         }
+        if (change.type === 'postponed') {
+          registration.qrCode = undefined; registration.verificationId = undefined; registration.updatedAt = new Date();
+        }
         if (attendee) this.dataStore.notifications.push({ notificationId: this.dataStore.generateId('notif'), userId: attendee.userId, eventId, registrationId: registration.registrationId, message: `${event.name}: ${change.summary}`, type: change.type === 'cancelled' ? 'event_cancelled' : 'event_changed', read: false, dateTime: new Date(), createdAt: new Date() });
       }
     }
+    this.dataStore.persist();
     return this.mapEventToFrontend(event);
   }
 
@@ -418,9 +563,14 @@ export class EventsService {
     if (event.cancellation) {
       throw new BadRequestException('A client-cancelled event cannot be deleted. Its cancellation and refund record must be preserved.');
     }
+    if (event.status !== 'draft' || this.dataStore.registrations.some(registration => registration.eventId === eventId)) {
+      throw new ConflictException('Only draft events without registrations can be deleted; cancel an active event instead');
+    }
 
     const index = this.dataStore.events.findIndex((e) => e.eventId === eventId);
     this.dataStore.events.splice(index, 1);
+
+    this.dataStore.persist();
 
     return { message: `Event ${eventId} deleted successfully` };
   }

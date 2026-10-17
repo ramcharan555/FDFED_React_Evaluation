@@ -94,12 +94,90 @@ export class AnalyticsService {
     const myEvents = this.db.events.filter(e => e.organizerId === organizer.organizerId);
     const myEventIds = myEvents.map(e => e.eventId);
     const myRegs = this.db.registrations.filter(r => myEventIds.includes(r.eventId));
-    const myRevenue = this.db.payments
-      .filter(p => myRegs.some(r => r.registrationId === p.registrationId) && p.status === 'completed')
-      .reduce((sum, p) => sum + p.amount, 0);
-    
+    const myRegistrationIds = new Set(myRegs.map(registration => registration.registrationId));
+    const capturedTicketPayments = new Map<string, typeof this.db.payments[number]>();
+    this.db.payments.forEach(payment => {
+      if (!myRegistrationIds.has(payment.registrationId) || !['completed', 'refunded'].includes(payment.status)) return;
+      const previous = capturedTicketPayments.get(payment.registrationId);
+      if (!previous || new Date(payment.createdAt).getTime() > new Date(previous.createdAt).getTime()) {
+        capturedTicketPayments.set(payment.registrationId, payment);
+      }
+    });
+    const ticketPayments = [...capturedTicketPayments.values()];
+    const workflowPayments = this.db.eventWorkflowPayments.filter(payment =>
+      myEventIds.includes(payment.eventId) && payment.status === 'completed');
+    const completedTicketRefunds = this.db.refunds.filter(refund =>
+      myRegistrationIds.has(refund.registrationId) && refund.status === 'completed');
+    const completedWorkflowRefunds = this.db.eventWorkflowRefunds.filter(refund =>
+      myEventIds.includes(refund.eventId) && (refund.status as string) === 'completed');
+    const grossRevenue = [...ticketPayments, ...workflowPayments]
+      .reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+    const refundedAmount = [...completedTicketRefunds, ...completedWorkflowRefunds]
+      .reduce((sum, refund) => sum + Number(refund.amount || 0), 0);
+    const myRevenue = grossRevenue - refundedAmount;
+
     const myRequests = this.db.eventRequests.filter(r => r.organizerId === organizer.organizerId);
     const myAssignments = this.db.staffAssignments.filter(a => a.organizerId === organizer.organizerId);
+    const actionableStatuses = new Set(['submitted', 'pending', 'under_review', 'changes_requested', 'counteroffer_received']);
+    const actionableRequests = myRequests.filter(request => actionableStatuses.has(request.status));
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    const overduePreparation = myEvents.flatMap(event => (event.preparationTasks || [])
+      .filter(task => task.status !== 'completed' && task.deadline < todayString)
+      .map(task => ({ event, task })));
+    const unresolvedIssues = this.db.supportTickets.filter(ticket =>
+      ticket.userId === userId && ticket.requestType === 'Event Related Issues' && ticket.status !== 'resolved');
+    const attentionEventIds = new Set<string>();
+    const attentionDetails = new Map<string, string>();
+    myEvents.forEach(event => {
+      const overdueTask = (event.preparationTasks || []).find(task => task.status !== 'completed' && task.deadline < todayString);
+      const issue = unresolvedIssues.find(ticket => ticket.eventId === event.eventId);
+      const detail = overdueTask ? `Overdue preparation: ${overdueTask.title}`
+        : issue ? `Unresolved issue: ${issue.concern}`
+        : (!event.name || !event.category || !event.location || !event.date || !event.time || event.capacity < 1) ? 'Required event information is missing.'
+        : (['published', 'ongoing'].includes(event.status) && event.date < todayString) ? 'Event date has passed but the event is not completed.' : '';
+      if (detail) {
+        attentionEventIds.add(event.eventId);
+        attentionDetails.set(event.eventId, detail);
+      }
+    });
+    const eventStatusCounts = {
+      upcoming: myEvents.filter(event => event.status === 'published' && event.date >= todayString).length,
+      inProgress: myEvents.filter(event => event.status === 'ongoing').length,
+      completed: myEvents.filter(event => event.status === 'completed').length,
+      cancelled: myEvents.filter(event => event.status === 'cancelled').length,
+      needsAttention: attentionEventIds.size,
+    };
+    const upcomingSchedule = myEvents.filter(event =>
+      event.status === 'published' && new Date(`${event.date}T23:59:59`).getTime() >= today.getTime())
+      .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))
+      .slice(0, 3)
+      .map(event => ({ eventId: event.eventId, title: event.name, date: event.date, time: event.time,
+        location: event.location, status: event.status }));
+    const priorityActions: any[] = [];
+    const nextRequest = actionableRequests[0];
+    if (nextRequest) priorityActions.push({ type: 'request', id: nextRequest.requestId, title: nextRequest.eventName,
+      detail: `Client request needs your response (${nextRequest.status.replace(/_/g, ' ')})`, dueDate: nextRequest.eventDate });
+    const nextPreparation = overduePreparation[0];
+    if (nextPreparation) priorityActions.push({ type: 'preparation', id: nextPreparation.task.taskId,
+      eventId: nextPreparation.event.eventId, title: nextPreparation.event.name,
+      detail: `Preparation task is overdue: ${nextPreparation.task.title}`, dueDate: nextPreparation.task.deadline });
+    const nextIssue = unresolvedIssues[0];
+    if (nextIssue) priorityActions.push({ type: 'issue', id: nextIssue.ticketId, title: nextIssue.concern,
+      detail: nextIssue.description, updatedAt: nextIssue.updatedAt });
+    const financialRecords = [
+      ...ticketPayments.map(payment => ({ id: payment.paymentId, type: 'Ticket payment', amount: payment.amount,
+        status: payment.status, date: payment.paymentDate,
+        eventId: myRegs.find(registration => registration.registrationId === payment.registrationId)?.eventId })),
+      ...workflowPayments.map(payment => ({ id: payment.paymentId, type: 'Event payment', amount: payment.amount,
+        status: payment.status, date: payment.paymentDate, eventId: payment.eventId })),
+      ...completedTicketRefunds.map(refund => ({ id: refund.refundId, type: 'Refund', amount: -Number(refund.amount || 0),
+        status: refund.status, date: refund.processedAt || refund.requestedAt,
+        eventId: myRegs.find(registration => registration.registrationId === refund.registrationId)?.eventId })),
+      ...completedWorkflowRefunds.map(refund => ({ id: refund.refundId, type: 'Refund', amount: -Number(refund.amount || 0),
+        status: refund.status, date: refund.requestedAt, eventId: refund.eventId })),
+    ].sort((a, b) => new Date(String(b.date)).getTime() - new Date(String(a.date)).getTime());
 
     return {
       success: true,
@@ -110,9 +188,17 @@ export class AnalyticsService {
         completedEvents: myEvents.filter(e => e.status === 'completed').length,
         totalRegistrations: myRegs.length,
         totalRevenue: myRevenue,
+        grossRevenue,
+        refundedAmount,
         staffAssigned: myAssignments.filter(a => a.status !== 'cancelled').length,
-        pendingRequests: myRequests.filter(r => r.status === 'pending').length,
+        pendingRequests: actionableRequests.length,
         approvedRequests: myRequests.filter(r => r.status === 'approved').length,
+        eventsNeedingAttention: attentionEventIds.size,
+        eventStatusCounts,
+        attentionEventIds: [...attentionEventIds],
+        priorityActions,
+        upcomingSchedule,
+        financialRecords,
       },
     };
   }

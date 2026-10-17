@@ -98,7 +98,7 @@ export class WorkspaceService {
       eventWorkflowRefunds: this.db.eventWorkflowRefunds.filter(refund => operator || ownEventIds.has(refund.eventId)),
       notifications: this.db.notifications.filter(notification => notification.userId === userId),
       supportTickets: tickets.map(ticket => ({ ticketId: ticket.ticketId, userId: ticket.userId,
-        concern: ticket.concern, requestType: ticket.requestType, description: ticket.description,
+        eventId: ticket.eventId, concern: ticket.concern, requestType: ticket.requestType, description: ticket.description,
         status: ticket.status, response: ticket.response, createdAt: ticket.createdAt, updatedAt: ticket.updatedAt,
       })),
       staffReports: this.db.staffReports.filter(report => !support && !finance && (admin ||

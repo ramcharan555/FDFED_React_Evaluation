@@ -1,0 +1,946 @@
+{
+  "timestamp": "2026-10-17T08:03:01.861Z",
+  "method": "GET",
+  "url": "/api/health",
+  "statusCode": 404,
+  "message": "Cannot GET /api/health",
+  "stack": "NotFoundException: Cannot GET /api/health\n    at callback (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\routes-resolver.js:77:19)\n    at C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handle [as handle_request] (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\layer.js:95:5)\n    at trim_prefix (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:328:13)\n    at C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:286:9\n    at router.process_params (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:346:12)\n    at next (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\index.js:280:10)\n    at RequestLoggingMiddleware.use (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\src\\common\\middleware\\request-logging.middleware.ts:25:5)\n    at C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-proxy.js:9:23\n    at Layer.handle [as handle_request] (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\platform-express\\node_modules\\express\\lib\\router\\layer.js:95:5)"
+}
+{
+  "timestamp": "2026-10-17T09:00:35.408Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:00:40.343Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:00:40.528Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:00:40.681Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:00:40.892Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:38.069Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:38.279Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:38.404Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:38.546Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:38.694Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:38.857Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:39.012Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:39.141Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:39.324Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:39.437Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:39.607Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:39.741Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:40.265Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:40.420Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:01:40.643Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:38:42.649Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T09:38:44.962Z",
+  "method": "POST",
+  "url": "/api/event-requests",
+  "statusCode": 400,
+  "message": [
+    "property budgetFlexibility should not exist",
+    "property startTime should not exist",
+    "property endTime should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:57:24.855Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:57:26.018Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:57:26.487Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:57:26.688Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:57:26.920Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:57:28.399Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:57:34.907Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:57:57.228Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:13.234Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:13.989Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:14.188Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:14.413Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:28.077Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:36.306Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:36.481Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:36.713Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:39.621Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:39.867Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:40.049Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:40.285Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:40.691Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:58:40.896Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:59:45.981Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T10:59:47.094Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/proposal",
+  "statusCode": 400,
+  "message": [
+    "property eventPlan should not exist",
+    "property timeline should not exist",
+    "property organizerFee should not exist",
+    "property itemizedCosts should not exist",
+    "property taxes should not exist",
+    "property includedServices should not exist",
+    "property excludedServices should not exist",
+    "property attendeeCapacity should not exist",
+    "property constraints should not exist",
+    "property paymentSchedule should not exist",
+    "property cancellationTerms should not exist",
+    "property conditions should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:00:35.036Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-demo-flow-002/reject",
+  "statusCode": 400,
+  "message": [
+    "property comments should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:01:32.136Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-orgdash-action-001/reject",
+  "statusCode": 400,
+  "message": [
+    "property comments should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:08:22.441Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:08:26.939Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792233538024-bck06vfqg/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:23:42.862Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:23:49.041Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:23:51.517Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:23:51.733Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:23:51.965Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:23:52.172Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:23:55.270Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:24:00.107Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:24:00.472Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:24:00.680Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:24:04.494Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:24:04.753Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}
+{
+  "timestamp": "2026-10-17T11:24:04.972Z",
+  "method": "POST",
+  "url": "/api/event-requests/req-1792231430349-qa1k7rptq/pay-deposit",
+  "statusCode": 400,
+  "message": [
+    "property methodDetails should not exist"
+  ],
+  "stack": "BadRequestException: Bad Request Exception\n    at ValidationPipe.exceptionFactory (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:101:20)\n    at ValidationPipe.transform (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\common\\pipes\\validation.pipe.js:74:30)\n    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)\n    at async resolveParamValue (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:148:23)\n    at async Promise.all (index 2)\n    at async pipesFn (C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:151:13)\n    at async C:\\Users\\sai ganesh\\Downloads\\FDFED_Main_Updated\\backend\\node_modules\\@nestjs\\core\\router\\router-execution-context.js:37:30"
+}

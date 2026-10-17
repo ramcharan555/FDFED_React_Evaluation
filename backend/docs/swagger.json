@@ -1224,6 +1224,113 @@
         ]
       }
     },
+    "/api/auth/organizer-application": {
+      "post": {
+        "operationId": "AuthController_submitOrganizerApplication",
+        "summary": "Submit organizer application for verification",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitOrganizerApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/organizer-application/{ref}": {
+      "get": {
+        "operationId": "AuthController_getOrganizerApplicationStatus",
+        "summary": "Track organizer application status by reference number or email",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/organizer-applications": {
+      "get": {
+        "operationId": "AuthController_getAllOrganizerApplications",
+        "summary": "List all organizer applications for review",
+        "parameters": [
+          {
+            "name": "status",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/organizer-application/{ref}/review": {
+      "post": {
+        "operationId": "AuthController_reviewOrganizerApplication",
+        "summary": "Review organizer application (approve, reject, request info, etc.)",
+        "parameters": [
+          {
+            "name": "ref",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewOrganizerApplicationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/auth/password": {
       "post": {
         "operationId": "AuthController_changePassword",
@@ -1694,6 +1801,15 @@
             "in": "query",
             "schema": {
               "example": "2026-09-05",
+              "type": "string"
+            }
+          },
+          {
+            "name": "excludeRequestId",
+            "required": false,
+            "in": "query",
+            "description": "Exclude the request currently being reviewed",
+            "schema": {
               "type": "string"
             }
           }
@@ -2333,7 +2449,7 @@
     "/api/event-requests/{id}/agreement": {
       "post": {
         "operationId": "EventRequestsController_updateAgreementStatus",
-        "summary": "Update agreement status",
+        "summary": "Record the client agreement acknowledgement or decline",
         "parameters": [
           {
             "name": "x-user-id",
@@ -2385,7 +2501,7 @@
     "/api/event-requests/{id}/payment": {
       "post": {
         "operationId": "EventRequestsController_updatePaymentStatus",
-        "summary": "Update deposit / payment status",
+        "summary": "Legacy endpoint; payment status is changed only by verified payment processing",
         "parameters": [
           {
             "name": "x-user-id",
@@ -2425,8 +2541,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Payment status updated"
+          "403": {
+            "description": "Manual payment status changes are not allowed"
           }
         },
         "tags": [
@@ -2489,10 +2605,274 @@
         ]
       }
     },
+    "/api/event-requests/{id}/pay-deposit": {
+      "post": {
+        "operationId": "EventRequestsController_payDeposit",
+        "summary": "Client pays the required deposit using demo provider",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PayDepositDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Deposit payment processed"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/modifications": {
+      "post": {
+        "operationId": "EventRequestsController_requestModification",
+        "summary": "Request modification for a confirmed event",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RequestEventModificationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Modification recorded and awaiting approval"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/modifications/{modId}/respond": {
+      "post": {
+        "operationId": "EventRequestsController_respondToModification",
+        "summary": "Approve or reject a confirmed event modification",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "modId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RespondToEventModificationDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Modification approved or rejected"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/cancellation-preview": {
+      "get": {
+        "operationId": "EventRequestsController_cancellationPreview",
+        "summary": "Preview cancellation rules, fee, and refund for an event request",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Cancellation preview calculation"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
+    "/api/event-requests/{id}/cancel": {
+      "post": {
+        "operationId": "EventRequestsController_cancelRequest",
+        "summary": "Cancel an event request with policy enforcement (CLIENT only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelEventRequestDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Request cancelled or withdrawn"
+          },
+          "400": {
+            "description": "Cancellation prohibited or invalid reason"
+          },
+          "409": {
+            "description": "Already cancelled or amount changed"
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
     "/api/event-requests/{id}/status": {
       "patch": {
         "operationId": "EventRequestsController_updateStatus",
-        "summary": "Update event request status (backward-compatible)",
+        "summary": "Perform the supported Under Review transition only",
         "parameters": [
           {
             "name": "x-user-id",
@@ -5955,6 +6335,14 @@
           "userRole"
         ]
       },
+      "SubmitOrganizerApplicationDto": {
+        "type": "object",
+        "properties": {}
+      },
+      "ReviewOrganizerApplicationDto": {
+        "type": "object",
+        "properties": {}
+      },
       "ChangePasswordDto": {
         "type": "object",
         "properties": {}
@@ -6229,6 +6617,54 @@
             "type": "string",
             "description": "Additional notes for the client",
             "example": "Deposit required within 7 days of agreement to lock the venue."
+          },
+          "eventPlan": {
+            "type": "string",
+            "description": "Event plan and execution details"
+          },
+          "timeline": {
+            "type": "string",
+            "description": "Execution timeline"
+          },
+          "organizerFee": {
+            "type": "number",
+            "description": "Organizer management fee in INR"
+          },
+          "itemizedCosts": {
+            "type": "string",
+            "description": "Itemized costs description or breakdown"
+          },
+          "taxes": {
+            "type": "number",
+            "description": "Taxes in INR"
+          },
+          "includedServices": {
+            "type": "string",
+            "description": "Included services"
+          },
+          "excludedServices": {
+            "type": "string",
+            "description": "Excluded services"
+          },
+          "attendeeCapacity": {
+            "type": "number",
+            "description": "Attendee capacity limit"
+          },
+          "constraints": {
+            "type": "string",
+            "description": "Venue, resource, and budget constraints"
+          },
+          "paymentSchedule": {
+            "type": "string",
+            "description": "Payment schedule and terms"
+          },
+          "cancellationTerms": {
+            "type": "string",
+            "description": "Cancellation deadline and refund terms"
+          },
+          "conditions": {
+            "type": "string",
+            "description": "Additional conditions"
           }
         },
         "required": [
@@ -6270,6 +6706,54 @@
             "description": "Additional notes for the client",
             "example": "Deposit required within 7 days of agreement to lock the venue."
           },
+          "eventPlan": {
+            "type": "string",
+            "description": "Event plan and execution details"
+          },
+          "timeline": {
+            "type": "string",
+            "description": "Execution timeline"
+          },
+          "organizerFee": {
+            "type": "number",
+            "description": "Organizer management fee in INR"
+          },
+          "itemizedCosts": {
+            "type": "string",
+            "description": "Itemized costs description or breakdown"
+          },
+          "taxes": {
+            "type": "number",
+            "description": "Taxes in INR"
+          },
+          "includedServices": {
+            "type": "string",
+            "description": "Included services"
+          },
+          "excludedServices": {
+            "type": "string",
+            "description": "Excluded services"
+          },
+          "attendeeCapacity": {
+            "type": "number",
+            "description": "Attendee capacity limit"
+          },
+          "constraints": {
+            "type": "string",
+            "description": "Venue, resource, and budget constraints"
+          },
+          "paymentSchedule": {
+            "type": "string",
+            "description": "Payment schedule and terms"
+          },
+          "cancellationTerms": {
+            "type": "string",
+            "description": "Cancellation deadline and refund terms"
+          },
+          "conditions": {
+            "type": "string",
+            "description": "Additional conditions"
+          },
           "revisionReason": {
             "type": "string",
             "description": "Reason for proposal revision",
@@ -6307,6 +6791,10 @@
           "proposedDate": {
             "type": "string",
             "description": "Proposed date when requesting a date change"
+          },
+          "comments": {
+            "type": "string",
+            "description": "Optional additional comments or context for rejection"
           }
         },
         "required": [
@@ -6409,38 +6897,119 @@
       },
       "ConfirmBookingDto": {
         "type": "object",
+        "properties": {}
+      },
+      "PayDepositDto": {
+        "type": "object",
         "properties": {
-          "agreementConfirmed": {
-            "type": "boolean",
-            "description": "Force confirm agreement if verified out-of-band",
-            "example": true
-          },
-          "depositConfirmed": {
-            "type": "boolean",
-            "description": "Force confirm deposit if verified out-of-band",
-            "example": true
+          "paymentMethod": {
+            "type": "string",
+            "description": "Payment method",
+            "example": "DEMO_PROVIDER"
           }
         }
+      },
+      "RequestEventModificationDto": {
+        "type": "object",
+        "properties": {
+          "date": {
+            "type": "string",
+            "description": "New proposed event date"
+          },
+          "venue": {
+            "type": "string",
+            "description": "New proposed venue"
+          },
+          "capacity": {
+            "type": "number",
+            "description": "New expected attendee count"
+          },
+          "budget": {
+            "type": "number",
+            "description": "New budget"
+          },
+          "requirements": {
+            "type": "string",
+            "description": "New or updated requirements/services"
+          },
+          "services": {
+            "type": "string",
+            "description": "Updated services"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for the requested changes"
+          }
+        },
+        "required": [
+          "reason"
+        ]
+      },
+      "RespondToEventModificationDto": {
+        "type": "object",
+        "properties": {
+          "action": {
+            "type": "string",
+            "description": "Approval decision",
+            "enum": [
+              "approve",
+              "reject"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for rejection or approval note"
+          }
+        },
+        "required": [
+          "action"
+        ]
+      },
+      "CancelEventRequestDto": {
+        "type": "object",
+        "properties": {
+          "reason": {
+            "type": "string",
+            "description": "Mandatory cancellation reason category",
+            "enum": [
+              "Change of Plans",
+              "Budget Constraints",
+              "Event Postponed",
+              "Organizer Issue",
+              "Other"
+            ],
+            "example": "Change of Plans"
+          },
+          "explanation": {
+            "type": "string",
+            "description": "Optional explanation field",
+            "example": "Venue schedule conflict"
+          },
+          "expectedPaidAmount": {
+            "type": "number",
+            "description": "Expected amount paid from preview"
+          },
+          "policyAccepted": {
+            "type": "boolean",
+            "description": "Policy accepted"
+          },
+          "acceptedPolicyVersion": {
+            "type": "string",
+            "description": "Accepted policy version"
+          }
+        },
+        "required": [
+          "reason"
+        ]
       },
       "UpdateEventRequestStatusDto": {
         "type": "object",
         "properties": {
           "status": {
             "type": "string",
-            "description": "New status for the request",
+            "description": "The only generic status transition supported; use dedicated workflow actions for all others",
             "enum": [
-              "submitted",
-              "pending",
-              "under_review",
-              "info_requested",
-              "proposal_sent",
-              "awaiting_client",
-              "confirmed",
-              "approved",
-              "rejected",
-              "cancelled",
-              "withdrawn",
-              "expired"
+              "under_review"
             ],
             "example": "under_review"
           }

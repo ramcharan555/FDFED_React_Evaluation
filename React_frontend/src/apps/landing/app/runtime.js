@@ -2116,6 +2116,9 @@ function generateCaptcha() {
   return { question: `${a} ${op} ${b} = ?`, answer: _captchaAnswer };
 }
 function openRegisterModal() {
+  if (window.EventFlowOrganizerRegistration && typeof window.EventFlowOrganizerRegistration.openRegisterModal === 'function') {
+    return window.EventFlowOrganizerRegistration.openRegisterModal();
+  }
   const captcha = generateCaptcha();
   openModal('Create New Account', `
     <div class="grid-2">

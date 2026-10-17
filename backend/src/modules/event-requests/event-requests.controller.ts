@@ -24,6 +24,9 @@ import {
   UpdateAgreementStatusDto,
   UpdatePaymentStatusDto,
   ConfirmBookingDto,
+  PayDepositDto,
+  RequestEventModificationDto,
+  RespondToEventModificationDto,
 } from './dto/event-request.dto';
 import { RoleGuard } from '../../common/guards/role.guard';
 import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
@@ -49,12 +52,14 @@ export class EventRequestsController {
   @ApiOperation({ summary: 'Check date availability for an organizer' })
   @ApiQuery({ name: 'organizerId', required: true, example: 'org-001' })
   @ApiQuery({ name: 'date', required: true, example: '2026-09-05' })
+  @ApiQuery({ name: 'excludeRequestId', required: false, description: 'Exclude the request currently being reviewed' })
   @ApiResponse({ status: 200, description: 'Date availability check results' })
   checkAvailability(
     @Query('organizerId') organizerId: string,
     @Query('date') date: string,
+    @Query('excludeRequestId') excludeRequestId?: string,
   ) {
-    return this.service.checkDateAvailability(organizerId, date);
+    return this.service.checkDateAvailability(organizerId, date, excludeRequestId);
   }
 
   @Get('organizers')
@@ -185,7 +190,7 @@ export class EventRequestsController {
   }
 
   @Post(':id/agreement')
-  @ApiOperation({ summary: 'Update agreement status' })
+  @ApiOperation({ summary: 'Record the client agreement acknowledgement or decline' })
   @ApiResponse({ status: 200, description: 'Agreement status updated' })
   updateAgreementStatus(
     @Param('id') id: string,
@@ -197,8 +202,8 @@ export class EventRequestsController {
   }
 
   @Post(':id/payment')
-  @ApiOperation({ summary: 'Update deposit / payment status' })
-  @ApiResponse({ status: 200, description: 'Payment status updated' })
+  @ApiOperation({ summary: 'Legacy endpoint; payment status is changed only by verified payment processing' })
+  @ApiResponse({ status: 403, description: 'Manual payment status changes are not allowed' })
   updatePaymentStatus(
     @Param('id') id: string,
     @Body() dto: UpdatePaymentStatusDto,
@@ -221,8 +226,45 @@ export class EventRequestsController {
     return this.service.confirmBooking(id, dto, role, userId);
   }
 
+  @Post(':id/pay-deposit')
+  @ApiOperation({ summary: 'Client pays the required deposit using demo provider' })
+  @ApiResponse({ status: 200, description: 'Deposit payment processed' })
+  payDeposit(
+    @Param('id') id: string,
+    @Body() dto: PayDepositDto,
+    @UserRoleDecorator() role: UserRole,
+    @UserId() userId: string,
+  ) {
+    return this.service.payDeposit(id, dto, role, userId);
+  }
+
+  @Post(':id/modifications')
+  @ApiOperation({ summary: 'Request modification for a confirmed event' })
+  @ApiResponse({ status: 201, description: 'Modification recorded and awaiting approval' })
+  requestModification(
+    @Param('id') id: string,
+    @Body() dto: RequestEventModificationDto,
+    @UserRoleDecorator() role: UserRole,
+    @UserId() userId: string,
+  ) {
+    return this.service.requestModification(id, dto, role, userId);
+  }
+
+  @Post(':id/modifications/:modId/respond')
+  @ApiOperation({ summary: 'Approve or reject a confirmed event modification' })
+  @ApiResponse({ status: 200, description: 'Modification approved or rejected' })
+  respondToModification(
+    @Param('id') id: string,
+    @Param('modId') modId: string,
+    @Body() dto: RespondToEventModificationDto,
+    @UserRoleDecorator() role: UserRole,
+    @UserId() userId: string,
+  ) {
+    return this.service.respondToModification(id, modId, dto, role, userId);
+  }
+
   @Patch(':id/status')
-  @ApiOperation({ summary: 'Update event request status (backward-compatible)' })
+  @ApiOperation({ summary: 'Perform the supported Under Review transition only' })
   @ApiResponse({ status: 200, description: 'Status updated' })
   updateStatus(
     @Param('id') id: string,

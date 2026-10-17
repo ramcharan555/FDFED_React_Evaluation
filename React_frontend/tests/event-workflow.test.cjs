@@ -23,6 +23,7 @@ function harness(role, state) {
   const context = vm.createContext({
     CU: { id: role === 'client' ? 'usr-client-001' : 'usr-org-001', role },
     DB: { users: [], events: [], eventRequests: [], eventPlans: [], notifications: [] },
+    _workflowAvailability: null,
     g: id => elements.get(id), v: id => elements.get(id)?.value || '', escapeHtml,
     reqBadge: () => 'blue', _workflowReturnPage: 'request-status', _currentPage: 'request-status',
     apiGetEventRequests: async () => ({ data: structuredClone(state.requests) }),
@@ -132,8 +133,94 @@ test('client submission calls the backend and cannot create a local-only request
   assert.equal(payload.capacity, 80);
   assert.equal(payload.policyAccepted, true);
   assert.equal(payload.acceptedPolicyVersion, policy.version);
+  assert.equal(payload.startTime, undefined);
+  assert.equal(payload.endTime, undefined);
+  assert.equal(payload.budgetFlexibility, undefined);
   assert.equal(h.context.DB.eventRequests.length, before);
 });
+
+test('client event request submission excludes startTime, endTime, budgetFlexibility, prevents duplicates, and preserves draft on error', async () => {
+  const h = harness('client', fixture());
+  await h.context.syncWorkflowData();
+  h.elements.set('req-policy', { checked: true });
+  const values = {
+    'req-title': 'Corporate Gala',
+    'req-type': 'Gala',
+    'req-date': '2099-12-25',
+    'req-city': 'Bengaluru',
+    'req-guests': '150',
+    'req-budget': '75000',
+    'req-desc': 'Annual end-of-year celebration with banquet and awards',
+    'req-venue': 'Grand Palace Hall',
+  };
+  for (const [id, value] of Object.entries(values)) h.elements.set(id, { value });
+  let modalTitle = null, modalContent = null;
+  h.context.openModal = (title, body) => {
+    modalTitle = title;
+    modalContent = body;
+  };
+  let closeModalCalls = 0;
+  h.context.closeModal = () => { closeModalCalls++; };
+  const toasts = [];
+  h.context.toast = (msg, type) => toasts.push({ msg, type });
+  h.context.DB.users.push({ id: 'usr-org-001', role: 'organizer', name: 'Test Organizer' });
+
+  vm.runInContext(section(sources.client, '    let eventRequestDraft = null;', '    function pageFindStaff('), h.context);
+  await h.context.loadWorkflowEventPolicy();
+
+  h.context.reviewEventRequest('usr-org-001');
+  assert.equal(modalTitle, 'Review Event Request');
+  assert.match(modalContent, /Corporate Gala/);
+  assert.match(modalContent, /₹75,000/);
+  assert.match(modalContent, /Grand Palace Hall/);
+  assert.doesNotMatch(modalContent, /18:30|23:00|flexibility/i);
+
+  const draft = vm.runInContext('eventRequestDraft', h.context);
+  assert.ok(draft);
+  assert.equal(draft.startTime, undefined);
+  assert.equal(draft.endTime, undefined);
+  assert.equal(draft.budgetFlexibility, undefined);
+  assert.equal(draft.budget, 75000);
+
+  let submitCalls = 0;
+  h.context.apiCreateEventRequest = async () => {
+    submitCalls++;
+    throw new Error('Server error occurred');
+  };
+
+  await h.context.submitEventRequest();
+  assert.equal(submitCalls, 1);
+  assert.equal(closeModalCalls, 0, 'Modal should remain open on failure');
+  assert.ok(vm.runInContext('eventRequestDraft', h.context), 'Draft should be preserved for retry');
+  assert.equal(toasts.at(-1)?.type, 'error');
+
+  let resolveSubmission;
+  const inFlightPromise = new Promise(resolve => { resolveSubmission = resolve; });
+  let payloadSent = null;
+  h.context.apiCreateEventRequest = async (payload) => {
+    submitCalls++;
+    payloadSent = payload;
+    await inFlightPromise;
+    return { success: true, message: 'Request sent to organizer!' };
+  };
+
+  const p1 = h.context.submitEventRequest();
+  const p2 = h.context.submitEventRequest();
+  assert.equal(submitCalls, 2);
+
+  resolveSubmission();
+  await Promise.all([p1, p2]);
+
+  assert.equal(submitCalls, 2, 'Duplicate concurrent submission must be blocked');
+  assert.equal(payloadSent.startTime, undefined);
+  assert.equal(payloadSent.endTime, undefined);
+  assert.equal(payloadSent.budgetFlexibility, undefined);
+  assert.equal(payloadSent.budget, 75000);
+  assert.equal(closeModalCalls, 1, 'Modal should be closed on success');
+  assert.equal(vm.runInContext('eventRequestDraft', h.context), null, 'Draft should be cleared on success');
+  assert.equal(toasts.at(-1)?.type, 'success');
+});
+
 
 test('organizer submits the selected PDF before submitting its linked event plan', async () => {
   const state = fixture();

@@ -20,6 +20,9 @@ import {
   UpdateAgreementStatusDto,
   UpdatePaymentStatusDto,
   ConfirmBookingDto,
+  PayDepositDto,
+  RequestEventModificationDto,
+  RespondToEventModificationDto,
 } from './dto/event-request.dto';
 
 @Injectable()
@@ -31,23 +34,24 @@ export class EventRequestsService {
 
   /** Reject invalid dates and dates that are not strictly in the future. */
   private isPastDate(dateStr: string): boolean {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr) || Number.isNaN(new Date(`${dateStr}T00:00:00`).getTime())) {
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
       return true;
     }
+    const normalizedDate = new Date(`${dateStr}T00:00:00.000Z`);
+    if (Number.isNaN(normalizedDate.getTime()) || normalizedDate.toISOString().slice(0, 10) !== dateStr) return true;
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const targetDate = new Date(`${dateStr}T00:00:00`);
     return targetDate <= today;
   }
 
-  /** Keep the legacy availability endpoint, but only validate future dates. */
-  checkDateAvailability(organizerId: string, dateStr: string): {
+  /** Check future dates against both confirmed events and active request holds. */
+  checkDateAvailability(organizerId: string, dateStr: string, excludeRequestId?: string): {
     available: boolean;
     reason?: string;
     pastDate?: boolean;
     conflictEvent?: any;
   } {
-    void organizerId;
     if (!dateStr || !dateStr.trim()) {
       return { available: false, reason: 'Date string is required' };
     }
@@ -60,6 +64,21 @@ export class EventRequestsService {
       };
     }
 
+    const organizer = this.db.organizers.find(item => item.organizerId === organizerId || item.userId === organizerId);
+    const ownerId = organizer?.organizerId || organizerId;
+    const eventConflict = this.db.events.find(event =>
+      event.organizerId === ownerId && event.date === dateStr && event.status !== 'cancelled',
+    );
+    if (eventConflict) {
+      return { available: false, reason: `Organizer is already scheduled for "${eventConflict.name}"`, conflictEvent: eventConflict };
+    }
+    const activeRequest = this.db.eventRequests.find(request =>
+      request.requestId !== excludeRequestId && request.organizerId === ownerId && request.eventDate === dateStr
+      && !['rejected', 'withdrawn', 'cancelled', 'expired', 'completed'].includes(request.status),
+    );
+    if (activeRequest) {
+      return { available: false, reason: `Date is being held for "${activeRequest.eventName}"` };
+    }
     return { available: true, reason: 'Future event date accepted' };
   }
 
@@ -276,7 +295,13 @@ export class EventRequestsService {
           performedBy: userId || clientProfile.userId,
           role: role,
           timestamp: new Date(),
-          details: { budget: dto.budget, capacity: dto.capacity, eventDate: dto.eventDate, eventType: dto.eventType, city: dto.city },
+          details: {
+            budget: dto.budget,
+            capacity: dto.capacity,
+            eventDate: dto.eventDate,
+            eventType: dto.eventType,
+            city: dto.city,
+          },
         },
       ],
       version: 1,
@@ -320,11 +345,24 @@ export class EventRequestsService {
     } else if (role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Access denied');
     }
-    return requests.map(request => ({
-      ...request,
-      clientUserId: this.db.clients.find(client => client.clientId === request.clientId)?.userId,
-      organizerUserId: this.db.organizers.find(organizer => organizer.organizerId === request.organizerId)?.userId,
-    }));
+    return requests.map(request => {
+      const clientProfile = this.db.clients.find(client => client.clientId === request.clientId);
+      const clientUser = clientProfile && this.db.findUserById(clientProfile.userId);
+      const organizerProfile = this.db.organizers.find(organizer => organizer.organizerId === request.organizerId);
+      const organizerUser = organizerProfile && this.db.findUserById(organizerProfile.userId);
+      return {
+        ...request,
+        clientUserId: clientUser?.userId,
+        organizerUserId: organizerUser?.userId,
+        clientDetails: clientUser ? {
+          userId: clientUser.userId, name: clientUser.name, email: clientUser.email,
+          phoneNo: clientUser.phoneNo, companyName: clientProfile?.companyName,
+        } : undefined,
+        organizerDetails: organizerUser ? {
+          userId: organizerUser.userId, name: organizerUser.name, businessName: organizerProfile?.businessName,
+        } : undefined,
+      };
+    });
   }
 
   findOne(requestId: string, role: UserRole, userId?: string): any {
@@ -359,7 +397,7 @@ export class EventRequestsService {
 
   private findMutableRequest(requestId: string, role: UserRole, userId?: string): any {
     const request = this.findOne(requestId, role, userId);
-    if (['cancelled', 'completed'].includes(request.status)) {
+    if (['cancelled', 'completed', 'rejected', 'withdrawn', 'expired'].includes(request.status)) {
       throw new BadRequestException(`Cannot change a request that is already ${request.status}`);
     }
     return request;
@@ -374,8 +412,8 @@ export class EventRequestsService {
       throw new ForbiddenException('Only organizers can start request reviews');
     }
 
-    if (request.status === 'confirmed' || request.status === 'rejected' || request.status === 'withdrawn') {
-      throw new BadRequestException(`Cannot review a request that is already ${request.status}`);
+    if (!['submitted', 'pending', 'under_review'].includes(request.status)) {
+      throw new BadRequestException(`Cannot review a request in ${request.status} status`);
     }
 
     if (request.status !== 'under_review') {
@@ -401,10 +439,17 @@ export class EventRequestsService {
     if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers can accept event requests');
     }
+    if (role === UserRole.EVENT_ORGANIZER) {
+      const user = this.db.users.find(u => u.userId === userId);
+      const org = this.db.organizers.find(o => o.organizerId === request.organizerId || o.userId === userId);
+      if ((user && user.status !== 'active') || (org && (org as any).verificationStatus && (org as any).verificationStatus !== 'Approved')) {
+        throw new ForbiddenException('Only approved organizers can accept event bookings or requests');
+      }
+    }
     if (!['submitted', 'pending', 'under_review', 'info_requested'].includes(request.status)) {
       throw new BadRequestException(`Cannot accept a request in ${request.status} status`);
     }
-    const availability = this.checkDateAvailability(request.organizerId, request.eventDate);
+    const availability = this.checkDateAvailability(request.organizerId, request.eventDate, request.requestId);
     if (!availability.available) throw new ConflictException(availability.reason);
     const policy = request.policySnapshot || getEventPolicy();
     assertEventPolicyAccepted(acknowledgement || {}, policy);
@@ -435,8 +480,8 @@ export class EventRequestsService {
       throw new ForbiddenException('Only organizers can request missing information');
     }
 
-    if (request.status === 'confirmed' || request.status === 'rejected' || request.status === 'withdrawn') {
-      throw new BadRequestException(`Cannot request info for a request that is ${request.status}`);
+    if (!['submitted', 'pending', 'under_review', 'info_requested'].includes(request.status)) {
+      throw new BadRequestException(`Cannot request information while the request is ${request.status}`);
     }
 
     if (!dto.message || !dto.message.trim()) {
@@ -493,6 +538,9 @@ export class EventRequestsService {
     const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.CLIENT && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only client can respond to missing information requests');
+    }
+    if (request.status !== 'info_requested') {
+      throw new BadRequestException('This request is not waiting for clarification');
     }
 
     if (!dto.response || !dto.response.trim()) {
@@ -553,8 +601,18 @@ export class EventRequestsService {
     const hasAcceptedProposal = Array.isArray(request.proposals) && request.proposals.length > 0;
     const canReviseAcceptedProposal = hasAcceptedProposal &&
       ['under_review', 'proposal_sent', 'awaiting_client'].includes(request.status);
-    if (!['planning', 'plan_revision_requested'].includes(request.status) && !canReviseAcceptedProposal) {
+    if (!['planning', 'plan_revision_requested', 'submitted', 'pending', 'under_review'].includes(request.status) && !canReviseAcceptedProposal) {
       throw new BadRequestException('A proposal can only be sent after the organizer accepts the request');
+    }
+
+    if (['submitted', 'pending', 'under_review'].includes(request.status)) {
+      if (!request.policySnapshot) {
+        request.policySnapshot = getEventPolicy();
+      }
+      if (!request.organizerPolicyAcceptedAt) {
+        request.organizerPolicyAcceptedAt = new Date();
+        request.organizerPolicyAcceptedBy = userId;
+      }
     }
 
     if (dto.amount <= 0) {
@@ -575,7 +633,7 @@ export class EventRequestsService {
     }
 
     // Check date availability
-    const avail = this.checkDateAvailability(request.organizerId, proposedDate);
+    const avail = this.checkDateAvailability(request.organizerId, proposedDate, request.requestId);
     if (!avail.available) {
       throw new ConflictException(`Cannot propose date ${proposedDate}: ${avail.reason}`);
     }
@@ -595,6 +653,18 @@ export class EventRequestsService {
       validUntil: dto.validUntil,
       terms: dto.terms || 'Standard service agreement terms apply.',
       notes: dto.notes || '',
+      eventPlan: dto.eventPlan || '',
+      timeline: dto.timeline || '',
+      organizerFee: dto.organizerFee !== undefined ? Number(dto.organizerFee) : undefined,
+      itemizedCosts: dto.itemizedCosts || '',
+      taxes: dto.taxes !== undefined ? Number(dto.taxes) : undefined,
+      includedServices: dto.includedServices || '',
+      excludedServices: dto.excludedServices || '',
+      attendeeCapacity: dto.attendeeCapacity !== undefined ? Number(dto.attendeeCapacity) : undefined,
+      constraints: dto.constraints || '',
+      paymentSchedule: dto.paymentSchedule || '',
+      cancellationTerms: dto.cancellationTerms || '',
+      conditions: dto.conditions || '',
       status: 'pending_client' as const,
       sentAt: new Date(),
     };
@@ -680,7 +750,7 @@ export class EventRequestsService {
         if (!dto.proposedDate || this.isPastDate(dto.proposedDate)) {
           throw new BadRequestException('A future proposed date is required');
         }
-        const availability = this.checkDateAvailability(request.organizerId, dto.proposedDate);
+        const availability = this.checkDateAvailability(request.organizerId, dto.proposedDate, request.requestId);
         if (!availability.available) throw new ConflictException(availability.reason);
       }
       request.negotiations = request.negotiations || [];
@@ -715,6 +785,9 @@ export class EventRequestsService {
 
     request.status = 'rejected';
     request.rejectionReason = dto.reason.trim();
+    if (dto.comments && dto.comments.trim()) {
+      request.rejectionComments = dto.comments.trim();
+    }
     request.updatedAt = new Date();
 
     // Mark any active proposal as rejected
@@ -731,7 +804,7 @@ export class EventRequestsService {
       performedBy: userId || 'organizer',
       role: role,
       timestamp: new Date(),
-      details: { reason: dto.reason.trim() },
+      details: { reason: dto.reason.trim(), comments: dto.comments?.trim() },
     });
 
     // Notify client
@@ -794,7 +867,7 @@ export class EventRequestsService {
       const latestChange = [...(request.negotiations || [])].reverse().find(n => n.action === 'changes_requested');
       if (dto.decision === 'accept_changes') {
         if (latestChange?.eventDate) {
-          const availability = this.checkDateAvailability(request.organizerId, latestChange.eventDate);
+          const availability = this.checkDateAvailability(request.organizerId, latestChange.eventDate, request.requestId);
           if (!availability.available) throw new ConflictException(availability.reason);
           request.eventDate = latestChange.eventDate;
         }
@@ -832,7 +905,7 @@ export class EventRequestsService {
         }
         if (dto.counterofferDate) {
           if (this.isPastDate(dto.counterofferDate)) throw new BadRequestException('Counteroffer date must be in the future');
-          const availability = this.checkDateAvailability(request.organizerId, dto.counterofferDate);
+          const availability = this.checkDateAvailability(request.organizerId, dto.counterofferDate, request.requestId);
           if (!availability.available) throw new ConflictException(availability.reason);
         }
         request.negotiations = request.negotiations || [];
@@ -900,6 +973,7 @@ export class EventRequestsService {
 
     if (dto.decision === 'accept') {
       activeProposal.status = 'accepted';
+      if (activeProposal.proposedDate) request.eventDate = activeProposal.proposedDate;
       request.status = 'awaiting_client';
       request.agreementStatus = 'pending_signature';
       request.paymentStatus = 'deposit_pending';
@@ -980,7 +1054,7 @@ export class EventRequestsService {
     const policy = request.policySnapshot || getEventPolicy();
     assertEventPolicyAccepted(acknowledgement || {}, policy);
     if (counteroffer.eventDate) {
-      const availability = this.checkDateAvailability(request.organizerId, counteroffer.eventDate);
+      const availability = this.checkDateAvailability(request.organizerId, counteroffer.eventDate, request.requestId);
       if (!availability.available) throw new ConflictException(availability.reason);
       request.eventDate = counteroffer.eventDate;
     }
@@ -1013,17 +1087,40 @@ export class EventRequestsService {
    */
   updateAgreementStatus(requestId: string, dto: UpdateAgreementStatusDto, role: UserRole, userId?: string): any {
     const request = this.findMutableRequest(requestId, role, userId);
-
+    if (role !== UserRole.CLIENT) {
+      throw new ForbiddenException('Only the client can acknowledge or decline the agreement');
+    }
+    if (!['agreed', 'declined'].includes(dto.agreementStatus)) {
+      throw new BadRequestException('Agreement status can only be changed through the client acknowledgement action');
+    }
+    if (!['pending_signature', 'declined'].includes(request.agreementStatus)) {
+      throw new BadRequestException('There is no agreement awaiting the client signature');
+    }
+    if (request.status !== 'awaiting_client') {
+      throw new BadRequestException('The request must be awaiting client agreement');
+    }
+    const latestProposal = request.proposals?.[request.proposals.length - 1];
+    const approvedPlan = this.db.eventPlans.some(plan =>
+      plan.requestId === request.requestId && plan.approvalStatus === 'approved',
+    );
+    if (latestProposal?.status !== 'accepted' && !approvedPlan) {
+      throw new BadRequestException('Accept a proposal or approve the final event plan before signing');
+    }
     request.agreementStatus = dto.agreementStatus;
     request.updatedAt = new Date();
     request.auditHistory = request.auditHistory || [];
     request.auditHistory.push({
       id: this.db.generateId('aud'),
-      action: `Agreement Status: ${dto.agreementStatus}`,
+      action: dto.agreementStatus === 'agreed' ? 'Client Acknowledged Agreement Terms' : 'Client Declined Agreement Terms',
       performedBy: userId || 'user',
       role: role,
       timestamp: new Date(),
     });
+    if (dto.agreementStatus === 'agreed') {
+      this.notifyRequestOrganizer(request, `The client acknowledged the agreement terms for "${request.eventName}".`, 'agreement_acknowledged');
+    } else {
+      this.notifyRequestOrganizer(request, `The client declined the agreement for "${request.eventName}".`, 'agreement_declined');
+    }
 
     return { success: true, message: `Agreement status updated to ${dto.agreementStatus}`, data: request };
   }
@@ -1031,29 +1128,15 @@ export class EventRequestsService {
   /**
    * Update Payment Status (unpaid, deposit_pending, deposit_paid, fully_paid)
    */
-  updatePaymentStatus(requestId: string, dto: UpdatePaymentStatusDto, role: UserRole, userId?: string): any {
-    const request = this.findMutableRequest(requestId, role, userId);
-    if (request.activeEventPlanId) {
-      throw new ForbiddenException('Payment for an approved-plan event must be verified through the event payment workflow');
-    }
-
-    request.paymentStatus = dto.paymentStatus;
-    request.updatedAt = new Date();
-    request.auditHistory = request.auditHistory || [];
-    request.auditHistory.push({
-      id: this.db.generateId('aud'),
-      action: `Payment Status: ${dto.paymentStatus}`,
-      performedBy: userId || 'user',
-      role: role,
-    });
-
-    return { success: true, message: `Payment status updated to ${dto.paymentStatus}`, data: request };
+  updatePaymentStatus(requestId: string, _dto: UpdatePaymentStatusDto, role: UserRole, userId?: string): any {
+    this.findOne(requestId, role, userId);
+    throw new ForbiddenException('Payment status is managed only by verified payment processing; manual status changes are not allowed');
   }
 
   /**
    * Confirm booking: STRICTLY requires agreementStatus === 'agreed' AND paymentStatus satisfied
    */
-  confirmBooking(requestId: string, dto: ConfirmBookingDto, role: UserRole, userId?: string): any {
+  confirmBooking(requestId: string, _dto: ConfirmBookingDto, role: UserRole, userId?: string): any {
     const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers can confirm event bookings');
@@ -1066,6 +1149,9 @@ export class EventRequestsService {
     if (request.status === 'rejected' || request.status === 'withdrawn') {
       throw new BadRequestException(`Cannot confirm a request that has been ${request.status}`);
     }
+    if (request.status !== 'awaiting_client') {
+      throw new BadRequestException('The client must accept the final plan before booking confirmation');
+    }
 
     const approvedPlan = this.db.eventPlans.find(
       plan => plan.requestId === request.requestId && plan.approvalStatus === 'approved',
@@ -1075,7 +1161,7 @@ export class EventRequestsService {
     }
 
     // Check agreement condition
-    const isAgreed = request.agreementStatus === 'agreed' || dto?.agreementConfirmed;
+    const isAgreed = request.agreementStatus === 'agreed';
     if (!isAgreed) {
       throw new BadRequestException(
         'Cannot confirm booking: Signed agreement is required before confirmation. (Agreement status: ' +
@@ -1085,10 +1171,10 @@ export class EventRequestsService {
     }
 
     // Check payment / deposit condition
-    const isDepositSatisfied =
-      request.paymentStatus === 'deposit_paid' ||
-      request.paymentStatus === 'fully_paid' ||
-      dto?.depositConfirmed;
+    const activeProposal = request.proposals?.[request.proposals.length - 1];
+    const depositRequired = activeProposal?.status === 'accepted' ? Number(activeProposal.depositRequired) : undefined;
+    const isDepositSatisfied = depositRequired === 0 ||
+      request.paymentStatus === 'deposit_paid' || request.paymentStatus === 'fully_paid';
 
     if (!isDepositSatisfied) {
       throw new BadRequestException(
@@ -1099,12 +1185,13 @@ export class EventRequestsService {
     }
 
     // Check date availability one more time to prevent double-booking
-    const eventDate = request.proposals?.length
-      ? request.proposals[request.proposals.length - 1].proposedDate || request.eventDate
+    const latestProposal = request.proposals?.[request.proposals.length - 1];
+    const eventDate = latestProposal?.status === 'accepted'
+      ? latestProposal.proposedDate || request.eventDate
       : request.eventDate;
 
-    const avail = this.checkDateAvailability(request.organizerId, eventDate);
-    if (!avail.available && !avail.reason?.includes('already has a confirmed')) {
+    const avail = this.checkDateAvailability(request.organizerId, eventDate, request.requestId);
+    if (!avail.available) {
       throw new ConflictException(`Cannot confirm booking for date ${eventDate}: ${avail.reason}`);
     }
 
@@ -1115,10 +1202,10 @@ export class EventRequestsService {
       organizerId: request.organizerId,
       clientId: request.clientId,
       name: request.eventName,
-      category: 'Corporate',
+      category: request.eventType || 'Event',
       date: eventDate,
-      time: '10:00',
-      location: 'TBD',
+      time: request.eventTime || '10:00',
+      location: request.venue || '',
       capacity: request.capacity,
       ticketPrice: 0,
       status: 'ongoing' as const,
@@ -1127,12 +1214,9 @@ export class EventRequestsService {
       updatedAt: new Date(),
     };
     this.db.events.push(newEvent);
+    approvedPlan.eventId = eventId;
 
     request.status = 'confirmed';
-    request.agreementStatus = 'agreed';
-    if (request.paymentStatus === 'unpaid' || request.paymentStatus === 'deposit_pending') {
-      request.paymentStatus = 'deposit_paid';
-    }
     request.eventId = eventId;
     request.updatedAt = new Date();
 
@@ -1173,28 +1257,223 @@ export class EventRequestsService {
   }
 
   /**
+   * Client pays deposit via demo payment provider
+   */
+  payDeposit(requestId: string, _dto: PayDepositDto, role: UserRole, userId?: string): any {
+    const request = this.findMutableRequest(requestId, role, userId);
+    if (role !== UserRole.CLIENT && role !== UserRole.SUPER_ADMIN) {
+      throw new ForbiddenException('Only the client can pay the required deposit');
+    }
+    if (request.paymentStatus === 'deposit_paid' || request.paymentStatus === 'fully_paid') {
+      return { success: true, message: 'Deposit has already been paid for this event request', data: request };
+    }
+
+    const activeProposal = request.proposals?.[request.proposals.length - 1];
+    const depositRequired = activeProposal?.depositRequired !== undefined
+      ? Number(activeProposal.depositRequired)
+      : Math.round((Number(request.budget) || 25000) * 0.3);
+
+    const now = new Date();
+    const paymentId = this.db.generateId('pay-deposit');
+    const payment = {
+      paymentId,
+      eventId: request.eventId,
+      requestId: request.requestId,
+      clientId: request.clientId,
+      organizerId: request.organizerId,
+      amount: depositRequired,
+      status: 'completed' as const,
+      paymentDate: now.toISOString().slice(0, 10),
+      paymentMethod: 'DEMO_PROVIDER' as const,
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.db.eventWorkflowPayments.push(payment);
+
+    request.paymentStatus = 'deposit_paid';
+    request.updatedAt = now;
+
+    this.addAudit(request, 'Deposit Payment Verified via Demo Provider', userId, role, {
+      paymentId,
+      amount: depositRequired,
+      method: 'DEMO_PROVIDER',
+    });
+
+    if (request.agreementStatus === 'agreed' && request.status !== 'confirmed') {
+      try {
+        this.confirmBooking(requestId, {}, UserRole.EVENT_ORGANIZER, request.organizerId);
+      } catch (err) {
+        // Can be confirmed by organizer action
+      }
+    }
+
+    const totalAmount = Number(activeProposal?.amount || request.budget || depositRequired);
+    const outstandingBalance = Math.max(0, totalAmount - depositRequired);
+    const bookingId = request.eventId ? `BKG-${request.eventId.toUpperCase()}` : `BKG-${request.requestId.toUpperCase()}`;
+
+    return {
+      success: true,
+      simulated: true,
+      message: 'Demo deposit payment verified successfully',
+      data: {
+        bookingId,
+        paymentId,
+        amountPaid: depositRequired,
+        outstandingBalance,
+        totalAmount,
+        paymentStatus: request.paymentStatus,
+        bookingStatus: request.status,
+        eventId: request.eventId,
+        receipt: {
+          receiptNumber: `REC-${Date.now().toString(36).toUpperCase()}`,
+          bookingId,
+          date: now.toISOString(),
+          paymentMethod: 'DEMO PAYMENT PROVIDER · SIMULATED TRANSACTION',
+          amountPaid: depositRequired,
+          outstandingBalance,
+        },
+      },
+    };
+  }
+
+  /**
+   * Request modification for a confirmed event
+   */
+  requestModification(requestId: string, dto: RequestEventModificationDto, role: UserRole, userId?: string): any {
+    const request = this.findMutableRequest(requestId, role, userId);
+    if (!['confirmed', 'planning', 'ongoing'].includes(request.status) && !request.eventId) {
+      throw new BadRequestException('Modifications can only be requested for confirmed bookings');
+    }
+
+    if (!dto.reason || !dto.reason.trim()) {
+      throw new BadRequestException('A reason is mandatory when requesting an event update');
+    }
+
+    const requesterRole = role === UserRole.CLIENT ? 'client' : 'organizer';
+    const oldCapacity = Number(request.capacity) || 1;
+    const newCapacity = dto.capacity !== undefined ? Number(dto.capacity) : oldCapacity;
+    const oldBudget = Number(request.budget) || 0;
+
+    let recalculatedCost = dto.budget !== undefined ? Number(dto.budget) : oldBudget;
+    if (newCapacity !== oldCapacity && oldCapacity > 0 && oldBudget > 0) {
+      recalculatedCost = Math.round((oldBudget / oldCapacity) * newCapacity);
+    }
+
+    const modId = this.db.generateId('mod');
+    const now = new Date();
+    const modification = {
+      id: modId,
+      requesterRole: requesterRole as 'client' | 'organizer',
+      requesterName: requesterRole === 'client' ? 'Client' : 'Organizer',
+      requesterId: userId,
+      timestamp: now,
+      oldValues: {
+        date: request.eventDate,
+        venue: request.venue,
+        capacity: request.capacity,
+        budget: request.budget,
+        requirements: request.requirements,
+      },
+      newValues: {
+        date: dto.date || request.eventDate,
+        venue: dto.venue !== undefined ? dto.venue : request.venue,
+        capacity: newCapacity,
+        budget: recalculatedCost,
+        requirements: dto.requirements !== undefined ? dto.requirements : request.requirements,
+      },
+      recalculatedCost,
+      reason: dto.reason.trim(),
+      status: 'pending_approval' as const,
+    };
+
+    request.eventModifications = request.eventModifications || [];
+    request.eventModifications.push(modification);
+    request.updatedAt = now;
+
+    this.addAudit(request, `Event Update Requested by ${requesterRole === 'client' ? 'Client' : 'Organizer'}`, userId, role, {
+      modId,
+      changes: modification.newValues,
+      reason: dto.reason,
+    });
+
+    return {
+      success: true,
+      message: 'Event modification request submitted and awaiting approval',
+      data: modification,
+    };
+  }
+
+  /**
+   * Approve or reject a confirmed event modification
+   */
+  respondToModification(requestId: string, modId: string, dto: RespondToEventModificationDto, role: UserRole, userId?: string): any {
+    const request = this.findMutableRequest(requestId, role, userId);
+    const mod = (request.eventModifications || []).find((m: any) => m.id === modId);
+    if (!mod) {
+      throw new NotFoundException(`Modification request ${modId} not found`);
+    }
+    if (mod.status !== 'pending_approval') {
+      throw new BadRequestException(`Modification request is already ${mod.status}`);
+    }
+
+    const responderRole = role === UserRole.CLIENT ? 'client' : 'organizer';
+    if (mod.requesterRole === responderRole) {
+      throw new ForbiddenException('You cannot approve or reject your own modification request');
+    }
+
+    const now = new Date();
+    if (dto.action === 'approve') {
+      mod.status = 'approved';
+      mod.approvedAt = now;
+      mod.approvedBy = userId;
+
+      if (mod.newValues.date) request.eventDate = mod.newValues.date;
+      if (mod.newValues.venue !== undefined) request.venue = mod.newValues.venue;
+      if (mod.newValues.capacity !== undefined) request.capacity = mod.newValues.capacity;
+      if (mod.newValues.requirements !== undefined) request.requirements = mod.newValues.requirements;
+      if (mod.recalculatedCost) request.budget = mod.recalculatedCost;
+
+      if (request.eventId) {
+        const event = this.db.events.find(e => e.eventId === request.eventId);
+        if (event) {
+          if (mod.newValues.date) event.date = mod.newValues.date;
+          if (mod.newValues.venue !== undefined) event.location = mod.newValues.venue;
+          if (mod.newValues.capacity !== undefined) event.capacity = mod.newValues.capacity;
+          if (mod.newValues.requirements !== undefined) event.description = mod.newValues.requirements;
+          event.updatedAt = now;
+        }
+      }
+
+      request.updatedAt = now;
+      this.addAudit(request, `Event Modification Approved by ${responderRole === 'client' ? 'Client' : 'Organizer'}`, userId, role, {
+        modId,
+        approvedValues: mod.newValues,
+      });
+    } else {
+      mod.status = 'rejected';
+      mod.rejectionReason = dto.reason?.trim() || 'Modification declined by other party';
+      request.updatedAt = now;
+
+      this.addAudit(request, `Event Modification Rejected by ${responderRole === 'client' ? 'Client' : 'Organizer'}`, userId, role, {
+        modId,
+        reason: mod.rejectionReason,
+      });
+    }
+
+    return {
+      success: true,
+      message: `Modification ${dto.action === 'approve' ? 'approved' : 'rejected'} successfully`,
+      data: request,
+    };
+  }
+
+  /**
    * Generic status updater (backward compatibility)
    */
   updateStatus(requestId: string, dto: UpdateEventRequestStatusDto, role: UserRole, userId?: string): any {
-    if (dto.status === 'confirmed' || dto.status === 'approved') {
-      return this.confirmBooking(requestId, { agreementConfirmed: true, depositConfirmed: true }, role, userId);
-    }
-    if (dto.status === 'rejected') {
-      return this.rejectRequest(requestId, { reason: 'Declined by organizer' }, role, userId);
-    }
     if (dto.status === 'under_review') {
       return this.startReview(requestId, role, userId);
     }
-    if (dto.status === 'cancelled' || dto.status === 'withdrawn') {
-      return this.clientResponse(requestId, { decision: 'withdraw' }, role, userId);
-    }
-
-    if (['confirmed', 'approved', 'ongoing'].includes(dto.status)) {
-      throw new BadRequestException('A request can only move to ongoing after the client approves its final event plan');
-    }
-    const request = this.findMutableRequest(requestId, role, userId);
-    request.status = dto.status;
-    request.updatedAt = new Date();
-    return { success: true, message: `Request status updated to ${dto.status}`, data: request };
+    throw new BadRequestException('Use the dedicated request workflow action for this status transition');
   }
 }

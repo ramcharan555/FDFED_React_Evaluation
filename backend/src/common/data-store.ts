@@ -39,6 +39,7 @@ const DATA_COLLECTIONS = [
   'activityLogs',
   'supportTickets',
   'supportAttachments',
+  'organizerApplications',
 ] as const;
 
 type DataCollection = (typeof DATA_COLLECTIONS)[number];
@@ -58,6 +59,7 @@ const DATE_FIELDS = new Set([
   'reviewedAt',
   'declineViewedAt',
   'submittedAt',
+  'sentAt',
   'clientPolicyAcceptedAt',
   'organizerPolicyAcceptedAt',
 ]);
@@ -77,6 +79,7 @@ export interface User {
   bio?: string;
   preferences?: { emailNotifications: boolean };
   profile?: Record<string, unknown>;
+  demoScenario?: 'event-request-workflow-v1';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -95,6 +98,7 @@ export interface Client {
   clientId: string;
   userId: string;
   companyName?: string;
+  demoScenario?: 'event-request-workflow-v1';
   createdAt: Date;
 }
 
@@ -103,7 +107,87 @@ export interface EventOrganizer {
   userId: string;
   businessName?: string;
   rating: number;
+  verificationStatus?: OrganizerApplicationStatus;
   createdAt: Date;
+}
+
+export type OrganizerApplicationStatus =
+  | 'Pending Verification'
+  | 'Under Review'
+  | 'Additional Information Required'
+  | 'Approved'
+  | 'Rejected'
+  | 'Suspended';
+
+export type OrganizerType =
+  | 'Registered Company / Event Agency'
+  | 'Independent Event Organizer';
+
+export interface OrganizerApplicationDecision {
+  decisionId: string;
+  status: OrganizerApplicationStatus;
+  reason?: string;
+  comments?: string;
+  additionalInfoRequest?: string;
+  reviewerId: string;
+  reviewerName?: string;
+  createdAt: Date;
+  emailSent?: boolean;
+  emailNote?: string;
+}
+
+export interface OrganizerApplication {
+  applicationId: string;
+  referenceNumber: string;
+  userId?: string;
+  organizerType: OrganizerType;
+  status: OrganizerApplicationStatus;
+  fullName: string;
+  email: string;
+  mobileNumber: string;
+  emailVerified: boolean;
+  mobileVerified: boolean;
+  companyDetails?: {
+    legalCompanyName: string;
+    businessStructure: string;
+    registrationNumber?: string;
+    gstin?: string;
+    address: string;
+    city: string;
+    state: string;
+    pinCode: string;
+    authorizedRepresentativeName: string;
+    representativeDesignation: string;
+    websiteUrl?: string;
+    registrationCertificateDoc?: { name: string; size: number; type: string; data?: string };
+    proofOfAuthorizationDoc?: { name: string; size: number; type: string; data?: string };
+  };
+  independentDetails?: {
+    fullName: string;
+    professionalName: string;
+    email: string;
+    mobileNumber: string;
+    address: string;
+    city: string;
+    state: string;
+    pinCode: string;
+    yearsOfExperience: number;
+    areasOfSpecialization: string[];
+    portfolioDetails: string;
+    portfolioUrl?: string;
+    supportingEvidenceDoc?: { name: string; size: number; type: string; data?: string };
+  };
+  declarationAccepted: boolean;
+  submittedAt: Date;
+  updatedAt: Date;
+  decisionHistory: OrganizerApplicationDecision[];
+  emailNotificationLog: Array<{
+    sentAt: Date;
+    to: string;
+    subject: string;
+    status: 'sent' | 'not_configured';
+    message: string;
+  }>;
 }
 
 export interface EventStaff {
@@ -142,9 +226,24 @@ export interface Event {
   cancellationDeadline?: string;
   eligibility?: string;
   waitlistEnabled?: boolean;
+  preparationTasks?: EventPreparationTask[];
+  /** Development-only display count used by the isolated organizer demo scenario. */
+  demoRegistrationCount?: number;
+  /** Development-only actionable reasons attached to the same event record. */
+  attentionReasons?: string[];
+  cancellationReason?: string;
+  demoScenario?: 'organizer-dashboard-v3' | 'event-request-workflow-v1';
   policySnapshot?: EventPolicy;
   cancellation?: EventCancellation;
   createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface EventPreparationTask {
+  taskId: string;
+  title: string;
+  deadline: string;
+  status: 'pending' | 'in_progress' | 'completed';
   updatedAt: Date;
 }
 
@@ -156,6 +255,18 @@ export interface ProposalVersion {
   validUntil: string;
   terms?: string;
   notes?: string;
+  eventPlan?: string;
+  timeline?: string;
+  organizerFee?: number;
+  itemizedCosts?: string;
+  taxes?: number;
+  includedServices?: string;
+  excludedServices?: string;
+  attendeeCapacity?: number;
+  constraints?: string;
+  paymentSchedule?: string;
+  cancellationTerms?: string;
+  conditions?: string;
   status: 'pending_client' | 'accepted' | 'revision_requested' | 'rejected' | 'expired';
   sentAt: Date;
   clientResponseAt?: Date;
@@ -196,8 +307,10 @@ export interface EventRequest {
   notes?: string;
   status: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'changes_requested' | 'counteroffer_received' | 'planning' | 'plan_submitted' | 'plan_revision_requested' | 'confirmed' | 'approved' | 'completed' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';
   agreementStatus: 'not_sent' | 'pending_signature' | 'agreed' | 'declined';
-  paymentStatus: 'unpaid' | 'deposit_pending' | 'deposit_paid' | 'fully_paid' | 'refunded';
+  paymentStatus: 'unpaid' | 'deposit_pending' | 'deposit_paid' | 'fully_paid' | 'failed' | 'refunded';
+  demoScenario?: 'event-request-workflow-v1';
   rejectionReason?: string;
+  rejectionComments?: string;
   withdrawalReason?: string;
   policySnapshot?: EventPolicy;
   clientPolicyAcceptedAt?: Date;
@@ -232,6 +345,33 @@ export interface EventRequest {
   venue?: string;
   clarifications?: RequestClarification[];
   auditHistory?: RequestAuditEntry[];
+  eventModifications?: Array<{
+    id: string;
+    requesterRole: 'client' | 'organizer';
+    requesterName?: string;
+    requesterId?: string;
+    timestamp: Date;
+    oldValues: {
+      date?: string;
+      venue?: string;
+      capacity?: number;
+      budget?: number;
+      requirements?: string;
+    };
+    newValues: {
+      date?: string;
+      venue?: string;
+      capacity?: number;
+      budget?: number;
+      requirements?: string;
+    };
+    recalculatedCost?: number;
+    reason?: string;
+    status: 'pending_approval' | 'approved' | 'rejected';
+    approvedAt?: Date;
+    approvedBy?: string;
+    rejectionReason?: string;
+  }>;
   eventId?: string;
   version?: number;
   createdAt: Date;
@@ -259,6 +399,7 @@ export interface EventPlan {
   revisionReason?: string;
   status: 'draft' | 'submitted' | 'revised' | 'approved' | 'rejected';
   approvalStatus: 'pending' | 'approved' | 'revision_requested' | 'rejected';
+  demoScenario?: 'event-request-workflow-v1';
   createdAt: Date;
   updatedAt: Date;
 }
@@ -388,7 +529,7 @@ export interface Refund {
 export interface EventChange {
   changeId: string;
   eventId: string;
-  type: 'cancelled' | 'postponed' | 'date_changed' | 'time_changed' | 'venue_changed';
+  type: 'cancelled' | 'postponed' | 'date_changed' | 'time_changed' | 'venue_changed' | 'status_changed' | 'preparation_updated' | 'details_updated';
   summary: string;
   previousValue?: string;
   newValue?: string;
@@ -541,6 +682,7 @@ export interface SupportAttachment {
 export interface SupportTicket {
   ticketId: string;
   userId: string;
+  eventId?: string;
   requestType: string;
   concern: string;
   description: string;
@@ -614,6 +756,9 @@ export class DataStore {
   supportTickets: SupportTicket[] = [];
   supportAttachments: SupportAttachment[] = [];
 
+  // Organizer Applications & Verification
+  organizerApplications: OrganizerApplication[] = [];
+
   private constructor() {
     this.initializeSeedData();
     this.restoreFromDisk();
@@ -638,6 +783,9 @@ export class DataStore {
 
     const demoSeeds = {
       events: this.events.filter(event => event.eventId.startsWith('evt-demo-')),
+      organizerEvents: this.events.filter(event => event.demoScenario === 'organizer-dashboard-v3'),
+      organizerRequests: this.eventRequests.filter(request => request.requestId.startsWith('req-orgdash-')),
+      organizerTickets: this.supportTickets.filter(ticket => ticket.ticketId === 'SUP-ORG-DEMO-001'),
       clientOrganizerReviews: this.clientOrganizerReviews,
       supportExecutiveReports: this.supportExecutiveReports,
       registrations: this.registrations.filter(registration => registration.registrationId.startsWith('reg-demo-')),
@@ -666,6 +814,34 @@ export class DataStore {
         throw new Error(`Invalid "${collection}" collection in ${this.persistencePath}`);
       }
       if (Array.isArray(rows)) Object.assign(this, { [collection]: rows });
+    }
+    if (process.env.NODE_ENV === 'production') {
+      const demoRequests = this.eventRequests.filter(request =>
+        request.demoScenario === 'event-request-workflow-v1' || request.requestId.startsWith('req-demo-flow-'),
+      );
+      const demoRequestIds = new Set(demoRequests.map(request => request.requestId));
+      const demoClientIds = new Set(this.clients
+        .filter(client => client.demoScenario === 'event-request-workflow-v1' || client.clientId.startsWith('cli-reqdemo-'))
+        .map(client => client.clientId));
+      const demoUserIds = new Set(this.clients
+        .filter(client => demoClientIds.has(client.clientId))
+        .map(client => client.userId));
+      const originalCounts = [this.eventRequests.length, this.eventPlans.length, this.events.length, this.clients.length, this.users.length];
+      this.eventRequests = this.eventRequests.filter(request => !demoRequestIds.has(request.requestId));
+      this.eventPlans = this.eventPlans.filter(plan =>
+        plan.demoScenario !== 'event-request-workflow-v1' && !demoRequestIds.has(plan.requestId || ''),
+      );
+      this.events = this.events.filter(event =>
+        event.demoScenario !== 'event-request-workflow-v1' && !event.eventId.startsWith('evt-demo-flow-'),
+      );
+      this.clients = this.clients.filter(client => !demoClientIds.has(client.clientId));
+      this.users = this.users.filter(user =>
+        !demoUserIds.has(user.userId) &&
+        user.demoScenario !== 'event-request-workflow-v1' &&
+        !user.userId.startsWith('usr-reqdemo-client-'),
+      );
+      if ([this.eventRequests.length, this.eventPlans.length, this.events.length, this.clients.length, this.users.length]
+        .some((count, index) => count !== originalCounts[index])) this.persist();
     }
 
     let reportSampleUpdated = false;
@@ -726,6 +902,20 @@ export class DataStore {
       }
       this.persist();
     }
+    if (Number(parsed.organizerDashboardSeedVersion || 0) < 4 && demoSeeds.organizerEvents.length) {
+      const eventIds = new Set(demoSeeds.organizerEvents.map(event => event.eventId));
+      this.events = [...this.events.filter(event => !eventIds.has(event.eventId)), ...demoSeeds.organizerEvents];
+      this.eventRequests = [...this.eventRequests.filter(request => !request.requestId.startsWith('req-orgdash-')), ...demoSeeds.organizerRequests];
+      this.supportTickets = [...this.supportTickets.filter(ticket => ticket.ticketId !== 'SUP-ORG-DEMO-001'), ...demoSeeds.organizerTickets];
+      this.persist();
+    }
+    // Demo records deliberately move with the current date so development dashboards
+    // do not slowly turn all seeded upcoming events into historical records.
+    if (process.env.NODE_ENV !== 'production') {
+      this.applyOrganizerDashboardDemoScenario();
+      this.applyEventRequestDemoScenario();
+      this.persist();
+    }
   }
 
   persist(): void {
@@ -733,7 +923,7 @@ export class DataStore {
     fs.mkdirSync(directory, { recursive: true });
     const snapshot: Partial<Record<DataCollection, unknown>> = {};
     for (const collection of DATA_COLLECTIONS) snapshot[collection] = this[collection];
-    Object.assign(snapshot, { demoSeedVersion: 2, organizerReviewSeedVersion: 1, supportReportSeedVersion: 1 });
+    Object.assign(snapshot, { demoSeedVersion: 2, organizerDashboardSeedVersion: 4, organizerReviewSeedVersion: 1, supportReportSeedVersion: 1 });
 
     const temporaryPath = `${this.persistencePath}.tmp`;
     fs.writeFileSync(temporaryPath, JSON.stringify(snapshot, null, 2), { encoding: 'utf8', mode: 0o600 });
@@ -2140,6 +2330,286 @@ export class DataStore {
         4,
       ),
     ];
+    this.applyOrganizerDashboardDemoScenario();
+    this.applyEventRequestDemoScenario();
+  }
+
+  private applyOrganizerDashboardDemoScenario(): void {
+    if (process.env.NODE_ENV === 'production') return;
+    const day = (offset: number): string => {
+      const value = new Date();
+      value.setHours(12, 0, 0, 0);
+      value.setDate(value.getDate() + offset);
+      return value.toISOString().slice(0, 10);
+    };
+    const now = new Date();
+    const scenarios: Array<Partial<Event> & Pick<Event, 'eventId' | 'name' | 'category' | 'date' | 'time' | 'location' | 'capacity' | 'ticketPrice' | 'status'>> = [
+      { eventId: 'evt-001', name: 'India AI Leadership Summit', category: 'Technology', date: day(-65), time: '09:00', location: 'Chennai Trade Centre, Chennai', capacity: 500, demoRegistrationCount: 462, ticketPrice: 1500, status: 'completed' },
+      { eventId: 'evt-002', name: 'Wellness & Mindfulness Retreat', category: 'Health & Wellness', date: day(-38), time: '07:00', location: 'Nandi Hills Retreat, Bengaluru', capacity: 120, demoRegistrationCount: 108, ticketPrice: 750, status: 'completed' },
+      { eventId: 'evt-003', name: 'Future of FinTech Forum', category: 'Finance', date: day(0), time: '10:00', location: 'Venue confirmation pending', capacity: 250, demoRegistrationCount: 0, ticketPrice: 1200, status: 'ongoing', attentionReasons: ['Confirm the final venue operations plan.'], preparationTasks: [{ taskId: 'prep-demo-003', title: 'Confirm the final venue', deadline: day(-1), status: 'in_progress', updatedAt: now }] },
+      { eventId: 'evt-att-201', name: 'Product Design Conference India', category: 'Design', date: day(7), time: '09:30', location: 'BIEC Conference Hall, Bengaluru', capacity: 300, demoRegistrationCount: 286, ticketPrice: 1200, status: 'published', attentionReasons: ['Capacity is above 95%; review waitlist and seating.'] },
+      { eventId: 'evt-att-202', name: 'Cloud Native Engineering Workshop', category: 'Technology', date: day(0), time: '10:00', location: 'Tidel Park Learning Centre, Chennai', capacity: 80, demoRegistrationCount: 68, ticketPrice: 750, status: 'ongoing' },
+      { eventId: 'evt-att-203', name: 'Community Demo Night', category: 'Networking', date: day(3), time: '17:30', location: 'Innovation Hub, Hyderabad', capacity: 140, demoRegistrationCount: 137, ticketPrice: 0, status: 'published', attentionReasons: ['Assign two additional check-in staff before doors open.'], preparationTasks: [{ taskId: 'prep-demo-203', title: 'Assign two additional check-in staff', deadline: day(-1), status: 'pending', updatedAt: now }] },
+      { eventId: 'evt-att-204', name: 'Autumn Creator Expo', category: 'Creative', date: day(12), time: '11:00', location: 'Pragati Maidan, New Delhi', capacity: 450, demoRegistrationCount: 214, ticketPrice: 900, status: 'cancelled', cancellationReason: 'Venue closed for emergency maintenance.' },
+      { eventId: 'evt-demo-301', name: 'AI Product & Cloud Summit', category: 'Technology', date: day(14), time: '09:00', location: 'Bangalore International Centre, Bengaluru', capacity: 500, demoRegistrationCount: 411, ticketPrice: 1800, status: 'published' },
+      { eventId: 'evt-demo-306', name: 'Coastal Wellness Weekend', category: 'Health & Wellness', date: day(55), time: '07:30', location: 'Ashvem Beach Retreat, Goa', capacity: 75, demoRegistrationCount: 54, ticketPrice: 1200, status: 'published' },
+      { eventId: 'evt-demo-307', name: 'Design Systems Exchange', category: 'Design', date: day(0), time: '11:30', location: 'Bangalore International Centre, Bengaluru', capacity: 140, demoRegistrationCount: 96, ticketPrice: 600, status: 'ongoing', attentionReasons: ['Complete the remaining agenda handoff.'], preparationTasks: [{ taskId: 'prep-demo-307', title: 'Complete the agenda handoff', deadline: day(-2), status: 'pending', updatedAt: now }] },
+      { eventId: 'evt-demo-309', name: 'Kochi Coastal Music Festival', category: 'Music', date: day(-10), time: '16:00', location: 'Bolgatty Palace Grounds, Kochi', capacity: 1000, demoRegistrationCount: 914, ticketPrice: 1500, status: 'completed' },
+      { eventId: 'evt-demo-311', name: 'Winter Makers Market', category: 'Arts & Culture', date: day(-120), time: '11:00', location: 'Jio World Drive, Mumbai', capacity: 90, demoRegistrationCount: 84, ticketPrice: 300, status: 'completed' },
+      { eventId: 'evt-orgdash-016', name: 'Retail Innovation Expo', category: 'Business', date: day(0), time: '09:30', location: 'World Trade Centre, Pune', capacity: 320, demoRegistrationCount: 244, ticketPrice: 950, status: 'ongoing' },
+      { eventId: 'evt-orgdash-017', name: 'Women in Engineering Conference', category: 'Conference', date: day(85), time: '09:00', location: 'The Leela Ambience, Gurugram', capacity: 420, demoRegistrationCount: 267, ticketPrice: 1100, status: 'published' },
+      { eventId: 'evt-orgdash-018', name: 'Monsoon Startup Mixer', category: 'Networking', date: day(-18), time: '18:30', location: 'WeWork Galaxy, Bengaluru', capacity: 180, demoRegistrationCount: 121, ticketPrice: 0, status: 'completed', cancellationReason: undefined },
+    ];
+    const activeScenarioIds = new Set(scenarios.map(event => event.eventId));
+    const retiredScenarioIds = new Set(['evt-att-205', 'evt-demo-303', 'evt-demo-304']);
+    this.events = this.events.filter(event => !retiredScenarioIds.has(event.eventId)
+      && (event.demoScenario !== 'organizer-dashboard-v3' || activeScenarioIds.has(event.eventId)));
+    const existingById = new Map(this.events.map(event => [event.eventId, event]));
+    for (const scenario of scenarios) {
+      const existing = existingById.get(scenario.eventId);
+      const base: Event = existing || {
+        eventId: scenario.eventId, organizerId: 'org-001', name: scenario.name, category: scenario.category,
+        date: scenario.date, time: scenario.time, location: scenario.location, capacity: scenario.capacity,
+        ticketPrice: scenario.ticketPrice, status: scenario.status, createdAt: now, updatedAt: now,
+      };
+      Object.assign(base, scenario, { organizerId: 'org-001', demoScenario: 'organizer-dashboard-v3', updatedAt: now });
+      if (!existing) this.events.push(base);
+    }
+    const preparationRequest: EventRequest = { requestId: 'req-orgdash-prep', clientId: 'cli-001', organizerId: 'org-001',
+      eventName: 'Annual Partner Awards', eventDate: day(-2), budget: 180000, capacity: 240,
+      requirements: 'Awards stage, dinner service, lighting, and guest transport.', status: 'planning',
+      agreementStatus: 'agreed', paymentStatus: 'deposit_paid', proposals: [], clarifications: [], auditHistory: [],
+      createdAt: new Date(now.getTime() - 20 * 86_400_000), updatedAt: new Date(now.getTime() - 5 * 86_400_000) };
+    const existingRequest = this.eventRequests.find(request => request.requestId === preparationRequest.requestId);
+    if (existingRequest) Object.assign(existingRequest, preparationRequest); else this.eventRequests.push(preparationRequest);
+    const actionableRequests: EventRequest[] = [
+      ['req-orgdash-action-001', 'Executive Product Launch', 9, 'submitted'],
+      ['req-orgdash-action-002', 'Regional Partner Conference', 16, 'pending'],
+      ['req-orgdash-action-003', 'Healthcare Innovation Roundtable', 24, 'under_review'],
+      ['req-orgdash-action-004', 'Annual Customer Awards', 31, 'changes_requested'],
+      ['req-orgdash-action-005', 'Sustainable Retail Forum', 38, 'counteroffer_received'],
+      ['req-orgdash-action-006', 'Leadership Strategy Retreat', 46, 'submitted'],
+      ['req-orgdash-action-007', 'Creator Economy Networking Night', 53, 'pending'],
+    ].map(([requestId, eventName, offset, status], index) => ({
+      requestId: String(requestId), clientId: 'cli-001', organizerId: 'org-001', eventName: String(eventName),
+      eventDate: day(Number(offset)), budget: 75_000 + index * 15_000, capacity: 80 + index * 20,
+      requirements: `Review the client brief and confirm availability for ${eventName}.`, status: status as EventRequest['status'],
+      agreementStatus: 'not_sent', paymentStatus: 'unpaid', proposals: [], clarifications: [], auditHistory: [],
+      createdAt: new Date(now.getTime() - (index + 1) * 86_400_000), updatedAt: now,
+    }));
+    const actionableIds = new Set(actionableRequests.map(request => request.requestId));
+    this.eventRequests = this.eventRequests.filter(request => !request.requestId.startsWith('req-orgdash-action-') || actionableIds.has(request.requestId));
+    for (const request of actionableRequests) {
+      const existing = this.eventRequests.find(item => item.requestId === request.requestId);
+      if (existing) Object.assign(existing, request); else this.eventRequests.push(request);
+    }
+    const operationalIssue: SupportTicket = { ticketId: 'SUP-ORG-DEMO-001', userId: 'usr-org-001', eventId: 'evt-att-203', requestType: 'Event Related Issues',
+      concern: 'Power backup confirmation overdue', description: 'The venue has not confirmed generator capacity for Community Demo Night.',
+      attachments: [], status: 'open', createdAt: new Date(now.getTime() - 3 * 86_400_000), updatedAt: now };
+    const existingIssue = this.supportTickets.find(ticket => ticket.ticketId === operationalIssue.ticketId);
+    if (existingIssue) Object.assign(existingIssue, operationalIssue); else this.supportTickets.push(operationalIssue);
+  }
+
+  private applyEventRequestDemoScenario(): void {
+    if (process.env.NODE_ENV === 'production') return;
+    const now = new Date();
+    const day = (offset: number): string => {
+      const date = new Date();
+      date.setHours(12, 0, 0, 0);
+      date.setDate(date.getDate() + offset);
+      return date.toISOString().slice(0, 10);
+    };
+    const demoClients = [
+      { clientId: 'cli-reqdemo-001', userId: 'usr-reqdemo-client-001', name: 'Aisha Rao', email: 'aisha.demo@example.test', phoneNo: '9000001001', companyName: 'Northstar Technology' },
+      { clientId: 'cli-reqdemo-002', userId: 'usr-reqdemo-client-002', name: 'Daniel Kim', email: 'daniel.demo@example.test', phoneNo: '9000001002', companyName: 'Mosaic Health Group' },
+      { clientId: 'cli-reqdemo-003', userId: 'usr-reqdemo-client-003', name: 'Leena Iyer', email: 'leena.demo@example.test', phoneNo: '9000001003', companyName: 'Greenline Foundation' },
+    ];
+    for (const demoClient of demoClients) {
+      if (!this.users.some(user => user.userId === demoClient.userId)) {
+        this.users.push({
+          userId: demoClient.userId, name: demoClient.name, email: demoClient.email,
+          password: 'Demo-only-not-for-production', userRole: UserRole.CLIENT, status: 'active',
+          phoneNo: demoClient.phoneNo, demoScenario: 'event-request-workflow-v1', createdAt: now, updatedAt: now,
+        });
+      } else {
+        this.users.find(user => user.userId === demoClient.userId)!.demoScenario = 'event-request-workflow-v1';
+      }
+      if (!this.clients.some(client => client.clientId === demoClient.clientId)) {
+        this.clients.push({
+          clientId: demoClient.clientId, userId: demoClient.userId,
+          companyName: demoClient.companyName, demoScenario: 'event-request-workflow-v1', createdAt: now,
+        });
+      } else {
+        this.clients.find(client => client.clientId === demoClient.clientId)!.demoScenario = 'event-request-workflow-v1';
+      }
+    }
+
+    const makeRequest = (
+      sequence: number,
+      status: EventRequest['status'],
+      clientId: string,
+      organizerId: string,
+      title: string,
+      eventType: string,
+      dateOffset: number,
+      budget: number,
+      capacity: number,
+      extra: Partial<EventRequest> = {},
+    ): EventRequest => {
+      const createdAt = new Date(now.getTime() - (sequence + 1) * 86_400_000);
+      return {
+        requestId: `req-demo-flow-${String(sequence).padStart(3, '0')}`,
+        clientId, organizerId, eventName: title, eventType, eventDate: day(dateOffset),
+        eventTime: sequence % 2 ? '18:30' : '09:00', city: ['Bengaluru', 'Mumbai', 'Chennai', 'Hyderabad'][sequence % 4],
+        dateFlexibility: sequence % 3 === 0 ? 'flexible' : 'exact',
+        venue: `Demo venue ${sequence}`, budget, capacity,
+        requirements: `Demo request ${sequence}: ${eventType.toLowerCase()} with catering, accessibility, and production coordination.`,
+        status, agreementStatus: 'not_sent', paymentStatus: 'unpaid',
+        proposals: [], clarifications: [], negotiations: [],
+        auditHistory: [{
+          id: `aud-demo-flow-${String(sequence).padStart(3, '0')}-created`,
+          action: 'Request Submitted', performedBy: clientId, role: 'client', timestamp: createdAt,
+          details: { demoScenario: 'event-request-workflow-v1' },
+        }],
+        createdAt, updatedAt: new Date(createdAt.getTime() + 60 * 60 * 1000),
+        demoScenario: 'event-request-workflow-v1',
+        ...extra,
+      };
+    };
+    const proposal = (version: number, request: EventRequest, status: ProposalVersion['status'], offset: number, clientNotes?: string): ProposalVersion => ({
+      version, amount: request.budget + version * 5_000, depositRequired: Math.round((request.budget + version * 5_000) * 0.25),
+      proposedDate: request.eventDate, validUntil: day(offset), terms: `Demo proposal v${version}: venue, catering, production, and on-site coordination.`,
+      status, sentAt: new Date(request.createdAt.getTime() + 86_400_000),
+      ...(clientNotes ? { clientNotes } : {}),
+    });
+
+    const requests: EventRequest[] = [
+      makeRequest(1, 'submitted', 'cli-reqdemo-001', 'org-001', 'Northstar Product Reveal', 'Product Launch', 45, 180000, 260),
+      makeRequest(2, 'under_review', 'cli-001', 'org-001', 'Torres Leadership Forum', 'Conference', 70, 240000, 180),
+      makeRequest(3, 'info_requested', 'cli-reqdemo-002', 'org-001', 'Mosaic Care Summit', 'Healthcare', 85, 95000, 120, {
+        clarifications: [
+          { id: 'clr-demo-flow-003-1', senderId: 'usr-org-001', senderRole: 'organizer', senderName: 'Sarah Chen', message: 'Please confirm the accessibility and dietary requirements.', timestamp: new Date(now.getTime() - 2 * 86_400_000) },
+        ],
+      }),
+      makeRequest(4, 'proposal_sent', 'cli-reqdemo-003', 'org-001', 'Greenline Fundraising Gala', 'Fundraiser', 100, 320000, 350),
+      makeRequest(5, 'awaiting_client', 'cli-001', 'org-001', 'Torres Partner Reception', 'Networking', 115, 125000, 90, {
+        agreementStatus: 'pending_signature', paymentStatus: 'deposit_pending',
+      }),
+      makeRequest(6, 'proposal_sent', 'cli-reqdemo-001', 'org-001', 'Northstar Design Exchange', 'Workshop', 130, 76000, 72),
+      makeRequest(7, 'changes_requested', 'cli-reqdemo-002', 'org-001', 'Mosaic Research Roundtable', 'Roundtable', 145, 110000, 80, {
+        negotiations: [{ id: 'neg-demo-flow-007', action: 'changes_requested', performedBy: 'usr-org-001', role: 'event_organizer', reason: 'The requested date needs a larger venue.', eventDate: day(150), timestamp: now }],
+      }),
+      makeRequest(8, 'counteroffer_received', 'cli-reqdemo-003', 'org-001', 'Greenline Community Day', 'Community', 160, 88000, 200, {
+        negotiations: [{ id: 'neg-demo-flow-008', action: 'counteroffer', performedBy: 'usr-reqdemo-client-003', role: 'client', reason: 'Please adjust the date and guest count.', budget: 98000, eventDate: day(165), capacity: 240, timestamp: now }],
+      }),
+      makeRequest(9, 'planning', 'cli-001', 'org-001', 'Torres Executive Retreat', 'Retreat', 175, 210000, 65),
+      makeRequest(10, 'plan_submitted', 'cli-reqdemo-001', 'org-001', 'Northstar Annual Conference', 'Conference', 190, 420000, 500, {
+        activeEventPlanId: 'plan-demo-flow-010',
+      }),
+      makeRequest(11, 'confirmed', 'cli-reqdemo-002', 'org-001', 'Mosaic Innovation Congress', 'Conference', 205, 510000, 420, {
+        agreementStatus: 'agreed', paymentStatus: 'deposit_paid', eventId: 'evt-demo-flow-011',
+        activeEventPlanId: 'plan-demo-flow-011', currentProposalVersion: 1,
+      }),
+      makeRequest(12, 'rejected', 'cli-reqdemo-003', 'org-001', 'Greenline Arts Benefit', 'Fundraiser', 220, 150000, 140, {
+        rejectionReason: 'The requested venue is unavailable for the event date.',
+      }),
+      makeRequest(13, 'withdrawn', 'cli-001', 'org-001', 'Torres Team Celebration', 'Celebration', 235, 65000, 55, {
+        withdrawalReason: 'The client postponed the event indefinitely.',
+      }),
+      makeRequest(14, 'expired', 'cli-reqdemo-001', 'org-001', 'Northstar Investor Briefing', 'Corporate', -5, 195000, 100, {
+        proposals: [{ version: 1, amount: 195000, depositRequired: 48750, proposedDate: day(-5), validUntil: day(-12), terms: 'Expired demo proposal.', status: 'expired', sentAt: new Date(now.getTime() - 20 * 86_400_000) }],
+      }),
+      makeRequest(15, 'under_review', 'cli-reqdemo-002', 'org-001', 'Mosaic Clinical Workshop', 'Workshop', -3, 72000, 45, {
+        updatedAt: new Date(now.getTime() - 18 * 86_400_000),
+      }),
+      makeRequest(16, 'awaiting_client', 'cli-reqdemo-003', 'org-001', 'Greenline Volunteer Dinner', 'Dinner', 250, 54000, 60, {
+        agreementStatus: 'agreed', paymentStatus: 'unpaid',
+      }),
+      makeRequest(17, 'awaiting_client', 'cli-reqdemo-001', 'org-001', 'Northstar Partner Workshop', 'Workshop', 265, 132000, 110, {
+        agreementStatus: 'agreed', paymentStatus: 'failed',
+      }),
+      makeRequest(18, 'cancelled', 'cli-001', 'org-002', 'Torres Regional Showcase', 'Product Launch', 280, 275000, 240, {
+        agreementStatus: 'agreed', paymentStatus: 'refunded', eventId: 'evt-demo-flow-018',
+        cancellation: {
+          reason: 'The client cancelled after the venue became unavailable.',
+          cancelledBy: 'usr-client-001', cancelledAt: now, policyVersion: 'demo-policy-v1',
+          paidAmount: 0, cancellationFeePercent: 10, cancellationFee: 0, refundAmount: 0,
+          refundStatus: 'not_applicable', cancellationDeadline: day(266),
+        },
+      }),
+      makeRequest(19, 'completed', 'cli-reqdemo-003', 'org-003', 'Greenline Climate Forum', 'Conference', -45, 360000, 310, {
+        agreementStatus: 'agreed', paymentStatus: 'fully_paid', eventId: 'evt-demo-flow-019',
+        activeEventPlanId: 'plan-demo-flow-019',
+      }),
+      makeRequest(20, 'proposal_sent', 'cli-reqdemo-002', 'org-004', 'Mosaic Care Leadership Day', 'Healthcare', 300, 175000, 160),
+    ];
+    const pendingProposal = (sequence: number, validUntil: number, status: ProposalVersion['status'] = 'pending_client'): ProposalVersion => {
+      const request = requests[sequence - 1];
+      return proposal(1, request, status, validUntil);
+    };
+    requests[3].proposals = [pendingProposal(4, 14)];
+    requests[4].proposals = [pendingProposal(5, 20, 'accepted')];
+    requests[5].proposals = [
+      proposal(1, requests[5], 'revision_requested', 10, 'Please include a lower-cost catering option.'),
+      proposal(2, requests[5], 'pending_client', 28),
+    ];
+    requests[9].auditHistory?.push({
+      id: 'aud-demo-flow-010-plan', action: 'Event Plan Submitted', performedBy: 'usr-org-001',
+      role: 'event_organizer', timestamp: now,
+    });
+    requests[10].proposals = [pendingProposal(11, 60, 'accepted')];
+    requests[10].auditHistory?.push({
+      id: 'aud-demo-flow-011-confirmed', action: 'Booking Confirmed after signed agreement and verified deposit',
+      performedBy: 'usr-org-001', role: 'event_organizer', timestamp: now,
+    });
+    requests[15].proposals = [pendingProposal(16, 45, 'accepted')];
+    requests[16].proposals = [pendingProposal(17, 50, 'accepted')];
+    requests[17].auditHistory?.push({
+      id: 'aud-demo-flow-018-cancelled', action: 'Booking Cancelled', performedBy: 'usr-client-001',
+      role: 'client', timestamp: now,
+    });
+    requests[18].proposals = [pendingProposal(19, -30, 'accepted')];
+
+    const eventScenarios: Event[] = [
+      { eventId: 'evt-demo-flow-011', organizerId: 'org-001', clientId: 'cli-reqdemo-002', name: requests[10].eventName,
+        category: requests[10].eventType || 'Conference', date: requests[10].eventDate, time: requests[10].eventTime || '09:00',
+        location: requests[10].venue || '', capacity: requests[10].capacity, ticketPrice: 0, status: 'ongoing',
+        description: requests[10].requirements, demoScenario: 'event-request-workflow-v1', createdAt: now, updatedAt: now },
+      { eventId: 'evt-demo-flow-018', organizerId: 'org-002', clientId: 'cli-001', name: requests[17].eventName,
+        category: requests[17].eventType || 'Product Launch', date: requests[17].eventDate, time: requests[17].eventTime || '09:00',
+        location: requests[17].venue || '', capacity: requests[17].capacity, ticketPrice: 0, status: 'cancelled',
+        cancellationReason: requests[17].cancellation?.reason, description: requests[17].requirements,
+        demoScenario: 'event-request-workflow-v1', createdAt: now, updatedAt: now },
+      { eventId: 'evt-demo-flow-019', organizerId: 'org-003', clientId: 'cli-reqdemo-003', name: requests[18].eventName,
+        category: requests[18].eventType || 'Conference', date: requests[18].eventDate, time: requests[18].eventTime || '09:00',
+        location: requests[18].venue || '', capacity: requests[18].capacity, ticketPrice: 0, status: 'completed',
+        description: requests[18].requirements, demoScenario: 'event-request-workflow-v1', createdAt: now, updatedAt: now },
+    ];
+    const plans: EventPlan[] = [
+      { eventPlanId: 'plan-demo-flow-010', requestId: requests[9].requestId, clientId: requests[9].clientId,
+        organizerId: requests[9].organizerId, title: 'Demo conference plan', description: 'Plan awaiting client review.',
+        budget: requests[9].budget, capacity: requests[9].capacity, status: 'submitted', approvalStatus: 'pending',
+        revision: 1, demoScenario: 'event-request-workflow-v1', createdAt: now, updatedAt: now },
+      { eventPlanId: 'plan-demo-flow-011', requestId: requests[10].requestId, eventId: 'evt-demo-flow-011',
+        clientId: requests[10].clientId, organizerId: requests[10].organizerId,
+        title: 'Demo approved event plan', description: 'Approved plan for the confirmed demo booking.',
+        budget: requests[10].budget, capacity: requests[10].capacity, status: 'approved', approvalStatus: 'approved',
+        revision: 1, demoScenario: 'event-request-workflow-v1', createdAt: now, updatedAt: now },
+      { eventPlanId: 'plan-demo-flow-019', requestId: requests[18].requestId, eventId: 'evt-demo-flow-019',
+        clientId: requests[18].clientId, organizerId: requests[18].organizerId,
+        title: 'Demo completed event plan', description: 'Approved plan for a completed demo event.',
+        budget: requests[18].budget, capacity: requests[18].capacity, status: 'approved', approvalStatus: 'approved',
+        revision: 1, demoScenario: 'event-request-workflow-v1', createdAt: now, updatedAt: now },
+    ];
+    for (const event of eventScenarios) {
+      if (!this.events.some(existing => existing.eventId === event.eventId)) this.events.push(event);
+    }
+    for (const plan of plans) {
+      if (!this.eventPlans.some(existing => existing.eventPlanId === plan.eventPlanId)) this.eventPlans.push(plan);
+    }
+    for (const request of requests) {
+      if (!this.eventRequests.some(existing => existing.requestId === request.requestId)) this.eventRequests.push(request);
+    }
   }
 
   // ==================== UTILITY METHODS ====================
@@ -2177,7 +2647,13 @@ export class DataStore {
     this.activityLogs = [];
     this.supportTickets = [];
     this.supportAttachments = [];
+    this.organizerApplications = [];
     this.initializeSeedData();
+  }
+
+  generateApplicationRefNumber(): string {
+    const random = Math.floor(1000 + Math.random() * 9000);
+    return `ORG-APP-2026-${random}`;
   }
 
   // User lookup utilities
