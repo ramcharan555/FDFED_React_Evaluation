@@ -6060,10 +6060,6 @@
           }
         }
       },
-      "ChangePasswordDto": {
-        "type": "object",
-        "properties": {}
-      },
       "CreateEventRequestDto": {
         "type": "object",
         "properties": {
@@ -6139,11 +6135,6 @@
             "type": "string",
             "description": "Additional client notes"
           },
-          "eventType": {
-            "type": "string",
-            "description": "Event category",
-            "example": "Corporate Events"
-          },
           "venue": {
             "type": "string",
             "description": "Preferred venue"
@@ -6157,10 +6148,8 @@
           "eventName",
           "eventType",
           "eventDate",
-          "eventTime",
           "budget",
-          "capacity",
-          "city"
+          "capacity"
         ]
       },
       "EventPolicyAcknowledgementDto": {

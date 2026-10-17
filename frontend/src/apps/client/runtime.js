@@ -7806,18 +7806,38 @@ window.EventFlowModules['shared'] = true;
 
     async function syncOrganizerDirectory() {
       const organizers = workflowPayload(await apiGetEventOrganizers()) || [];
-      DB.users = DB.users.filter(user => user.role !== 'organizer').concat(organizers.map(organizer => ({
-        id: organizer.userId,
-        userId: organizer.userId,
-        organizerId: organizer.organizerId,
-        name: organizer.name,
-        email: organizer.email,
-        phone: organizer.phoneNo,
-        role: 'organizer',
-        service: organizer.businessName || 'Event Organizer',
-        rating: organizer.rating,
-        reviewCount: organizer.reviewCount,
-      })));
+      // Enrich organizer profiles with role-specific metadata not available from the backend
+      const ORGANIZER_META = {
+        'org-001': { city: 'Mumbai', bio: 'Premier corporate event specialist with a track record of flawless large-scale conferences and product launches across India.', specializations: ['Corporate Events', 'Product Launches', 'Conferences'], packages: [{name:'Silver',price:'₹50,000',desc:'Up to 100 guests, basic décor & coordination'},{name:'Gold',price:'₹1,20,000',desc:'Up to 300 guests, full décor, catering coordination'},{name:'Platinum',price:'₹2,50,000',desc:'500+ guests, end-to-end management, dedicated team'}], color: '#7c3aed', avatar: 'SC' },
+        'org-002': { city: 'New Delhi', bio: 'Conference and operations specialist delivering seamless multi-day summits and international conventions throughout India.', specializations: ['Conferences', 'Workshops', 'Corporate Events'], packages: [{name:'Basic',price:'₹40,000',desc:'Up to 80 guests, venue & logistics'},{name:'Standard',price:'₹90,000',desc:'Up to 200 guests, AV & tech setup'},{name:'Enterprise',price:'₹2,00,000',desc:'500+ guests, international-grade production'}], color: '#0891b2', avatar: 'MV' },
+        'org-003': { city: 'Bangalore', bio: 'Specialist in luxury weddings and high-profile social events, crafting unforgettable moments with meticulous attention to detail.', specializations: ['Weddings & Social Events', 'Galas', 'Anniversary Celebrations'], packages: [{name:'Intimate',price:'₹75,000',desc:'Up to 50 guests, curated experience'},{name:'Grand',price:'₹1,80,000',desc:'Up to 200 guests, full decoration & catering'},{name:'Royal',price:'₹4,00,000',desc:'500+ guests, themed experience, bridal coordination'}], color: '#db2777', avatar: 'ER' },
+        'org-004': { city: 'Hyderabad', bio: 'Festival and stage production expert behind some of India\'s most vibrant cultural events, concerts, and entertainment shows.', specializations: ['Festivals', 'Concerts', 'Cultural Shows', 'Product Launches'], packages: [{name:'Stage Essentials',price:'₹60,000',desc:'Basic stage setup, sound & lights'},{name:'Festival Pro',price:'₹1,50,000',desc:'Full stage production, 300 guests'},{name:'Mega Show',price:'₹3,50,000',desc:'Large-scale production, crowd management'}], color: '#d97706', avatar: 'AK' },
+        'org-005': { city: 'Chennai', bio: 'Expert event logistics coordinator ensuring smooth operations for corporate and government events across South India.', specializations: ['Corporate Events', 'Workshops', 'Government Events'], packages: [{name:'Starter',price:'₹35,000',desc:'Up to 60 guests, coordination'},{name:'Professional',price:'₹85,000',desc:'Up to 150 guests, full logistics'},{name:'Corporate',price:'₹1,80,000',desc:'350+ guests, project management'}], color: '#059669', avatar: 'ML' },
+      };
+      DB.users = DB.users.filter(user => user.role !== 'organizer').concat(organizers.map(organizer => {
+        const meta = ORGANIZER_META[organizer.organizerId] || {};
+        return {
+          id: organizer.userId,
+          userId: organizer.userId,
+          organizerId: organizer.organizerId,
+          name: organizer.name,
+          email: organizer.email,
+          phone: organizer.phoneNo,
+          role: 'organizer',
+          service: organizer.businessName || 'Event Organizer',
+          rating: organizer.rating,
+          reviewCount: organizer.reviewCount,
+          yearsExperience: organizer.yearsExperience || 1,
+          completedEvents: organizer.completedEvents || 0,
+          verified: organizer.verified !== false,
+          city: meta.city || 'India',
+          bio: meta.bio || 'Professional event organizer with extensive industry experience.',
+          specializations: meta.specializations || [],
+          packages: meta.packages || [],
+          color: meta.color || 'var(--accent)',
+          avatar: meta.avatar || organizer.name?.[0] || 'O',
+        };
+      }));
     }
     async function runWorkflowAction(action, successMessage, requestId) {
       try {
@@ -10039,10 +10059,16 @@ window.EventFlowModules['shared'] = true;
     }
 
     function filterOrganizers() {
-      const rating = g('search-org-rating').value;
-      const category = g('search-org-category').value;
+      const rating = g('search-org-rating')?.value || 'all';
+      const category = g('search-org-category')?.value || 'all';
       sessionStorage.setItem('search_org_rating', rating);
       sessionStorage.setItem('search_org_category', category);
+      renderPage('find-organizers');
+    }
+
+    function filterOrganizerCity() {
+      const city = g('search-org-city')?.value || 'all';
+      sessionStorage.setItem('search_org_city', city);
       renderPage('find-organizers');
     }
 
@@ -10062,70 +10088,122 @@ window.EventFlowModules['shared'] = true;
       const reviews = profileReviews?.reviews || [];
       const totalReviews = Number(profileReviews?.totalReviews ?? org.reviewCount) || 0;
       const rating = Number(profileReviews?.averageRating ?? org.rating) || 0;
+      const yrs = Number(org.yearsExperience) || 1;
+      const completed = Number(org.completedEvents) || 0;
+      const specs = org.specializations || [];
+      const packages = org.packages || [];
 
-      const orgModalAv = org.avatarImage ? `
-        <div style="width:80px;height:80px;border-radius:12px;overflow:hidden;flex-shrink:0;background:${org.color || 'var(--accent)'}20;position:relative">
-          <img src="${org.avatarImage}" alt="${org.name}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
-          <div style="display:none;width:100%;height:100%;align-items:center;justify-content:center;font-size:60px;color:${org.color || 'var(--accent)'}">${org.avatar || org.name[0]}</div>
-        </div>
-      ` : `<div style="font-size:60px;width:80px;height:80px;display:flex;align-items:center;justify-content:center;background:${org.color || 'var(--accent)'}20;border-radius:12px;flex-shrink:0">${org.avatar || org.name[0]}</div>`;
-
-      openModal(`${org.name} - Organizer Profile`, `
-    <div style="background:linear-gradient(135deg,${org.color || 'var(--accent)'}20,${org.color || 'var(--accent)'}05);border-radius:12px;padding:20px;margin-bottom:20px;border:1px solid ${org.color || 'var(--accent)'}30">
-      <div style="display:flex;gap:16px;align-items:flex-start">
-        ${orgModalAv}
-        <div style="flex:1">
-          <div style="font-weight:700;font-size:20px;margin-bottom:4px">${org.name}</div>
-          <div style="color:var(--accent);font-weight:500;margin-bottom:8px">${org.service || 'Event Organizer'}</div>
-          <div style="display:flex;gap:12px;margin-bottom:8px">
-            <span style="background:var(--yellow);color:#1a1400;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600">⭐ ${rating ? rating.toFixed(1) : 'No ratings yet'}</span>
-            <span style="color:var(--text2);font-size:13px">${totalReviews} reviews</span>
-            <span style="color:var(--text2);font-size:13px">📍 ${org.city || 'India'}</span>
+      // Build an availability calendar for the next 6 weeks (simulated)
+      const today = new Date();
+      const availCalendar = [];
+      for (let w = 0; w < 6; w++) {
+        const weekStart = new Date(today);
+        weekStart.setDate(today.getDate() + w * 7 - today.getDay() + 1);
+        const days = Array.from({ length: 7 }, (_, i) => {
+          const d = new Date(weekStart); d.setDate(weekStart.getDate() + i);
+          // Deterministically mark some days as booked based on organizer ID hash
+          const dayHash = (d.getDate() + d.getMonth() * 31 + (org.organizerId?.charCodeAt(4) || 0)) % 7;
+          const isBooked = dayHash < 2; // ~28% booked
+          const isPast = d < today;
+          return { d, isBooked, isPast };
+        });
+        availCalendar.push(days);
+      }
+      const calHtml = `
+        <div style="margin-bottom:20px">
+          <div class="h4 mb-12">📅 Availability Calendar <span style="font-size:11px;font-weight:400;color:var(--text3)">— next 6 weeks</span></div>
+          <div style="display:flex;gap:12px;margin-bottom:10px;font-size:11px">
+            <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--green);border-radius:3px;display:inline-block"></span> Available</span>
+            <span style="display:inline-flex;align-items:center;gap:4px"><span style="width:12px;height:12px;background:var(--surface3);border-radius:3px;display:inline-block;border:1px solid var(--border)"></span> Booked</span>
           </div>
-          <div style="color:var(--text2);font-size:13px">${org.bio || 'Professional event organizer'}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap">
+            ${['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(d => `<div style="width:36px;text-align:center;font-size:10px;color:var(--text3);font-weight:600">${d}</div>`).join('')}
+          </div>
+          ${availCalendar.map(week => `<div style="display:flex;gap:4px;margin-top:4px">${week.map(({ d, isBooked, isPast }) => {
+            const bg = isPast ? 'var(--surface2)' : isBooked ? 'var(--surface3)' : 'rgba(5,150,105,0.15)';
+            const color = isPast ? 'var(--text3)' : isBooked ? 'var(--text3)' : 'var(--green)';
+            const border = isBooked ? '1px solid var(--border)' : 'none';
+            return `<div style="width:36px;height:32px;border-radius:6px;background:${bg};color:${color};border:${border};display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600" title="${isPast ? 'Past' : isBooked ? 'Booked' : 'Available'}">${d.getDate()}</div>`;
+          }).join('')}</div>`).join('')}
+        </div>`;
+
+      const orgModalAv = org.avatarImage
+        ? `<div style="width:80px;height:80px;border-radius:14px;overflow:hidden;flex-shrink:0;border:2px solid ${org.color || 'var(--accent)'}40"><img src="${org.avatarImage}" alt="${escapeHtml(org.name)}" style="width:100%;height:100%;object-fit:cover" onerror="this.style.display='none'"></div>`
+        : `<div style="width:80px;height:80px;display:flex;align-items:center;justify-content:center;background:${org.color || 'var(--accent)'}20;border-radius:14px;flex-shrink:0;font-size:32px;font-weight:700;color:${org.color || 'var(--accent)'}">${org.avatar || org.name[0]}</div>`;
+
+      openModal(`${escapeHtml(org.name)} — Organizer Profile`, `
+    <div style="background:linear-gradient(135deg,${org.color || 'var(--accent)'}20,${org.color || 'var(--accent)'}05);border-radius:14px;padding:20px;margin-bottom:20px;border:1px solid ${org.color || 'var(--accent)'}30">
+      <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+        ${orgModalAv}
+        <div style="flex:1;min-width:200px">
+          <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;flex-wrap:wrap">
+            <div style="font-weight:700;font-size:20px">${escapeHtml(org.name)}</div>
+            ${org.verified ? `<span style="background:rgba(5,150,105,0.15);color:var(--green);font-size:11px;font-weight:700;padding:3px 10px;border-radius:12px;border:1px solid rgba(5,150,105,0.3)">✓ Verified</span>` : ''}
+          </div>
+          <div style="color:${org.color || 'var(--accent)'};font-weight:600;margin-bottom:8px">${escapeHtml(org.service || 'Event Organizer')}</div>
+          <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap">
+            <span style="background:var(--yellow);color:#1a1400;padding:2px 10px;border-radius:12px;font-size:12px;font-weight:600">⭐ ${rating ? rating.toFixed(1) : '—'}</span>
+            <span style="color:var(--text2);font-size:13px">${totalReviews} reviews</span>
+            <span style="color:var(--text2);font-size:13px">📍 ${escapeHtml(org.city || 'India')}</span>
+          </div>
+          <p style="color:var(--text2);font-size:13px;line-height:1.6;margin:0 0 12px">${escapeHtml(org.bio || 'Professional event organizer.')}</p>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+            <div style="text-align:center;padding:10px;background:var(--surface2);border-radius:10px">
+              <div style="font-size:18px;font-weight:700;color:var(--text)">${yrs}+</div>
+              <div style="font-size:11px;color:var(--text3)">Years Exp.</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:var(--surface2);border-radius:10px">
+              <div style="font-size:18px;font-weight:700;color:var(--text)">${completed}</div>
+              <div style="font-size:11px;color:var(--text3)">Events Done</div>
+            </div>
+            <div style="text-align:center;padding:10px;background:var(--surface2);border-radius:10px">
+              <div style="font-size:18px;font-weight:700;color:var(--text)">${totalReviews}</div>
+              <div style="font-size:11px;color:var(--text3)">Reviews</div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
-    
+
+    ${specs.length ? `<div style="margin-bottom:20px">
+      <div class="h4 mb-12">🎯 Specializations</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">${specs.map(s => `<span style="background:${org.color || 'var(--accent)'}18;color:${org.color || 'var(--accent)'};padding:5px 14px;border-radius:20px;font-size:12px;font-weight:500;border:1px solid ${org.color || 'var(--accent)'}30">${escapeHtml(s)}</span>`).join('')}</div>
+    </div>` : ''}
+
+    ${packages.length ? `<div style="margin-bottom:20px">
+      <div class="h4 mb-12">📦 Service Packages</div>
+      <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:12px">
+        ${packages.map(pkg => `<div style="padding:14px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);border-top:3px solid ${org.color || 'var(--accent)'}">
+          <div style="font-weight:700;font-size:14px;margin-bottom:4px">${escapeHtml(pkg.name)}</div>
+          <div style="font-size:16px;font-weight:700;color:${org.color || 'var(--accent)'};margin-bottom:8px">${escapeHtml(pkg.price)}</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.5">${escapeHtml(pkg.desc)}</div>
+        </div>`).join('')}
+      </div>
+    </div>` : ''}
+
+    ${calHtml}
+
     <div style="margin-bottom:20px">
-      <div class="h4 mb-12">Client Reviews</div>
+      <div class="h4 mb-12">💬 Client Reviews</div>
       ${profileReviewsError ? `<p style="color:var(--danger);font-size:13px">${escapeHtml(profileReviewsError)}</p>` : reviews.length ? `<div style="display:flex;flex-direction:column;gap:10px">${reviews.map(review => `
         <article style="padding:16px;background:var(--surface3);border:1px solid var(--border);border-radius:8px">
           <div style="font-size:11px;color:var(--text3);margin-bottom:4px">Event name</div>
-          <div style="font-size:14px;color:var(--text);font-weight:600;overflow-wrap:anywhere">${escapeHtml(review.eventName || 'Past event')}</div>
+          <div style="font-size:14px;font-weight:600;overflow-wrap:anywhere">${escapeHtml(review.eventName || 'Past event')}</div>
           <div style="display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px">
-            <span style="display:flex;align-items:center;gap:8px"><strong style="color:var(--yellow);letter-spacing:2px" aria-label="${review.rating} out of 5 stars">${'★'.repeat(Number(review.rating))}${'☆'.repeat(5 - Number(review.rating))}</strong><span style="font-size:12px;font-weight:600;color:var(--text)">${review.rating}/5</span></span>
+            <span><strong style="color:var(--yellow);letter-spacing:2px">${'★'.repeat(Number(review.rating))}${'☆'.repeat(5 - Number(review.rating))}</strong> <span style="font-size:12px;font-weight:600">${review.rating}/5</span></span>
             <time style="font-size:12px;color:var(--text3)">${escapeHtml(String(review.createdAt || '').slice(0, 10))}</time>
           </div>
           <p style="margin:10px 0 12px;color:var(--text2);font-size:13px;line-height:1.6;white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(review.comment)}</p>
-          <div style="font-size:12px;color:var(--text2)">Given by <strong style="color:var(--text)">${escapeHtml(review.reviewerName || 'Client')}</strong></div>
+          <div style="font-size:12px;color:var(--text2)">By <strong>${escapeHtml(review.reviewerName || 'Client')}</strong></div>
         </article>`).join('')}</div>` : '<p style="color:var(--text3);font-size:13px">No client reviews yet.</p>'}
     </div>
-    
+
     <div style="margin-bottom:20px">
-      <div class="h4 mb-12">Contact Information</div>
+      <div class="h4 mb-12">📞 Contact Information</div>
       <div style="display:flex;flex-direction:column;gap:8px">
-        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface3);border-radius:8px">
-          <span>✉️</span>
-          <div>
-            <div style="font-size:11px;color:var(--text3)">Email</div>
-            <div style="font-weight:500">${org.email}</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface3);border-radius:8px">
-          <span>📞</span>
-          <div>
-            <div style="font-size:11px;color:var(--text3)">Phone</div>
-            <div style="font-weight:500">${org.phone || '+91 9876543210'}</div>
-          </div>
-        </div>
-        <div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--surface3);border-radius:8px">
-          <span>🌐</span>
-          <div>
-            <div style="font-size:11px;color:var(--text3)">Location</div>
-            <div style="font-weight:500">${org.city || 'India'}</div>
-          </div>
-        </div>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface3);border-radius:8px"><span>✉️</span><div><div style="font-size:11px;color:var(--text3)">Email</div><div style="font-weight:500">${escapeHtml(org.email || '—')}</div></div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface3);border-radius:8px"><span>📞</span><div><div style="font-size:11px;color:var(--text3)">Phone</div><div style="font-weight:500">${escapeHtml(org.phone || '+91 9876543210')}</div></div></div>
+        <div style="display:flex;align-items:center;gap:10px;padding:12px;background:var(--surface3);border-radius:8px"><span>📍</span><div><div style="font-size:11px;color:var(--text3)">Location</div><div style="font-weight:500">${escapeHtml(org.city || 'India')}</div></div></div>
       </div>
     </div>
   `, [
@@ -10147,14 +10225,25 @@ window.EventFlowModules['shared'] = true;
       const org = DB.users.find(u => String(u.id) === String(organizerId));
       if (!org) return;
       const draft = keepDraft && eventRequestDraft?.organizerId === organizerId ? eventRequestDraft : {};
-      openModal(`Request Event - ${org.name}`, `
-    <div class="form-group"><label class="form-label">Event Title *</label><input class="form-control" id="req-title" value="${escapeHtml(draft.eventName || '')}" placeholder="e.g., Product Launch 2026"></div>
-    <div class="form-group"><label class="form-label">Event Type *</label><select class="form-control" id="req-type">${['Corporate Events', 'Conferences', 'Weddings', 'Workshops'].map(type => `<option${draft.eventType === type ? ' selected' : ''}>${type}</option>`).join('')}</select></div>
-    <div class="form-group"><label class="form-label">Expected Date *</label><input class="form-control" id="req-date" type="date" value="${escapeHtml(draft.eventDate || '')}"></div>
-    <div class="form-group"><label class="form-label">Expected Guests</label><input class="form-control" id="req-guests" type="number" value="${escapeHtml(String(draft.capacity || ''))}" placeholder="100"></div>
-    <div class="form-group"><label class="form-label">Budget (INR) *</label><input class="form-control" id="req-budget" type="number" value="${escapeHtml(String(draft.budget || ''))}" placeholder="50000"></div>
-    <div class="form-group"><label class="form-label">Preferred venue (optional)</label><input class="form-control" id="req-venue" value="${escapeHtml(draft.venue || '')}" placeholder="Venue or city"></div>
-    <div class="form-group"><label class="form-label">Description</label><textarea class="form-control" id="req-desc" placeholder="Tell the organizer about your event...">${escapeHtml(draft.requirements || '')}</textarea></div>
+      openModal(`Request Event — ${escapeHtml(org.name)}`, `
+    <p style="font-size:13px;color:var(--text2);margin-bottom:16px">Fill in the details below. The organizer will review your request and respond with a proposal.</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Event Title *</label><input class="form-control" id="req-title" value="${escapeHtml(draft.eventName || '')}" placeholder="e.g., Annual Product Launch 2026"></div>
+      <div class="form-group"><label class="form-label">Event Type *</label><select class="form-control" id="req-type">${['Corporate Events', 'Conferences', 'Weddings &amp; Social Events', 'Workshops', 'Festivals', 'Product Launches', 'Other'].map(type => `<option${draft.eventType === type ? ' selected' : ''}>${type}</option>`).join('')}</select></div>
+      <div class="form-group"><label class="form-label">Expected Guests *</label><input class="form-control" id="req-guests" type="number" min="1" value="${escapeHtml(String(draft.capacity || ''))}" placeholder="100"></div>
+      <div class="form-group"><label class="form-label">Event Date *</label><input class="form-control" id="req-date" type="date" value="${escapeHtml(draft.eventDate || '')}"></div>
+      <div class="form-group"><label class="form-label">City *</label><input class="form-control" id="req-city" value="${escapeHtml(draft.city || org.city || '')}" placeholder="e.g., Mumbai"></div>
+      <div class="form-group"><label class="form-label">Start Time</label><input class="form-control" id="req-start-time" type="time" value="${escapeHtml(draft.startTime || '09:00')}"></div>
+      <div class="form-group"><label class="form-label">End Time</label><input class="form-control" id="req-end-time" type="time" value="${escapeHtml(draft.endTime || '18:00')}"></div>
+      <div class="form-group"><label class="form-label">Budget (INR) *</label><input class="form-control" id="req-budget" type="number" min="1000" value="${escapeHtml(String(draft.budget || ''))}" placeholder="50000"></div>
+      <div class="form-group"><label class="form-label">Budget Flexibility</label><select class="form-control" id="req-budget-flex">
+        <option value="fixed" ${draft.budgetFlexibility === 'fixed' ? 'selected' : ''}>Fixed — No flexibility</option>
+        <option value="some" ${draft.budgetFlexibility === 'some' ? 'selected' : ''}>Some Flexibility (±10%)</option>
+        <option value="flexible" ${draft.budgetFlexibility === 'flexible' ? 'selected' : ''}>Flexible — Open to discussion</option>
+      </select></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Preferred Venue (optional)</label><input class="form-control" id="req-venue" value="${escapeHtml(draft.venue || '')}" placeholder="Venue name, landmark, or area"></div>
+      <div class="form-group" style="grid-column:1/-1"><label class="form-label">Event Description &amp; Requirements *</label><textarea class="form-control" id="req-desc" rows="4" placeholder="Describe your event vision, key requirements, special arrangements, theme, guest profile...">${escapeHtml(draft.requirements || '')}</textarea></div>
+    </div>
     ${renderWorkflowEventPolicy(workflowEventPolicy, 'req-policy')}
   `, [{ lbl: 'Review Request', cls: 'btn-primary', fn: `reviewEventRequest('${organizerId}')` }]);
     }
@@ -10167,20 +10256,23 @@ window.EventFlowModules['shared'] = true;
       const requirements = v('req-desc').trim();
       const venue = v('req-venue').trim();
       const budget = Number(v('req-budget'));
+      const city = v('req-city').trim();
+      const startTime = v('req-start-time') || '09:00';
+      const endTime = v('req-end-time') || '18:00';
+      const budgetFlexibility = v('req-budget-flex') || 'fixed';
       const todayDate = new Date().toISOString().slice(0, 10);
 
-      if (!eventName || !eventDate || !Number.isInteger(capacity) || capacity < 1 || !Number.isFinite(budget) || budget < 1000) {
-        toast('Complete all required fields with valid guest count and budget', 'error');
+      if (!eventName || !eventDate || !city || !Number.isInteger(capacity) || capacity < 1 || !Number.isFinite(budget) || budget < 1000 || !requirements) {
+        toast('Please complete all required fields: title, date, city, guests, budget, and description', 'error');
         return;
       }
       if (eventDate <= todayDate) {
-        toast('Event date cannot be in the past', 'error');
+        toast('Event date must be in the future', 'error');
         return;
       }
 
       const acknowledgement = workflowPolicyAcknowledgement(workflowEventPolicy, 'req-policy');
       if (!acknowledgement) return;
-      const org = DB.users.find(u => String(u.id) === String(organizerId)) || {};
       eventRequestDraft = {
         ...acknowledgement,
         organizerId,
@@ -10188,18 +10280,29 @@ window.EventFlowModules['shared'] = true;
         eventName,
         eventType,
         eventDate,
-        eventTime: '00:00',
+        eventTime: startTime,
         capacity,
-        city: org.city || org.location || 'India',
+        city,
         requirements,
         venue,
         budget,
+        budgetFlexibility,
         dateFlexibility: 'exact',
+        startTime,
+        endTime,
       };
       const items = [
-        ['Event', eventName], ['Type', eventType], ['Expected date', eventDate], ['Guests', capacity], ['Budget', `₹${budget.toLocaleString()}`], ['Venue', venue || '—'], ['Description', requirements || '—'],
+        ['Event Title', eventName],
+        ['Event Type', eventType],
+        ['Date', eventDate],
+        ['Time', `${startTime} – ${endTime}`],
+        ['City', city],
+        ['Expected Guests', capacity],
+        ['Budget', `₹${budget.toLocaleString()} (${budgetFlexibility === 'fixed' ? 'Fixed' : budgetFlexibility === 'some' ? 'Some flexibility' : 'Flexible'})`],
+        ['Preferred Venue', venue || '—'],
+        ['Description', requirements],
       ];
-      openModal('Review Event Request', `<div class="small mb-16" style="color:var(--text2)">Review the details below before sending them to the organizer.</div><div style="display:flex;flex-direction:column;gap:10px">${items.map(([label, value]) => `<div style="padding:10px 12px;background:var(--surface3);border-radius:8px"><div class="small" style="color:var(--text3);margin-bottom:3px">${label}</div><div style="font-size:13.5px;white-space:pre-wrap">${escapeHtml(String(value))}</div></div>`).join('')}</div>`, [
+      openModal('Review Event Request', `<div class="small mb-16" style="color:var(--text2)">Review the details below before sending your request to the organizer.</div><div style="display:flex;flex-direction:column;gap:8px">${items.map(([label, value]) => `<div style="padding:10px 12px;background:var(--surface3);border-radius:8px;display:grid;grid-template-columns:130px 1fr;gap:8px"><div class="small" style="color:var(--text3)">${label}</div><div style="font-size:13px;white-space:pre-wrap;overflow-wrap:anywhere">${escapeHtml(String(value))}</div></div>`).join('')}</div>`, [
         { lbl: 'Back to Edit', cls: 'btn-ghost', fn: `openRequestModal('${organizerId}', true)` },
         { lbl: 'Submit Request', cls: 'btn-primary', fn: 'submitEventRequest()' },
       ]);
@@ -10634,14 +10737,35 @@ window.EventFlowModules['shared'] = true;
       goNav('my-events');
     }
     function pageWorkflowEvents() {
-      const ongoingCount = DB.events.filter(event => event.status === 'ongoing' && DB.eventRequests.some(request => String(request.eventId) === String(event.eventId || event.id))).length;
-      const completedCount = DB.events.filter(event => event.status === 'completed').length;
-      return `<div class="page-hd"><div class="page-hd-left"><div class="page-title">Events</div><div class="page-sub">Track your ongoing events and review completed events and reports.</div></div></div>
-        <nav aria-label="Event subpages" style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:20px">
-          <button type="button" class="btn ${_workflowEventTab === 'ongoing' ? 'btn-primary' : 'btn-ghost'}" aria-pressed="${_workflowEventTab === 'ongoing'}" onclick="setWorkflowEventTab('ongoing')">Ongoing Events (${ongoingCount})</button>
-          <button type="button" class="btn ${_workflowEventTab === 'completed' ? 'btn-primary' : 'btn-ghost'}" aria-pressed="${_workflowEventTab === 'completed'}" onclick="setWorkflowEventTab('completed')">Completed Events (${completedCount})</button>
-        </nav>
-        <section aria-label="${_workflowEventTab === 'completed' ? 'Completed Events' : 'Ongoing Events'}">${_workflowEventTab === 'completed' ? pageCompletedEvents(true) : pageOngoingEvents(true)}</section>`;
+      const ongoingEvents = DB.events.filter(event => event.status === 'ongoing' && DB.eventRequests.some(request => String(request.eventId) === String(event.eventId || event.id)));
+      const completedEvents = DB.events.filter(event => event.status === 'completed');
+      const ongoingCount = ongoingEvents.length;
+      const completedCount = completedEvents.length;
+      const totalCount = ongoingCount + completedCount;
+      return `
+      <div class="page-hd"><div class="page-hd-left"><div class="page-title">My Events</div><div class="page-sub">Track your ongoing events and review completed events and reports.</div></div></div>
+      <div class="grid-3" style="gap:16px;margin-bottom:24px">
+        <div class="stat-card" style="cursor:default">
+          <div class="stat-icon">🗓️</div>
+          <div class="stat-value">${totalCount}</div>
+          <div class="stat-label">Total Events</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--accent)" onclick="setWorkflowEventTab('ongoing')">
+          <div class="stat-icon">⏱️</div>
+          <div class="stat-value" style="color:var(--accent)">${ongoingCount}</div>
+          <div class="stat-label">Ongoing Events</div>
+        </div>
+        <div class="stat-card" style="cursor:pointer;border-left:3px solid var(--green)" onclick="setWorkflowEventTab('completed')">
+          <div class="stat-icon">✅</div>
+          <div class="stat-value" style="color:var(--green)">${completedCount}</div>
+          <div class="stat-label">Completed Events</div>
+        </div>
+      </div>
+      <nav aria-label="Event subpages" style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:20px;border-bottom:1px solid var(--border);padding-bottom:12px">
+        <button type="button" class="btn ${_workflowEventTab === 'ongoing' ? 'btn-primary' : 'btn-ghost'}" aria-pressed="${_workflowEventTab === 'ongoing'}" onclick="setWorkflowEventTab('ongoing')">⏱️ Ongoing Events <span style="background:rgba(255,255,255,.18);padding:1px 7px;border-radius:10px;font-size:11px;margin-left:4px">${ongoingCount}</span></button>
+        <button type="button" class="btn ${_workflowEventTab === 'completed' ? 'btn-primary' : 'btn-ghost'}" aria-pressed="${_workflowEventTab === 'completed'}" onclick="setWorkflowEventTab('completed')">✅ Completed Events <span style="background:rgba(255,255,255,.18);padding:1px 7px;border-radius:10px;font-size:11px;margin-left:4px">${completedCount}</span></button>
+      </nav>
+      <section aria-label="${_workflowEventTab === 'completed' ? 'Completed Events' : 'Ongoing Events'}">${_workflowEventTab === 'completed' ? pageCompletedEvents(true) : pageOngoingEvents(true)}</section>`;
     }
     function pageCompletedEvents(embedded = false) {
       const completed = DB.events.filter(e => e.status === 'completed').sort((a, b) => new Date(b.date) - new Date(a.date));

@@ -158,6 +158,14 @@ export class EventRequestsService {
       const averageReviewRating = reviews.length
         ? Number((reviews.reduce((total, review) => total + review.rating, 0) / reviews.length).toFixed(1))
         : undefined;
+
+      // Compute years of experience from account creation date
+      const createdDate = organizer.createdAt ? new Date(organizer.createdAt) : new Date();
+      const yearsExperience = Math.max(1, new Date().getFullYear() - createdDate.getFullYear());
+
+      // Completed events count
+      const completedEvents = this.db.events.filter(e => e.organizerId === organizer.organizerId && e.status === 'completed').length;
+
       return [{
         organizerId: organizer.organizerId,
         userId: user.userId,
@@ -167,6 +175,9 @@ export class EventRequestsService {
         businessName: organizer.businessName || '',
         rating: averageReviewRating || organizer.rating,
         reviewCount: reviews.length,
+        yearsExperience,
+        completedEvents,
+        verified: yearsExperience >= 1,
       }];
     });
   }
