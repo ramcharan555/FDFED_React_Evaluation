@@ -5573,3 +5573,4 @@
 2026-10-17T02:19:14.916Z 127.0.0.1 GET /api/notifications 200 6ms
 2026-10-17T02:19:14.912Z 127.0.0.1 PATCH /api/finance/submissions/fin-rpt-1792203554869-bzvr8uatc/review 200 9ms
 2026-10-17T02:19:14.919Z 127.0.0.1 GET /api/finance/submissions 200 4ms
+2026-10-17T03:24:42.229Z ::1 GET /api/workspace 304 2ms

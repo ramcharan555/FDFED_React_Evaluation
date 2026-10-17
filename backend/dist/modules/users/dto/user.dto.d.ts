@@ -6,6 +6,7 @@ export declare class CreateUserDto {
     userRole: UserRole;
     address?: string;
     phoneNo?: string;
+    bio?: string;
 }
 export declare class UpdateUserDto {
     bio?: string;
@@ -13,6 +14,7 @@ export declare class UpdateUserDto {
     email?: string;
     address?: string;
     phoneNo?: string;
+    bio?: string;
     status?: 'active' | 'inactive' | 'suspended';
 }
 export declare class ChangePasswordDto {

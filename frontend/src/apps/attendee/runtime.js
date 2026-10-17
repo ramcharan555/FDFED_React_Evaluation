@@ -10117,8 +10117,8 @@ function openViewEventDrawer(id, registrationId = null) {
       </div>
       <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="st-name" value="${CU.name}"></div>
       <div class="form-group"><label class="form-label">Email Address</label><input class="form-control" id="st-email" value="${CU.email}"></div>
-      <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control" id="st-phone" value="${CU.phone || ''}"></div>
-      <div class="form-group"><label class="form-label">Bio</label><textarea class="form-control" id="st-bio">${CU.bio || ''}</textarea></div>
+      <div class="form-group"><label class="form-label">Phone Number *</label><input class="form-control" id="st-phone" type="tel" inputmode="numeric" pattern="[6-9][0-9]{9}" maxlength="10" required oninput="this.value=this.value.replace(/[^0-9]/g,'')" value="${CU.phone || ''}"></div>
+      <div class="form-group"><label class="form-label">Bio *</label><textarea class="form-control" id="st-bio" required>${CU.bio || ''}</textarea></div>
       <button class="btn btn-primary w-full" onclick="saveSettings()" style="justify-content:center">Save Changes</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:20px">
@@ -10141,11 +10141,20 @@ function openViewEventDrawer(id, registrationId = null) {
     </div>
   </div>`;
     }
-    function saveSettings() {
-      const name = v('st-name'), email = v('st-email'), phone = v('st-phone'), bio = v('st-bio');
+    async function saveSettings() {
+      const name = v('st-name'), email = v('st-email'), phone = v('st-phone').trim(), bio = v('st-bio').trim();
       if (!name) { toast('Name is required', 'error'); return; }
       if (!email || !email.includes('@')) { toast('Enter a valid email', 'error'); return; }
       if (window.EventFlowAccountPolicy.isEmailInUse(DB.users, email, CU.id || CU.userId)) { toast('Email already registered', 'error'); return; }
+      if (!phone) { toast('Phone number is required', 'error'); return; }
+      if (!/^[6-9]\d{9}$/.test(phone)) { toast('Enter a valid 10-digit Indian mobile number.', 'error'); return; }
+      if (!bio) { toast('Bio is required', 'error'); return; }
+      try {
+        await apiUpdateUser(CU.id, { name, email, phoneNo: phone, bio });
+      } catch (error) {
+        toast(error?.message || 'Unable to save profile changes', 'error');
+        return;
+      }
       CU.name = name; CU.email = email; CU.phone = phone; CU.bio = bio;
       CU.avatar = (name.split(' ').map(n => n[0]).join('').toUpperCase()).slice(0, 2);
       const u = DB.users.find(u => u.id === CU.id);

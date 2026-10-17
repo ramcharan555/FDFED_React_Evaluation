@@ -2126,7 +2126,7 @@ function openRegisterModal() {
     </div>
     <div class="grid-2">
       <div class="form-group"><label class="form-label">Password *</label><input class="form-control" id="rg-pass" type="password" placeholder="Min 6 characters"></div>
-      <div class="form-group"><label class="form-label">Phone *</label><input class="form-control" id="rg-phone" type="tel" placeholder="+91 9876543200"></div>
+      <div class="form-group"><label class="form-label">Phone *</label><input class="form-control" id="rg-phone" type="tel" inputmode="numeric" pattern="[6-9][0-9]{9}" maxlength="10" oninput="this.value=this.value.replace(/[^0-9]/g,'')" placeholder="9876543210"></div>
     </div>
     <div class="form-group"><label class="form-label">Register As *</label>
       <select class="form-control" id="rg-role">
@@ -2136,6 +2136,7 @@ function openRegisterModal() {
         <option value="organizer">🎯 Event Organizer</option>
       </select>
     </div>
+    <div class="form-group"><label class="form-label">Bio *</label><textarea class="form-control" id="rg-bio" placeholder="Tell us briefly about yourself"></textarea></div>
     <div id="rg-role-fields"></div>
     <div class="form-group" style="margin-top:12px;">
       <label class="form-label">Security Check (CAPTCHA) *</label>
@@ -2208,10 +2209,13 @@ function refreshCaptcha() {
 }
 let pendingRegistration = null;
 function submitRegister() {
-  const name = v('rg-name'), email = v('rg-email'), pass = v('rg-pass'), phone = v('rg-phone'), role = v('rg-role');
+  const name = v('rg-name'), email = v('rg-email'), pass = v('rg-pass'), phone = v('rg-phone').trim(), bio = v('rg-bio').trim(), role = v('rg-role');
   if (!name) { toast('Name is required', 'error'); return; }
   if (!email || !email.includes('@')) { toast('Valid email is required', 'error'); return; }
   if (!pass || pass.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
+  if (['attendee', 'client', 'organizer'].includes(role) && !phone) { toast('Phone number is required', 'error'); return; }
+  if (['attendee', 'client', 'organizer'].includes(role) && !/^[6-9]\d{9}$/.test(phone)) { toast('Enter a valid 10-digit Indian mobile number.', 'error'); return; }
+  if (['attendee', 'client', 'organizer'].includes(role) && !bio) { toast('Bio is required', 'error'); return; }
   const captchaVal = v('rg-captcha');
   if (!captchaVal || parseInt(captchaVal, 10) !== _captchaAnswer) {
     showErr('rg-captcha-err');
@@ -2266,7 +2270,7 @@ function submitRegister() {
       const random = new Uint32Array(1);
       window.crypto.getRandomValues(random);
       pendingRegistration = {
-        user: { id: DB._nextId.users, name, email, password: pass, role, phone, avatar: initials, status: 'active', joined: today(), ...details },
+        user: { id: DB._nextId.users, name, email, password: pass, role, phone, bio, avatar: initials, status: 'active', joined: today(), ...details },
         otp: String(random[0] % 1000000).padStart(6, '0'),
         expiresAt: Date.now() + 5 * 60 * 1000
       };
@@ -2287,7 +2291,7 @@ function submitRegister() {
   const random = new Uint32Array(1);
   window.crypto.getRandomValues(random);
   pendingRegistration = {
-    user: { id: DB._nextId.users, name, email, password: pass, role, phone, avatar: initials, status: 'active', joined: today(), ...details },
+    user: { id: DB._nextId.users, name, email, password: pass, role, phone, bio, avatar: initials, status: 'active', joined: today(), ...details },
     otp: String(random[0] % 1000000).padStart(6, '0'),
     expiresAt: Date.now() + 5 * 60 * 1000
   };

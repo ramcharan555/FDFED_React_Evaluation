@@ -9,7 +9,7 @@ export default function Organizer() {
 
 <div id="landing">
 <nav className="l-nav">
-<span className="l-nav-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.png" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
+<span className="l-nav-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.svg" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
 <div className="l-nav-links">
 <a href="#" onClick={event => legacyEvent("event.preventDefault();showPage('find-events');", event)}>Find Events</a>
 <a href="#" onClick={event => legacyEvent("event.preventDefault();showPage('gallery');", event)}>Gallery</a>
@@ -171,7 +171,7 @@ export default function Organizer() {
 </section>
 <footer className="l-footer">
 <div>
-<span style={{"fontFamily": "var(--font-head)", "fontWeight": "700", "display": "block", "marginBottom": "12px"}}><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.png" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
+<span style={{"fontFamily": "var(--font-head)", "fontWeight": "700", "display": "block", "marginBottom": "12px"}}><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.svg" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
 <div className="small" style={{"color": "var(--text2)", "lineHeight": "1.6", "marginBottom": "8px"}}>
 <div>📧 support@eventflow.com</div>
 <div>📞 +1 (555) 123-4567</div>
@@ -190,7 +190,7 @@ export default function Organizer() {
 
 <div id="login">
 <div className="login-card">
-<div className="login-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.png" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></div>
+<div className="login-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.svg" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></div>
 <p className="login-sub" id="login-subtitle">Sign in to your dashboard</p>
 <div className="login-hint" id="login-hint">📝 Demo credentials available below</div>
 <div className="form-group">
@@ -244,7 +244,7 @@ export default function Organizer() {
 
 <div id="find-events" style={{"background": "var(--bg)", "minHeight": "100vh", "padding": "80px 20px 20px", "display": "none"}}>
 <nav className="l-nav" style={{"zIndex": "300"}}>
-<span className="l-nav-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.png" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
+<span className="l-nav-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.svg" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
 <div className="l-nav-links">
 <a href="#" style={{"color": "var(--accent)"}} onClick={event => legacyEvent("event.preventDefault();showPage('landing');", event)}>← Home</a>
 <a href="#" onClick={event => legacyEvent("event.preventDefault();showPage('find-events');", event)}>Find Events</a>
@@ -487,7 +487,7 @@ export default function Organizer() {
 
 <div id="gallery" style={{"background": "var(--bg)", "minHeight": "100vh", "padding": "60px 20px", "display": "none"}}>
 <nav className="l-nav" style={{"zIndex": "300"}}>
-<span className="l-nav-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.png" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
+<span className="l-nav-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.svg" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
 <div className="l-nav-links">
 <a href="#" style={{"color": "var(--accent)"}} onClick={event => legacyEvent("event.preventDefault();showPage('landing');", event)}>← Home</a>
 <a href="#" onClick={event => legacyEvent("event.preventDefault();showPage('find-events');", event)}>Find Events</a>
@@ -644,7 +644,7 @@ export default function Organizer() {
 
 <div id="about" style={{"background": "var(--bg)", "minHeight": "100vh", "padding": "60px 20px", "display": "none"}}>
 <nav className="l-nav" style={{"zIndex": "300"}}>
-<span className="l-nav-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.png" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
+<span className="l-nav-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.svg" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
 <div className="l-nav-links">
 <a href="#" style={{"color": "var(--accent)"}} onClick={event => legacyEvent("event.preventDefault();showPage('landing');", event)}>← Home</a>
 <a href="#" onClick={event => legacyEvent("event.preventDefault();showPage('find-events');", event)}>Find Events</a>
@@ -683,7 +683,7 @@ export default function Organizer() {
 
 <div id="contact" style={{"background": "var(--bg)", "minHeight": "100vh", "padding": "60px 20px", "display": "none"}}>
 <nav className="l-nav" style={{"zIndex": "300"}}>
-<span className="l-nav-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.png" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
+<span className="l-nav-logo"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.svg" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></span>
 <div className="l-nav-links">
 <a href="#" style={{"color": "var(--accent)"}} onClick={event => legacyEvent("event.preventDefault();showPage('landing');", event)}>← Home</a>
 <a href="#" onClick={event => legacyEvent("event.preventDefault();showPage('find-events');", event)}>Find Events</a>
@@ -746,7 +746,7 @@ export default function Organizer() {
 
 <aside className="sidebar">
 <div className="sb-logo">
-<div className="sb-logo-mark"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.png" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></div>
+<div className="sb-logo-mark"><span className="brand-logo"><span className="brand-logo-art"><img src="/images/eventflow-logo.svg" alt="EventFlow" width="2172" height="724" decoding="async" /></span></span></div>
 </div>
 <nav className="sb-nav" id="sb-nav"></nav>
 <div className="sb-bottom">

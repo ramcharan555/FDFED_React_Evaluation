@@ -64,6 +64,13 @@ __decorate([
     (0, class_validator_1.Matches)(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' }),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "phoneNo", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Profile biography' }),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim() : value),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "bio", void 0);
 class UpdateUserDto {
 }
 exports.UpdateUserDto = UpdateUserDto;
@@ -101,6 +108,13 @@ __decorate([
     (0, class_validator_1.Matches)(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' }),
     __metadata("design:type", String)
 ], UpdateUserDto.prototype, "phoneNo", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Profile biography' }),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim() : value),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "bio", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({
         description: 'Account status',

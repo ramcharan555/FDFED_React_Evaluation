@@ -37,6 +37,12 @@ export class CreateAttendeeDto {
   @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' })
   phone?: string;
 
+  @ApiProperty({ description: 'Attendee biography', required: false })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @IsString()
+  @IsOptional()
+  bio?: string;
+
   @ApiProperty({
     description: 'Attendee password',
     example: 'Attendee@123',
@@ -73,6 +79,12 @@ export class UpdateAttendeeDto {
   @IsOptional()
   @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' })
   phone?: string;
+
+  @ApiProperty({ description: 'Attendee biography', required: false })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @IsString()
+  @IsOptional()
+  bio?: string;
 
   @ApiProperty({
     description: 'Attendee status',

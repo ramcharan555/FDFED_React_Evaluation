@@ -47,6 +47,13 @@ __decorate([
     __metadata("design:type", String)
 ], CreateAttendeeDto.prototype, "phone", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Attendee biography', required: false }),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim() : value),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateAttendeeDto.prototype, "bio", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Attendee password',
         example: 'Attendee@123',
@@ -88,6 +95,13 @@ __decorate([
     (0, class_validator_1.Matches)(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' }),
     __metadata("design:type", String)
 ], UpdateAttendeeDto.prototype, "phone", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Attendee biography', required: false }),
+    (0, class_transformer_1.Transform)(({ value }) => typeof value === 'string' ? value.trim() : value),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], UpdateAttendeeDto.prototype, "bio", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({
         description: 'Attendee status',

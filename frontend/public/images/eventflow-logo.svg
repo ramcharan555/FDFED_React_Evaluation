@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 520 150" role="img" aria-labelledby="title">
+  <title id="title">EventFlow</title>
+  <defs>
+    <linearGradient id="icon" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#6C63FF"/>
+      <stop offset="1" stop-color="#8B0CF4"/>
+    </linearGradient>
+    <linearGradient id="wordmark" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4F7CFF"/>
+      <stop offset="1" stop-color="#9D3CF4"/>
+    </linearGradient>
+  </defs>
+  <rect x="8" y="8" width="134" height="134" rx="35" fill="url(#icon)"/>
+  <path fill="#fff" d="M39 45h76l-7 19H69l-3 10h36l-6 17H60l-4 13h39l-7 19H21z"/>
+  <path fill="#fff" d="M86 74h29l-7 18H79z"/>
+  <text x="164" y="94" fill="url(#wordmark)" font-family="Arial, Helvetica, sans-serif" font-size="58" font-weight="700" letter-spacing="-2">EventFlow</text>
+</svg>

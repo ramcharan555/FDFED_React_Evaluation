@@ -3,6 +3,7 @@ import { ChangePasswordDto, CreateUserDto, UpdateUserDto } from './dto/user.dto'
 export declare class UsersService {
     private db;
     constructor();
+    private validateRequiredProfileFields;
     findAll(role: UserRole): any[];
     findOne(userId: string, role: UserRole): any;
     create(dto: CreateUserDto, role: UserRole): any;

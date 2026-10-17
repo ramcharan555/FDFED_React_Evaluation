@@ -31,6 +31,7 @@ let AttendeesService = class AttendeesService {
             email: user?.email || '',
             phone: user?.phoneNo || '',
             status: user?.status || 'active',
+            bio: user?.bio || '',
             registrationCount: regs.length,
             eventIds,
             // First registered event (for simple displays)
@@ -47,6 +48,10 @@ let AttendeesService = class AttendeesService {
         if (existingUser) {
             throw new common_1.BadRequestException('Email already registered');
         }
+        if (!createAttendeeDto.phone)
+            throw new common_1.BadRequestException('Phone number is required');
+        if (!createAttendeeDto.bio?.trim())
+            throw new common_1.BadRequestException('Bio is required');
         const userId = this.dataStore.generateId('usr-attendee');
         const attendeeId = this.dataStore.generateId('att');
         const user = {
@@ -57,6 +62,7 @@ let AttendeesService = class AttendeesService {
             userRole: constants_1.UserRole.ATTENDEE,
             status: 'active',
             phoneNo: createAttendeeDto.phone || '',
+            bio: createAttendeeDto.bio.trim(),
             createdAt: new Date(),
             updatedAt: new Date(),
         };
@@ -145,12 +151,22 @@ let AttendeesService = class AttendeesService {
             if (existing && existing.userId !== user.userId)
                 throw new common_1.BadRequestException('Email already registered');
         }
+        const phone = dto.phone ?? user.phoneNo;
+        const bio = dto.bio ?? user.bio;
+        if (!phone)
+            throw new common_1.BadRequestException('Phone number is required');
+        if (!/^[6-9]\d{9}$/.test(phone))
+            throw new common_1.BadRequestException('Enter a valid 10-digit Indian mobile number.');
+        if (!bio?.trim())
+            throw new common_1.BadRequestException('Bio is required');
         if (dto.name)
             user.name = dto.name;
         if (dto.email)
             user.email = dto.email.trim().toLowerCase();
         if (dto.phone)
             user.phoneNo = dto.phone;
+        if (dto.bio !== undefined)
+            user.bio = dto.bio.trim();
         if (dto.status)
             user.status = dto.status;
         user.updatedAt = new Date();

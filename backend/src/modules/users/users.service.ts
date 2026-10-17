@@ -1,5 +1,5 @@
 import {
-  Injectable, NotFoundException, ConflictException, ForbiddenException, UnauthorizedException,
+  Injectable, NotFoundException, ConflictException, ForbiddenException, UnauthorizedException, BadRequestException,
 } from '@nestjs/common';
 import { DataStore } from '../../common/data-store';
 import { UserRole } from '../../common/constants';
@@ -10,6 +10,13 @@ import { hashPassword, verifyPassword } from '../../common/password';
 export class UsersService {
   private db: DataStore;
   constructor() { this.db = DataStore.getInstance(); }
+
+  private validateRequiredProfileFields(userRole: UserRole, phoneNo?: string, bio?: string): void {
+    if (![UserRole.CLIENT, UserRole.EVENT_ORGANIZER, UserRole.ATTENDEE].includes(userRole)) return;
+    if (!phoneNo) throw new BadRequestException('Phone number is required');
+    if (!/^[6-9]\d{9}$/.test(phoneNo)) throw new BadRequestException('Enter a valid 10-digit Indian mobile number.');
+    if (!bio?.trim()) throw new BadRequestException('Bio is required');
+  }
 
   findAll(role: UserRole): any[] {
     if (role !== UserRole.SUPER_ADMIN) throw new ForbiddenException('Only SUPER_ADMIN can view all users');
@@ -28,12 +35,13 @@ export class UsersService {
     if (role !== UserRole.SUPER_ADMIN) throw new ForbiddenException('Only SUPER_ADMIN can create users');
     const existing = this.db.findUserByEmail(dto.email);
     if (existing) throw new ConflictException('Email already registered');
+    this.validateRequiredProfileFields(dto.userRole, dto.phoneNo, dto.bio);
 
     const userId = this.db.generateId('usr');
     const user = {
       userId, name: dto.name, email: dto.email.trim().toLowerCase(), password: hashPassword(dto.password),
       userRole: dto.userRole, status: 'active' as const,
-      address: dto.address, phoneNo: dto.phoneNo,
+      address: dto.address, phoneNo: dto.phoneNo, bio: dto.bio?.trim(),
       createdAt: new Date(), updatedAt: new Date(),
     };
     this.db.users.push(user);
@@ -61,6 +69,7 @@ export class UsersService {
     }
     const user = this.db.findUserById(userId);
     if (!user) throw new NotFoundException(`User ${userId} not found`);
+    this.validateRequiredProfileFields(user.userRole, dto.phoneNo ?? user.phoneNo, dto.bio ?? user.bio);
 
     if (dto.email) {
       const existing = this.db.findUserByEmail(dto.email);
@@ -74,7 +83,7 @@ export class UsersService {
     }
     if (dto.address) user.address = dto.address;
     if (dto.phoneNo !== undefined) user.phoneNo = dto.phoneNo;
-    if (dto.bio !== undefined) user.bio = dto.bio;
+    if (dto.bio !== undefined) user.bio = dto.bio.trim();
     if (dto.status && role === UserRole.SUPER_ADMIN) user.status = dto.status;
     user.updatedAt = new Date();
 

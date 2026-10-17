@@ -2,12 +2,14 @@ export declare class CreateAttendeeDto {
     name: string;
     email: string;
     phone?: string;
+    bio?: string;
     password?: string;
 }
 export declare class UpdateAttendeeDto {
     name?: string;
     email?: string;
     phone?: string;
+    bio?: string;
     status?: 'active' | 'inactive' | 'suspended';
 }
 export declare class AttendeeResponseDto {

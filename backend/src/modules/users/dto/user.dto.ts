@@ -47,6 +47,12 @@ export class CreateUserDto {
   @ValidateIf((_, value) => value !== '')
   @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' })
   phoneNo?: string;
+
+  @ApiPropertyOptional({ description: 'Profile biography' })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @IsString()
+  @IsOptional()
+  bio?: string;
 }
 
 export class UpdateUserDto {
@@ -78,6 +84,12 @@ export class UpdateUserDto {
   @ValidateIf((_, value) => value !== '')
   @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' })
   phoneNo?: string;
+
+  @ApiPropertyOptional({ description: 'Profile biography' })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @IsString()
+  @IsOptional()
+  bio?: string;
 
   @ApiPropertyOptional({
     description: 'Account status',

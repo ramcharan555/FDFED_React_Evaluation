@@ -16,6 +16,16 @@ const constants_1 = require("../../common/constants");
 const password_1 = require("../../common/password");
 let UsersService = class UsersService {
     constructor() { this.db = data_store_1.DataStore.getInstance(); }
+    validateRequiredProfileFields(userRole, phoneNo, bio) {
+        if (![constants_1.UserRole.CLIENT, constants_1.UserRole.EVENT_ORGANIZER, constants_1.UserRole.ATTENDEE].includes(userRole))
+            return;
+        if (!phoneNo)
+            throw new common_1.BadRequestException('Phone number is required');
+        if (!/^[6-9]\d{9}$/.test(phoneNo))
+            throw new common_1.BadRequestException('Enter a valid 10-digit Indian mobile number.');
+        if (!bio?.trim())
+            throw new common_1.BadRequestException('Bio is required');
+    }
     findAll(role) {
         if (role !== constants_1.UserRole.SUPER_ADMIN)
             throw new common_1.ForbiddenException('Only SUPER_ADMIN can view all users');
@@ -36,11 +46,12 @@ let UsersService = class UsersService {
         const existing = this.db.findUserByEmail(dto.email);
         if (existing)
             throw new common_1.ConflictException('Email already registered');
+        this.validateRequiredProfileFields(dto.userRole, dto.phoneNo, dto.bio);
         const userId = this.db.generateId('usr');
         const user = {
             userId, name: dto.name, email: dto.email.trim().toLowerCase(), password: (0, password_1.hashPassword)(dto.password),
             userRole: dto.userRole, status: 'active',
-            address: dto.address, phoneNo: dto.phoneNo,
+            address: dto.address, phoneNo: dto.phoneNo, bio: dto.bio?.trim(),
             createdAt: new Date(), updatedAt: new Date(),
         };
         this.db.users.push(user);
@@ -70,6 +81,7 @@ let UsersService = class UsersService {
         const user = this.db.findUserById(userId);
         if (!user)
             throw new common_1.NotFoundException(`User ${userId} not found`);
+        this.validateRequiredProfileFields(user.userRole, dto.phoneNo ?? user.phoneNo, dto.bio ?? user.bio);
         if (dto.email) {
             const existing = this.db.findUserByEmail(dto.email);
             if (existing && existing.userId !== userId)
@@ -88,7 +100,7 @@ let UsersService = class UsersService {
         if (dto.phoneNo !== undefined)
             user.phoneNo = dto.phoneNo;
         if (dto.bio !== undefined)
-            user.bio = dto.bio;
+            user.bio = dto.bio.trim();
         if (dto.status && role === constants_1.UserRole.SUPER_ADMIN)
             user.status = dto.status;
         user.updatedAt = new Date();

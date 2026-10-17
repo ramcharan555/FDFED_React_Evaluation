@@ -16,6 +16,8 @@ export declare class CreateEventDto {
     ticketPrice: number;
     organizerId?: string;
     clientId?: string;
+    description?: string;
+    status?: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
     registrationDeadline?: string;
     cancellationDeadline?: string;
     eligibility?: string;

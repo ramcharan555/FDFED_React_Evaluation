@@ -99,6 +99,21 @@ export class CreateEventDto {
   @IsOptional()
   clientId?: string;
 
+  @ApiProperty({ description: 'Event description', required: false })
+  @IsString()
+  @IsOptional()
+  description?: string;
+
+  @ApiProperty({
+    description: 'Event status',
+    enum: ['draft', 'published', 'ongoing', 'completed', 'cancelled'],
+    required: false,
+  })
+  @Transform(({ value }) => value === 'upcoming' || value === 'full' ? 'published' : value)
+  @IsIn(['draft', 'published', 'ongoing', 'completed', 'cancelled'])
+  @IsOptional()
+  status?: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
+
   @IsString() @IsOptional() registrationDeadline?: string;
   @IsString() @IsOptional() cancellationDeadline?: string;
   @IsString() @IsOptional() eligibility?: string;

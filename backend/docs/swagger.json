@@ -5693,6 +5693,21 @@
             "type": "string",
             "description": "Client ID",
             "example": "cli-001"
+          },
+          "description": {
+            "type": "string",
+            "description": "Event description"
+          },
+          "status": {
+            "type": "string",
+            "description": "Event status",
+            "enum": [
+              "draft",
+              "published",
+              "ongoing",
+              "completed",
+              "cancelled"
+            ]
           }
         },
         "required": [
@@ -5796,6 +5811,10 @@
             "description": "Valid 10-digit Indian mobile number",
             "example": "9876543210"
           },
+          "bio": {
+            "type": "string",
+            "description": "Attendee biography"
+          },
           "password": {
             "type": "string",
             "description": "Attendee password",
@@ -5821,6 +5840,10 @@
           "phone": {
             "type": "string",
             "description": "Valid 10-digit Indian mobile number"
+          },
+          "bio": {
+            "type": "string",
+            "description": "Attendee biography"
           },
           "status": {
             "type": "string",
@@ -5946,6 +5969,10 @@
             "type": "string",
             "description": "Phone number (10 digits, starts with 6-9)",
             "example": "9876543210"
+          },
+          "bio": {
+            "type": "string",
+            "description": "Profile biography"
           }
         },
         "required": [
@@ -6017,6 +6044,10 @@
             "type": "string",
             "description": "Phone number (10 digits, starts with 6-9)",
             "example": "9876543210"
+          },
+          "bio": {
+            "type": "string",
+            "description": "Profile biography"
           }
         },
         "required": [
@@ -6059,10 +6090,6 @@
             ]
           }
         }
-      },
-      "ChangePasswordDto": {
-        "type": "object",
-        "properties": {}
       },
       "CreateEventRequestDto": {
         "type": "object",
@@ -6139,11 +6166,6 @@
             "type": "string",
             "description": "Additional client notes"
           },
-          "eventType": {
-            "type": "string",
-            "description": "Event category",
-            "example": "Corporate Events"
-          },
           "venue": {
             "type": "string",
             "description": "Preferred venue"
@@ -6157,10 +6179,8 @@
           "eventName",
           "eventType",
           "eventDate",
-          "eventTime",
           "budget",
-          "capacity",
-          "city"
+          "capacity"
         ]
       },
       "EventPolicyAcknowledgementDto": {

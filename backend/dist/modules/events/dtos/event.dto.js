@@ -133,6 +133,23 @@ __decorate([
     __metadata("design:type", String)
 ], CreateEventDto.prototype, "clientId", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Event description', required: false }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventDto.prototype, "description", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({
+        description: 'Event status',
+        enum: ['draft', 'published', 'ongoing', 'completed', 'cancelled'],
+        required: false,
+    }),
+    (0, class_transformer_1.Transform)(({ value }) => value === 'upcoming' || value === 'full' ? 'published' : value),
+    (0, class_validator_1.IsIn)(['draft', 'published', 'ongoing', 'completed', 'cancelled']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventDto.prototype, "status", void 0);
+__decorate([
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
