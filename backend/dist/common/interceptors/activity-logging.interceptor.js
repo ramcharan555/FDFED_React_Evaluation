@@ -26,6 +26,7 @@ let ActivityLoggingInterceptor = class ActivityLoggingInterceptor {
         const method = request.method;
         const path = request.path;
         const role = request.userRole;
+        const actorUserId = request.user?.userId;
         // Only log non-GET requests
         if (!['POST', 'PUT', 'DELETE', 'PATCH'].includes(method)) {
             return next.handle();
@@ -35,6 +36,7 @@ let ActivityLoggingInterceptor = class ActivityLoggingInterceptor {
                 action: method,
                 resource: path,
                 role: role || 'unknown',
+                actorUserId,
                 timestamp: new Date(),
                 status: 'success',
                 details: data,

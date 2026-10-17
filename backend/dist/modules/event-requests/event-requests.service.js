@@ -118,6 +118,15 @@ let EventRequestsService = class EventRequestsService {
         if (role !== constants_1.UserRole.CLIENT && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Only CLIENT can create event requests');
         }
+        const client = this.db.clients.find((item) => item.userId === userId || item.clientId === userId);
+        if (role === constants_1.UserRole.CLIENT && !client) {
+            throw new common_1.ForbiddenException('Client profile not found');
+        }
+        const clientId = role === constants_1.UserRole.CLIENT ? client.clientId : dto.clientId;
+        const organizer = this.db.organizers.find((item) => item.organizerId === dto.organizerId || item.userId === dto.organizerId);
+        if (!organizer) {
+            throw new common_1.BadRequestException('Selected organizer was not found');
+        }
         if (this.isPastDate(dto.eventDate)) {
             throw new common_1.BadRequestException('Desired event date cannot be in the past');
         }
@@ -128,7 +137,8 @@ let EventRequestsService = class EventRequestsService {
             throw new common_1.BadRequestException('Capacity must be at least 1 guest');
         }
         // Check for duplicate active requests
-        const isDuplicate = this.db.eventRequests.some(r => r.clientId === dto.clientId &&
+        const isDuplicate = this.db.eventRequests.some(r => r.clientId === clientId &&
+            r.organizerId === organizer.organizerId &&
             r.eventName.toLowerCase().trim() === dto.eventName.toLowerCase().trim() &&
             r.eventDate === dto.eventDate &&
             ['submitted', 'pending', 'under_review', 'info_requested', 'proposal_sent', 'awaiting_client', 'confirmed'].includes(r.status));
@@ -138,13 +148,18 @@ let EventRequestsService = class EventRequestsService {
         const requestId = this.db.generateId('req');
         const request = {
             requestId,
-            clientId: dto.clientId,
-            organizerId: dto.organizerId,
+            clientId,
+            organizerId: organizer.organizerId,
             eventName: dto.eventName.trim(),
+            eventType: dto.eventType?.trim() || 'General',
             eventDate: dto.eventDate,
+            eventTime: dto.eventTime?.trim() || '00:00',
+            city: dto.city?.trim() || '',
+            dateFlexibility: dto.dateFlexibility || 'exact',
             budget: Number(dto.budget),
             capacity: Number(dto.capacity),
             requirements: dto.requirements || '',
+            notes: dto.notes || '',
             status: 'submitted',
             agreementStatus: 'not_sent',
             paymentStatus: 'unpaid',
@@ -155,10 +170,10 @@ let EventRequestsService = class EventRequestsService {
                 {
                     id: this.db.generateId('aud'),
                     action: 'Request Submitted',
-                    performedBy: userId || dto.clientId,
+                    performedBy: userId || clientId,
                     role: role,
                     timestamp: new Date(),
-                    details: { budget: dto.budget, capacity: dto.capacity, eventDate: dto.eventDate },
+                    details: { budget: dto.budget, capacity: dto.capacity, eventDate: dto.eventDate, eventType: dto.eventType, city: dto.city },
                 },
             ],
             version: 1,
@@ -167,14 +182,13 @@ let EventRequestsService = class EventRequestsService {
         };
         this.db.eventRequests.push(request);
         // Notify organizer
-        const organizer = this.db.organizers.find(o => o.organizerId === dto.organizerId || o.userId === dto.organizerId);
         this.db.notifications.push({
             notificationId: this.db.generateId('notif'),
-            userId: organizer ? organizer.userId : dto.organizerId,
+            userId: organizer.userId,
             eventId: undefined,
             registrationId: undefined,
             paymentId: undefined,
-            message: `New event request: "${dto.eventName}" from client ${dto.clientId}`,
+            message: `New event request: "${dto.eventName}" from client ${clientId}`,
             type: 'event_request',
             read: false,
             dateTime: new Date(),
@@ -531,6 +545,12 @@ let EventRequestsService = class EventRequestsService {
         if (!activeProposal) {
             throw new common_1.BadRequestException('No active proposal found on this request to respond to');
         }
+        if (request.status !== 'proposal_sent' || activeProposal.status !== 'pending_client') {
+            throw new common_1.BadRequestException('This proposal is no longer awaiting a client decision');
+        }
+        if (dto.decision === 'request_revision' && !dto.notes?.trim()) {
+            throw new common_1.BadRequestException('A reason is required when requesting a revised proposal');
+        }
         // Check expiry
         if (activeProposal.validUntil) {
             const validUntilDate = new Date(activeProposal.validUntil + 'T23:59:59');
@@ -542,7 +562,7 @@ let EventRequestsService = class EventRequestsService {
             }
         }
         activeProposal.clientResponseAt = new Date();
-        activeProposal.clientNotes = dto.notes || '';
+        activeProposal.clientNotes = dto.notes?.trim() || '';
         if (dto.decision === 'accept') {
             activeProposal.status = 'accepted';
             request.status = 'awaiting_client';
@@ -597,7 +617,9 @@ let EventRequestsService = class EventRequestsService {
                 eventId: undefined,
                 registrationId: undefined,
                 paymentId: undefined,
-                message: `Client responded to proposal for "${request.eventName}": ${dto.decision.toUpperCase()}`,
+                message: dto.decision === 'request_revision'
+                    ? `Client requested a revised plan for "${request.eventName}": ${activeProposal.clientNotes}`
+                    : `Client responded to proposal for "${request.eventName}": ${dto.decision.toUpperCase()}`,
                 type: `proposal_${dto.decision}`,
                 read: false,
                 dateTime: new Date(),

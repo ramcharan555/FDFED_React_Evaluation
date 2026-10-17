@@ -2041,7 +2041,7 @@ window.EventFlowModules['shared'] = true;
         const inNorm = norm(pass);
         const stNorm = localUser ? norm(localUser.password) : '';
 
-        const localMatches = localUser && (
+        const localMatches = localUser && !['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(String(localUser.employeeType || '').toUpperCase()) && (
           localUser.password === pass ||
           localUser.password.toLowerCase() === pass.toLowerCase() ||
           inNorm === stNorm ||
@@ -9815,6 +9815,7 @@ window.EventFlowModules['shared'] = true;
           REGISTRATION_VERIFICATION: { key: 'employee1' },
           EVENT_OPERATIONS: { key: 'employee2' },
           SUPPORT_FINANCE: { key: 'employee3' },
+          FINANCE_EXECUTIVE: { key: 'employee3' },
         };
         if (employeePages[empType]) return employeePages[empType];
       }

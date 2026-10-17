@@ -1977,7 +1977,7 @@ window.EventFlowModules['shared'] = true;
     function isSupportExecutive() {
       if (!CU) return false;
       const type = (CU.employeeType || '').toUpperCase();
-      return type === 'SUPPORT_EXECUTIVE' || type === 'REGISTRATION_VERIFICATION' || type === 'EVENT_OPERATIONS' || isEmployeeAccount();
+      return type === 'SUPPORT_EXECUTIVE' || type === 'REGISTRATION_VERIFICATION' || type === 'EVENT_OPERATIONS' || (!type && isEmployeeAccount());
     }
 
     // ════════════════════════════════════════════════
@@ -2057,7 +2057,7 @@ window.EventFlowModules['shared'] = true;
         const inNorm = norm(pass);
         const stNorm = localUser ? norm(localUser.password) : '';
 
-        const localMatches = localUser && (
+        const localMatches = localUser && !['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(String(localUser.employeeType || '').toUpperCase()) && (
           localUser.password === pass ||
           localUser.password.toLowerCase() === pass.toLowerCase() ||
           inNorm === stNorm ||
@@ -2356,29 +2356,28 @@ window.EventFlowModules['shared'] = true;
     }
 
     function buildEmployeeNav(employeeType) {
-      const isSupportExec = employeeType === 'SUPPORT_EXECUTIVE' ||
-        employeeType === 'REGISTRATION_VERIFICATION' ||
-        employeeType === 'EVENT_OPERATIONS' ||
-        isEmployeeAccount();
-
+      const financeExec = ['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(String(employeeType || '').toUpperCase());
+      const isSupportExec = ['SUPPORT_EXECUTIVE', 'REGISTRATION_VERIFICATION', 'EVENT_OPERATIONS'].includes(employeeType) || (!financeExec && isEmployeeAccount());
       const supportExecNav = [
         { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
         { ic: '👥', lbl: 'User & Event Management', pg: 'user-event-mgmt' },
         { ic: '🎧', lbl: 'Support & Issue Management', pg: 'support-issue-mgmt' },
         { ic: '📈', lbl: 'Reports & Analytics', pg: 'reports-analytics' },
       ];
-
-      const nav = isSupportExec
-        ? supportExecNav
-        : ({
-            SUPPORT_FINANCE: [
-              { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' }, { ic: '📩', lbl: 'Support Center', pg: 'support-center' },
-              { ic: '💳', lbl: 'Finance', pg: 'finance' }, { ic: '📋', lbl: 'Reports', pg: 'reports' },
-            ],
-          }[employeeType] || supportExecNav);
+      const nav = isSupportExec ? supportExecNav : (financeExec ? [
+        { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
+        { ic: '💳', lbl: 'Finance', pg: 'finance', children: [['transactions','Payment Transactions'],['refunds','Refund Management'],['settlements','Organizer Settlements'],['commission','Commission & Revenue'],['reconciliation','Payment Reconciliation']] },
+        { ic: '📋', lbl: 'Reports', pg: 'reports' },
+        { ic: '⚙️', lbl: 'Account Settings', pg: 'settings' },
+      ] : supportExecNav);
       const unread = visibleNotifications().filter(n => !n.read).length;
-      g('sb-nav').innerHTML = `<div class="sb-section-lbl">Menu</div>` + nav.map(i => `<div class="sb-item" data-pg="${i.pg}" onclick="goNav('${i.pg}')"><span class="ic">${i.ic}</span><span>${i.lbl}</span>${i.badge && unread > 0 ? '<span class="badge-dot"></span>' : ''}</div>`).join('');
+      g('sb-nav').innerHTML = '<div class="sb-section-lbl">Menu</div>' + nav.map(i => {
+        if (!i.children) return '<div class="sb-item" data-pg="' + i.pg + '" onclick="goNav(this.dataset.pg)"><span class="ic">' + i.ic + '</span><span>' + i.lbl + '</span>' + (i.badge && unread > 0 ? '<span class="badge-dot"></span>' : '') + '</div>';
+        const children = i.children.map(child => '<div class="sb-item finance-subitem ' + (sessionStorage.getItem('finance_tab') === child[0] ? 'active' : '') + '" data-tab="' + child[0] + '" onclick="switchFinanceTab(this.dataset.tab)"><span>' + child[1] + '</span></div>').join('');
+        return '<div class="sb-item ' + (_currentPage === 'finance' ? 'active' : '') + '" data-pg="finance" onclick="toggleFinanceNav()"><span class="ic">' + i.ic + '</span><span>' + i.lbl + '</span><span class="small muted" style="margin-left:auto">⌄</span></div><div id="finance-subnav" style="display:' + (sessionStorage.getItem('finance_nav_open') === 'true' ? 'block' : 'none') + ';padding-left:26px">' + children + '</div>';
+      }).join('');
     }
+
 
     function sendContactMessage() {
       const name = document.getElementById('contact-name').value.trim();
@@ -2446,6 +2445,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function goNav(pg) {
+      if (isDepartmentEmployee() && ['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(CU.employeeType)) { if (pg === 'dashboard') sessionStorage.setItem('finance_tab', 'dashboard'); else if (pg === 'finance' && !sessionStorage.getItem('finance_tab')) sessionStorage.setItem('finance_tab', 'transactions'); }
       _currentPage = pg;
       // Keep event-request tabs associated with their parent sidebar section.
       let sidebarPage = pg;
@@ -2525,6 +2525,7 @@ window.EventFlowModules['shared'] = true;
           ? supportExecPages
           : ({
               SUPPORT_FINANCE: ['dashboard', 'support-center', 'finance', 'reports', 'profile', 'settings', 'notifications'],
+              FINANCE_EXECUTIVE: ['dashboard', 'finance', 'reports', 'profile', 'settings', 'notifications'],
             }[CU.employeeType] || supportExecPages);
         if (!allowed.includes(pg)) { el.innerHTML = `<div class="empty"><div class="empty-title">Access restricted</div><p class="empty-desc">This department does not have access to this area.</p></div>`; return; }
       }
@@ -2548,8 +2549,9 @@ window.EventFlowModules['shared'] = true;
 
       switch (pg) {
         case 'dashboard':
-          el.innerHTML = isDepartmentEmployee()
-            ? dashDepartmentEmployee()
+          el.innerHTML = isDepartmentEmployee() && ['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(CU.employeeType)
+            ? await pageFinanceCenter()
+            : isDepartmentEmployee() ? dashDepartmentEmployee()
             : ({ organizer: dashOrganizer, client: dashClient, staff: dashStaff, attendee: dashAttendee }[r] || dashAttendee)();
           break;
         case 'user-event-mgmt':
@@ -2597,7 +2599,7 @@ window.EventFlowModules['shared'] = true;
           el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageSupportCenter() : (isSupportExecutive() ? pageSupportAndIssueManagement() : pageEventRequests());
           break;
         case 'finance':
-          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageFinanceCenter() : pageRevenueReports();
+          el.innerHTML = isDepartmentEmployee() && ['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(CU.employeeType) ? await pageFinanceCenter() : pageRevenueReports();
           break;
         case 'request-status':
           el.innerHTML = pageRequestStatus();
@@ -2610,10 +2612,12 @@ window.EventFlowModules['shared'] = true;
           el.innerHTML = pageAttendeeVerification();
           break;
         case 'reports':
-          if (isSupportExecutive()) {
+          if (isDepartmentEmployee() && ['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(CU.employeeType)) {
+            el.innerHTML = await pageFinanceReports();
+          } else if (isSupportExecutive()) {
             el.innerHTML = pageReportsAndAnalytics();
           } else {
-            el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'REGISTRATION_VERIFICATION' ? pageRegVerificationReports() : (isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOpsReports() : (isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageOperationalReports() : pageReports()));
+            el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'REGISTRATION_VERIFICATION' ? pageRegVerificationReports() : (isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOpsReports() : pageReports());
           }
           break;
         case 'staff-reports':
@@ -5410,150 +5414,139 @@ window.EventFlowModules['shared'] = true;
       toast('Support request updated', 'success');
     }
 
-    function financeStatusBadge(status) { return { Successful: 'green', Pending: 'yellow', Failed: 'red', Requested: 'yellow', Processing: 'purple', Completed: 'green', Rejected: 'red' }[status] || 'gray'; }
-    function pageFinanceCenter() {
-      const tab = sessionStorage.getItem('finance_tab') || 'transactions';
-      const query = (sessionStorage.getItem('finance_query') || '').toLowerCase();
-      const commissionRate = 0.15;
-      const allTransactions = Array.isArray(DB.financeTransactions) ? DB.financeTransactions : [];
-      const refundRecords = Array.isArray(DB.financeRefunds) ? DB.financeRefunds : [];
-      const paidRegistrations = (DB.registrations || []).filter(reg => String(reg.payment || '').toLowerCase() === 'paid' && ['confirmed', 'verified'].includes(String(reg.status || '').toLowerCase()));
-      const successfulTransactions = paidRegistrations.length ? paidRegistrations : allTransactions.filter(tx => String(tx.status || '').toLowerCase() === 'successful' && Number(tx.amount || 0) > 0);
-      const totalRevenue = successfulTransactions.reduce((sum, item) => sum + Number(item.amount || 0), 0);
-      const platformCommission = totalRevenue * commissionRate;
-      const organizerPayout = totalRevenue - platformCommission;
-
-      const records = tab === 'transactions' ? allTransactions : refundRecords;
-      const filtered = records.filter(item => {
-        const user = DB.users.find(u => String(u.id) === String(item.userId)) || {};
-        const event = DB.events.find(e => String(e.id) === String(item.eventId)) || {};
-        const text = `${item.id || ''} ${user.name || ''} ${user.email || ''} ${event.title || ''} ${item.status || ''} ${item.reason || ''}`.toLowerCase();
-        return !query || text.includes(query);
-      });
-
-      return `
-        <div class="page-hd">
-          <div class="page-hd-left">
-            <div class="page-title">Finance &amp; Revenue</div>
-            <div class="page-sub">Track registration revenue, platform commission, organizer payouts, and customer payment activity.</div>
-          </div>
-        </div>
-
-        <div class="grid-4 mb-20">
-          <div class="stat-card">
-            <div class="stat-icon" style="background:var(--green-dim);color:var(--green)">💰</div>
-            <div class="stat-value" style="color:var(--green)">₹${totalRevenue.toLocaleString('en-IN')}</div>
-            <div class="stat-label">Total Registration Revenue</div>
-            <div class="stat-sub neutral">Successful attendee payments</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">📈</div>
-            <div class="stat-value" style="color:var(--accent)">₹${platformCommission.toLocaleString('en-IN')}</div>
-            <div class="stat-label">Platform Commission</div>
-            <div class="stat-sub neutral">Fixed 15% fee share</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">💸</div>
-            <div class="stat-value" style="color:var(--yellow)">₹${organizerPayout.toLocaleString('en-IN')}</div>
-            <div class="stat-label">Organizer Payouts</div>
-            <div class="stat-sub neutral">Net payout after commission</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-icon" style="background:var(--purple-dim);color:var(--purple)">🧾</div>
-            <div class="stat-value" style="color:var(--purple)">${successfulTransactions.length}</div>
-            <div class="stat-label">Successful Transactions</div>
-            <div class="stat-sub neutral">Monitored payment records</div>
-          </div>
-        </div>
-
-        <div class="card" style="margin-bottom:20px">
-          <div class="flex justify-between items-center mb-12">
-            <div class="h4">Event-wise Revenue &amp; Commission</div>
-            <div class="small muted">Commission formula: registration fee × 15%</div>
-          </div>
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Event</th>
-                  <th>Attendees</th>
-                  <th>Gross Revenue</th>
-                  <th>Platform Commission</th>
-                  <th>Organizer Payout</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${(() => {
-                  const eventSummary = {};
-                  successfulTransactions.forEach(tx => {
-                    const event = DB.events.find(e => String(e.id) === String(tx.eventId)) || { title: 'Unknown Event' };
-                    const eventKey = String(tx.eventId || event.title);
-                    if (!eventSummary[eventKey]) {
-                      eventSummary[eventKey] = {
-                        eventTitle: event.title,
-                        attendeeCount: 0,
-                        revenue: 0
-                      };
-                    }
-                    eventSummary[eventKey].attendeeCount += 1;
-                    eventSummary[eventKey].revenue += Number(tx.amount || 0);
-                  });
-                  const rows = Object.values(eventSummary);
-                  return rows.length
-                    ? rows.map(row => {
-                        const commission = row.revenue * commissionRate;
-                        const payout = row.revenue - commission;
-                        return `
-                          <tr>
-                            <td>${row.eventTitle}</td>
-                            <td>${row.attendeeCount}</td>
-                            <td style="color:var(--green);font-weight:700">₹${row.revenue}</td>
-                            <td style="color:var(--accent);font-weight:700">₹${commission}</td>
-                            <td style="color:var(--yellow);font-weight:700">₹${payout}</td>
-                          </tr>
-                        `;
-                      }).join('')
-                    : '<tr><td colspan="5" class="text-center py-20">No successful event revenue data found.</td></tr>';
-                })()}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:6px;margin-bottom:16px">
-          <button class="btn ${tab === 'transactions' ? 'btn-primary' : 'btn-ghost'}" onclick="switchFinanceTab('transactions')">💳 Transactions</button>
-          <button class="btn ${tab === 'refunds' ? 'btn-primary' : 'btn-ghost'}" onclick="switchFinanceTab('refunds')">↩️ Refunds</button>
-        </div>
-
-        <div class="filter-row">
-          <div class="search-box input-group">
-            <span class="input-icon">🔍</span>
-            <input class="form-control" id="finance-query" placeholder="Search finance records..." value="${query}" oninput="refreshFinanceCenter()">
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                ${tab === 'transactions' ? '<tr><th>Transaction ID</th><th>User</th><th>Event</th><th>Amount</th><th>Payment Status</th><th>Date</th></tr>' : '<tr><th>Refund ID</th><th>User</th><th>Event</th><th>Amount</th><th>Reason</th><th>Status</th><th>Date</th></tr>'}
-              </thead>
-              <tbody>
-                ${filtered.map(item => {
-                  const user = DB.users.find(u => String(u.id) === String(item.userId)) || { name: 'Unknown' };
-                  const event = DB.events.find(e => String(e.id) === String(item.eventId)) || { title: 'Unknown Event' };
-                  return tab === 'transactions'
-                    ? `<tr><td class="mono">${item.id}</td><td>${user.name}</td><td>${event.title}</td><td style="color:var(--green);font-weight:700">₹${item.amount}</td><td><span class="badge badge-${financeStatusBadge(item.status)}">${item.status}</span></td><td>${item.date}</td></tr>`
-                    : `<tr><td class="mono">${item.id}</td><td>${user.name}</td><td>${event.title}</td><td style="color:var(--green);font-weight:700">₹${item.amount}</td><td>${item.reason}</td><td><span class="badge badge-${financeStatusBadge(item.status)}">${item.status}</span></td><td>${item.date}</td></tr>`;
-                }).join('') || `<tr><td colspan="${tab === 'transactions' ? 6 : 7}" class="text-center py-20">No finance records found.</td></tr>`}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      `;
+    function financeStatusBadge(status) { return { completed: 'green', pending: 'yellow', failed: 'red', refunded: 'purple' }[String(status || '').toLowerCase()] || 'gray'; }
+    async function pageFinanceReports() {
+      const from = sessionStorage.getItem('finance_from') || ''; const to = sessionStorage.getItem('finance_to') || '';
+      try {
+        const query = new URLSearchParams({ from, to }); const data = await apiRequest('/finance/dashboard?' + query.toString()); const totals = data.totals || {};
+        const money = value => new Intl.NumberFormat('en-IN',{style:'currency',currency:data.currency || 'INR'}).format(Number(value || 0));
+        const rows = (data.eventRevenue || []).map(row => '<tr><td>' + escapeHtml(row.eventName) + '</td><td>' + row.ticketsSold + '</td><td>' + money(row.revenue) + '</td></tr>').join('');
+        return '<div class="page-hd"><div><div class="page-title">Financial Reports</div><div class="page-sub">Database-backed revenue summary and transaction export</div></div></div><div class="filter-row"><label class="small muted">From <input class="form-control" type="date" id="finance-from" value="' + escapeHtml(from) + '"></label><label class="small muted">To <input class="form-control" type="date" id="finance-to" value="' + escapeHtml(to) + '"></label><button class="btn btn-primary" onclick="applyFinanceDateRange()">Generate report</button><button class="btn btn-ghost" onclick="downloadFinanceCsv()">Download transaction CSV</button></div><div class="grid-3 mb-20"><div class="stat-card"><div class="stat-value">' + money(totals.grossRevenue) + '</div><div class="stat-label">Gross captured revenue</div></div><div class="stat-card"><div class="stat-value">' + money(totals.refundedAmount) + '</div><div class="stat-label">Completed refunds</div></div><div class="stat-card"><div class="stat-value">' + money(totals.netRevenue) + '</div><div class="stat-label">Net revenue</div></div></div><div class="card"><div class="h4 mb-12">Event revenue report</div><div class="table-wrap"><table><thead><tr><th>Event</th><th>Tickets sold</th><th>Captured revenue</th></tr></thead><tbody>' + (rows || '<tr><td colspan="3" class="text-center py-20">No event revenue for this range.</td></tr>') + '</tbody></table></div><p class="small muted mt-16">Generated ' + new Date().toLocaleString('en-IN') + '. PDF, payout, and gateway reconciliation reports are not available in the current demo integration.</p></div>';
+      } catch (error) { return '<div class="card"><div class="empty-title">Report data is unavailable</div><p class="empty-desc">' + escapeHtml(error.message) + '</p><button class="btn btn-primary" onclick="goNav(&quot;reports&quot;)">Retry</button></div>'; }
     }
-    function switchFinanceTab(tab) { sessionStorage.setItem('finance_tab', tab); renderPage('finance'); }
-    function refreshFinanceCenter() { sessionStorage.setItem('finance_query', v('finance-query')); renderPage('finance'); }
+    async function pageFinanceCenter() {
+      const tab = sessionStorage.getItem('finance_tab') || 'dashboard';
+      const query = sessionStorage.getItem('finance_query') || '';
+      const page = Number(sessionStorage.getItem('finance_page') || 1);
+      const status = sessionStorage.getItem('finance_status') || '';
+      const method = sessionStorage.getItem('finance_method') || '';
+      const from = sessionStorage.getItem('finance_from') || '';
+      const to = sessionStorage.getItem('finance_to') || '';
+      const eventId = sessionStorage.getItem('finance_event') || '';
+      const sort = sessionStorage.getItem('finance_sort') || 'date';
+      const refundRange = sessionStorage.getItem('finance_refund_range') || 'last30';
+      const refundEvent = sessionStorage.getItem('finance_refund_event') || '';
+      const refundOrganizer = sessionStorage.getItem('finance_refund_organizer') || '';
+      const refundStatus = sessionStorage.getItem('finance_refund_status') || '';
+      const refundSearch = sessionStorage.getItem('finance_refund_search') || '';
+      const refundSort = sessionStorage.getItem('finance_refund_sort') || 'newest';
+      const params = new URLSearchParams({ page: String(page), pageSize: '25', search: query, status, paymentMethod: method, eventId, from, to, sort, direction: 'desc' });
+      const isTransactions = tab === 'transactions' || tab === 'dashboard' || tab === 'commission';
+      const dashboardParams = new URLSearchParams({ from, to });
+      const refundParams = new URLSearchParams({ page: String(page), pageSize: '25', range: refundRange, eventId: refundEvent, organizerId: refundOrganizer, status: refundStatus, search: refundSearch, sort: refundSort });
+      const tasks = tab === 'refunds' ? [apiRequest('/finance/refunds?' + refundParams.toString())] : [apiRequest('/finance/dashboard?' + dashboardParams.toString())];
+      if (isTransactions) tasks.push(apiRequest('/finance/transactions?' + params.toString()));
+      let dashboard, result;
+      try { const data = await Promise.all(tasks); if (tab === 'refunds') result = data[0]; else { dashboard = data[0]; result = data[1]; } }
+      catch (error) { return '<div class="page-hd"><div><div class="page-title">Finance Executive</div><div class="page-sub">Financial operations</div></div></div><div class="card"><div class="empty-title">Finance data is unavailable</div><p class="empty-desc">' + escapeHtml(error.message) + '</p><button class="btn btn-primary" onclick="renderPage(&quot;finance&quot;)">Retry</button></div>'; }
+      dashboard = dashboard || { currency: 'INR', totals: {} };
+      const totals = dashboard.totals || {};
+      const currency = value => new Intl.NumberFormat('en-IN', { style: 'currency', currency: dashboard.currency || 'INR', maximumFractionDigits: 2 }).format(Number(value || 0));
+      const dateText = value => value ? new Date(value).toLocaleString('en-IN') : '—';
+      const metric = (label, value, color) => '<div class="stat-card"><div class="stat-value" style="color:' + color + '">' + value + '</div><div class="stat-label">' + label + '</div></div>';
+      const metrics = '<div class="grid-4 mb-20">' + metric('Gross captured revenue', currency(totals.grossRevenue), 'var(--green)') + metric('Net after completed refunds', currency(totals.netRevenue), 'var(--accent)') + metric('Successful payments', totals.successfulPayments || 0, 'var(--green)') + metric('Tickets sold', totals.ticketsSold || 0, 'var(--blue)') + metric('Failed payments', totals.failedPayments || 0, 'var(--red)') + metric('Pending payments', totals.pendingPayments || 0, 'var(--yellow)') + metric('Refund requests pending', totals.pendingRefundRequests || 0, 'var(--yellow)') + metric('Completed refunds', currency(totals.refundedAmount), 'var(--purple)') + '</div>';
+      const tabs = [['dashboard','Dashboard'],['transactions','Payment Transactions'],['refunds','Refund Management'],['settlements','Organizer Settlements'],['commission','Commission & Revenue'],['reconciliation','Payment Reconciliation']].map(item => '<button class="btn ' + (tab === item[0] ? 'btn-primary' : 'btn-ghost') + '" onclick="switchFinanceTab(&quot;' + item[0] + '&quot;)">' + item[1] + '</button>').join('');
+      let content = '';
+      if (tab === 'dashboard') {
+        const rows = (result && result.data || []).slice(0,8).map(item => '<tr><td class="mono">' + escapeHtml(item.paymentId) + '</td><td>' + escapeHtml(item.eventName) + '</td><td>' + escapeHtml(item.attendeeName) + '</td><td>' + currency(item.amount) + '</td><td><span class="badge badge-' + financeStatusBadge(item.status) + '">' + escapeHtml(item.status) + '</span></td><td>' + dateText(item.paymentDate || item.createdAt) + '</td></tr>').join('');
+        const eventMax = Math.max(1, ...(dashboard.eventRevenue || []).map(item => Number(item.revenue || 0)));
+        const eventBars = (dashboard.eventRevenue || []).map(item => '<div class="finance-chart-row"><span>' + escapeHtml(item.eventName) + '</span><div class="finance-bar-track"><i style="width:' + (Number(item.revenue || 0) / eventMax * 100) + '%"></i></div><strong>' + currency(item.revenue) + '</strong></div>').join('') || '<p class="small muted">No event revenue recorded.</p>';
+        const trend = (dashboard.revenueTrend || []).map(item => '<div class="finance-trend-item"><span>' + escapeHtml(item.date) + '</span><strong>' + currency(item.revenue) + '</strong></div>').join('') || '<p class="small muted">No revenue trend data available.</p>';
+        content = '<div class="filter-row"><label class="small muted">From <input class="form-control" type="date" id="finance-from" value="' + escapeHtml(from) + '"></label><label class="small muted">To <input class="form-control" type="date" id="finance-to" value="' + escapeHtml(to) + '"></label><button class="btn btn-primary" onclick="applyFinanceDateRange()">Apply date range</button><button class="btn btn-ghost" onclick="clearFinanceDateRange()">Clear</button></div><div class="card"><div class="h4 mb-12">Recent payment activity</div><div class="table-wrap"><table><thead><tr><th>Payment</th><th>Event</th><th>Attendee</th><th>Amount</th><th>Status</th><th>Date</th></tr></thead><tbody>' + (rows || '<tr><td colspan="6" class="text-center py-20">No payment records yet.</td></tr>') + '</tbody></table></div></div><div class="grid-2 mt-16"><div class="card"><div class="h4 mb-12">Revenue by event</div>' + eventBars + '</div><div class="card"><div class="h4 mb-12">Captured revenue trend</div><div class="finance-trend">' + trend + '</div></div></div>';
+      } else if (tab === 'transactions') {
+        const rows = (result.data || []).map(item => '<tr><td class="mono">' + escapeHtml(item.paymentId) + '</td><td>' + escapeHtml(item.registrationId) + '</td><td>' + escapeHtml(item.eventName) + '</td><td>' + escapeHtml(item.attendeeName) + '<div class="small muted">' + escapeHtml(item.attendeeEmail) + '</div></td><td>' + currency(item.amount) + '</td><td>' + escapeHtml(item.paymentMethod) + '</td><td><span class="badge badge-' + financeStatusBadge(item.status) + '">' + escapeHtml(item.status) + '</span></td><td>' + dateText(item.paymentDate || item.createdAt) + '</td><td><button class="btn btn-ghost btn-sm" data-payment="' + encodeURIComponent(item.paymentId) + '" onclick="openFinanceTransaction(this.dataset.payment)">View</button></td></tr>').join('');
+        content = '<div class="card"><div class="filter-row"><input class="form-control" id="finance-query" placeholder="Search payment, booking, attendee, or event" value="' + escapeHtml(query) + '"><select class="form-control" id="finance-status"><option value="">All statuses</option>' + ['completed','pending','failed','refunded'].map(s => '<option ' + (status === s ? 'selected' : '') + ' value="' + s + '">' + s + '</option>').join('') + '</select><select class="form-control" id="finance-method"><option value="">All methods</option><option value="DEMO_PROVIDER" ' + (method === 'DEMO_PROVIDER' ? 'selected' : '') + '>Demo provider</option></select><select class="form-control" id="finance-event"><option value="">All events</option>' + (dashboard.eventRevenue || []).map(item => '<option value="' + escapeHtml(item.eventId || '') + '" ' + (eventId === item.eventId ? 'selected' : '') + '>' + escapeHtml(item.eventName) + '</option>').join('') + '</select><select class="form-control" id="finance-sort"><option value="date" ' + (sort === 'date' ? 'selected' : '') + '>Sort by date</option><option value="amount" ' + (sort === 'amount' ? 'selected' : '') + '>Sort by amount</option></select><input class="form-control" type="date" id="finance-from" value="' + escapeHtml(from) + '"><input class="form-control" type="date" id="finance-to" value="' + escapeHtml(to) + '"><button class="btn btn-primary" onclick="refreshFinanceCenter()">Apply</button><button class="btn btn-ghost" onclick="downloadFinanceCsv()">Download CSV</button></div><div class="table-wrap"><table><thead><tr><th>Transaction</th><th>Booking</th><th>Event</th><th>Attendee</th><th>Amount (INR)</th><th>Method</th><th>Status</th><th>Date</th><th></th></tr></thead><tbody>' + (rows || '<tr><td colspan="9" class="text-center py-20">No transactions match these filters.</td></tr>') + '</tbody></table></div><div class="flex justify-between items-center mt-16"><span class="small muted">' + (result.pagination.total || 0) + ' matching records · page ' + result.pagination.page + ' of ' + Math.max(1,result.pagination.totalPages) + '</span><div><button class="btn btn-ghost" ' + (page <= 1 ? 'disabled' : '') + ' onclick="financeChangePage(-1)">Previous</button> <button class="btn btn-ghost" ' + (page >= result.pagination.totalPages ? 'disabled' : '') + ' onclick="financeChangePage(1)">Next</button></div></div></div>';
+      } else if (tab === 'refunds') {
+        const filters = result.filters || {};
+        const eventOptions = (filters.events || []).map(item => '<option value="' + escapeHtml(item.eventId) + '" ' + (refundEvent === item.eventId ? 'selected' : '') + '>' + escapeHtml(item.name) + '</option>').join('');
+        const organizerOptions = (filters.organizers || []).map(item => '<option value="' + escapeHtml(item.organizerId) + '" ' + (refundOrganizer === item.organizerId ? 'selected' : '') + '>' + escapeHtml(item.name) + '</option>').join('');
+        const refundDate = value => value ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date(value)) : '—';
+        const refundMoney = value => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value || 0));
+        const rows = (result.data || []).map(item => '<tr><td class="mono">' + escapeHtml(item.refundId) + '</td><td>' + escapeHtml(item.registrationId) + '</td><td>' + escapeHtml(item.eventName) + '<div class="small muted">' + escapeHtml(item.organizerName) + '</div></td><td>' + escapeHtml(item.attendeeName) + '</td><td>' + refundMoney(item.originalPaymentAmount) + '</td><td>' + refundMoney(item.amount) + '</td><td>' + escapeHtml(item.reason) + '</td><td><span class="finance-refund-status finance-refund-status-' + escapeHtml(String(item.status).toLowerCase()) + '">' + escapeHtml(String(item.status).charAt(0).toUpperCase() + String(item.status).slice(1)) + '</span></td><td>' + refundDate(item.requestedAt) + '</td><td><button class="btn btn-ghost btn-sm" data-refund="' + encodeURIComponent(item.refundId) + '" onclick="openFinanceRefund(this.dataset.refund)">View details</button></td></tr>').join('');
+        const pagination = result.pagination || { page: 1, total: 0, totalPages: 0 };
+        content = '<div class="finance-warning"><span class="finance-warning-icon">!</span><span>Demo provider only; all existing payments are unverified or simulated. No live refunds or payouts are available. Commission policy is not configured; related amounts remain unavailable.</span></div><div class="finance-filter-toolbar"><label><span>Date range</span><select class="form-control" id="finance-refund-range"><option value="last30" ' + (refundRange === 'last30' ? 'selected' : '') + '>Last 30 days</option><option value="last7" ' + (refundRange === 'last7' ? 'selected' : '') + '>Last 7 days</option><option value="thisMonth" ' + (refundRange === 'thisMonth' ? 'selected' : '') + '>This month</option><option value="all" ' + (refundRange === 'all' ? 'selected' : '') + '>All time</option></select></label><label><span>Event</span><select class="form-control" id="finance-refund-event"><option value="">All events</option>' + eventOptions + '</select></label><label><span>Organizer</span><select class="form-control" id="finance-refund-organizer"><option value="">All organizers</option>' + organizerOptions + '</select></label><label><span>Status</span><select class="form-control" id="finance-refund-status"><option value="">All statuses</option>' + ['pending','completed','failed','not_applicable'].map(value => '<option value="' + value + '" ' + (refundStatus === value ? 'selected' : '') + '>' + value.charAt(0).toUpperCase() + value.slice(1).replace('_',' ') + '</option>').join('') + '</select></label><label class="finance-refund-search"><span>Search</span><input class="form-control" id="finance-refund-search" placeholder="Reference, booking, attendee" value="' + escapeHtml(refundSearch) + '"></label><label><span>Sort</span><select class="form-control" id="finance-refund-sort"><option value="newest" ' + (refundSort === 'newest' ? 'selected' : '') + '>Newest first</option><option value="oldest" ' + (refundSort === 'oldest' ? 'selected' : '') + '>Oldest first</option><option value="amountHigh" ' + (refundSort === 'amountHigh' ? 'selected' : '') + '>Amount: high to low</option><option value="amountLow" ' + (refundSort === 'amountLow' ? 'selected' : '') + '>Amount: low to high</option></select></label><div class="finance-filter-actions"><button class="btn btn-primary" onclick="applyFinanceRefundFilters()">Apply filters</button><button class="btn btn-ghost" onclick="resetFinanceRefundFilters()">Reset</button></div></div><div class="card finance-refund-table-card"><div class="table-wrap"><table class="finance-refund-table"><thead><tr><th>Refund request</th><th>Booking</th><th>Event</th><th>Attendee</th><th>Original payment</th><th>Requested amount</th><th>Reason</th><th>Status</th><th>Requested</th><th>Actions</th></tr></thead><tbody>' + (rows || '<tr><td colspan="10" class="text-center py-20">No refund requests match these filters.</td></tr>') + '</tbody></table></div><div class="finance-refund-pagination"><span>' + pagination.total + ' records · Page ' + pagination.page + ' of ' + Math.max(1, pagination.totalPages) + '</span><div><button class="btn btn-ghost" ' + (pagination.page <= 1 ? 'disabled' : '') + ' onclick="financeChangePage(-1)">Previous</button><button class="btn btn-ghost" ' + (pagination.page >= pagination.totalPages ? 'disabled' : '') + ' onclick="financeChangePage(1)">Next</button></div></div></div>';
+      } else if (tab === 'commission') {
+        content = '<div class="card"><div class="h4 mb-12">Commission &amp; revenue</div><p class="small muted">Gross and net revenue below are calculated from persisted payment and refund records.</p><div class="grid-3 mt-16">' + metric('Gross captured revenue', currency(totals.grossRevenue), 'var(--green)') + metric('Completed refunds', currency(totals.refundedAmount), 'var(--purple)') + metric('Net revenue', currency(totals.netRevenue), 'var(--accent)') + '</div><div class="empty-desc mt-16">Commission policy is not configured. Commission and organizer payable amounts are unavailable until an administrator defines a policy.</div></div>';
+      } else {
+        const title = tab === 'settlements' ? 'Organizer settlements' : 'Payment reconciliation';
+        const explanation = tab === 'settlements' ? 'No payout provider or settlement policy is configured. No organizer payouts can be calculated or marked paid.' : 'The configured payment provider is DEMO_PROVIDER and does not provide gateway reconciliation records.';
+        content = '<div class="card"><div class="h4 mb-12">' + title + '</div><p class="empty-desc">' + explanation + '</p></div>';
+      }
+      const pageTitle = { dashboard: 'Dashboard', transactions: 'Payment Transactions', refunds: 'Refund Management', settlements: 'Organizer Settlements', commission: 'Commission & Revenue', reconciliation: 'Payment Reconciliation' }[tab] || 'Finance';
+      const pageHeader = '<div class="page-hd"><div class="page-hd-left"><div class="page-title">' + pageTitle + '</div><div class="page-sub">Financial operations · INR · Asia/Kolkata</div></div><button class="btn btn-ghost" onclick="renderPage(&quot;finance&quot;)">Refresh</button></div>';
+      return pageHeader + (tab === 'refunds' ? '' : metrics) + content;
+    }
+    function toggleFinanceNav() { const node = g('finance-subnav'); if (!node) return; const open = node.style.display === 'none'; node.style.display = open ? 'block' : 'none'; sessionStorage.setItem('finance_nav_open', String(open)); if (_currentPage !== 'finance') goNav('finance'); }
+    function switchFinanceTab(tab) { sessionStorage.setItem('finance_nav_open', 'true'); sessionStorage.setItem('finance_tab', tab); sessionStorage.setItem('finance_page', '1'); document.querySelectorAll('.finance-subitem').forEach(item => item.classList.toggle('active', item.dataset.tab === tab)); goNav('finance'); }
+    function refreshFinanceCenter() {
+      if (sessionStorage.getItem('finance_tab') === 'refunds') { applyFinanceRefundFilters(); return; }
+      sessionStorage.setItem('finance_query', v('finance-query'));
+      sessionStorage.setItem('finance_status', v('finance-status'));
+      sessionStorage.setItem('finance_method', v('finance-method'));
+      sessionStorage.setItem('finance_event', v('finance-event'));
+      sessionStorage.setItem('finance_sort', v('finance-sort'));
+      sessionStorage.setItem('finance_from', v('finance-from'));
+      sessionStorage.setItem('finance_to', v('finance-to'));
+      sessionStorage.setItem('finance_page', '1'); renderPage('finance');
+    }
+    function applyFinanceDateRange() { sessionStorage.setItem('finance_from', v('finance-from')); sessionStorage.setItem('finance_to', v('finance-to')); renderPage(_currentPage); }
+    function clearFinanceDateRange() { sessionStorage.removeItem('finance_from'); sessionStorage.removeItem('finance_to'); renderPage(_currentPage === 'dashboard' ? 'dashboard' : 'finance'); }
+    async function openFinanceTransaction(encodedId) {
+      try {
+        const item = await apiRequest('/finance/transactions/' + encodeURIComponent(decodeURIComponent(encodedId)));
+        let modal = document.getElementById('finance-transaction-modal'); if (modal) modal.remove();
+        const money = new Intl.NumberFormat('en-IN', { style: 'currency', currency: item.currency || 'INR' }).format(Number(item.amount || 0));
+        const refunds = (item.refunds || []).map(refund => '<div class="finance-detail-row"><span>' + escapeHtml(refund.refundId) + ' · ' + escapeHtml(refund.status) + '</span><strong>' + new Intl.NumberFormat('en-IN',{style:'currency',currency:'INR'}).format(Number(refund.amount || 0)) + '</strong></div>').join('') || '<p class="small muted">No refund history.</p>';
+        modal = document.createElement('div'); modal.id = 'finance-transaction-modal'; modal.setAttribute('role','dialog'); modal.setAttribute('aria-modal','true'); modal.setAttribute('aria-label','Payment transaction details');
+        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px';
+        modal.innerHTML = '<div class="card" style="width:min(720px,100%);max-height:90vh;overflow:auto"><div class="flex justify-between items-center mb-16"><div class="h4">Payment details</div><button class="btn btn-ghost" onclick="document.getElementById(&quot;finance-transaction-modal&quot;).remove()" aria-label="Close">×</button></div><div class="finance-detail-row"><span>Transaction reference</span><strong class="mono">' + escapeHtml(item.paymentId) + '</strong></div><div class="finance-detail-row"><span>Booking reference</span><strong>' + escapeHtml(item.registrationId) + '</strong></div><div class="finance-detail-row"><span>Event</span><strong>' + escapeHtml(item.eventName) + '</strong></div><div class="finance-detail-row"><span>Attendee</span><strong>' + escapeHtml(item.attendeeName) + ' · ' + escapeHtml(item.attendeeEmail) + '</strong></div><div class="finance-detail-row"><span>Amount</span><strong>' + money + '</strong></div><div class="finance-detail-row"><span>Payment provider / method</span><strong>' + escapeHtml(item.paymentMethod) + ' (simulated)</strong></div><div class="finance-detail-row"><span>Status</span><strong>' + escapeHtml(item.status) + '</strong></div><div class="finance-detail-row"><span>Payment date</span><strong>' + escapeHtml(new Date(item.paymentDate || item.createdAt).toLocaleString('en-IN')) + '</strong></div><div class="small muted mt-16">Gateway reference and reconciliation details are not supplied by the demo payment provider.</div><h4 class="mt-16 mb-12">Refund history</h4>' + refunds + '</div>';
+        modal.addEventListener('click', event => { if (event.target === modal) modal.remove(); }); document.body.appendChild(modal);
+      } catch (error) { alert(error.message || 'Could not load transaction details'); }
+    }
+    function applyFinanceRefundFilters() {
+      sessionStorage.setItem('finance_refund_range', v('finance-refund-range') || 'last30');
+      sessionStorage.setItem('finance_refund_event', v('finance-refund-event'));
+      sessionStorage.setItem('finance_refund_organizer', v('finance-refund-organizer'));
+      sessionStorage.setItem('finance_refund_status', v('finance-refund-status'));
+      sessionStorage.setItem('finance_refund_search', v('finance-refund-search'));
+      sessionStorage.setItem('finance_refund_sort', v('finance-refund-sort'));
+      sessionStorage.setItem('finance_page', '1'); renderPage('finance');
+    }
+    function resetFinanceRefundFilters() {
+      ['finance_refund_event','finance_refund_organizer','finance_refund_status','finance_refund_search','finance_refund_sort'].forEach(key => sessionStorage.removeItem(key));
+      sessionStorage.setItem('finance_refund_range', 'last30'); sessionStorage.setItem('finance_page', '1'); renderPage('finance');
+    }
+    async function openFinanceRefund(encodedId) {
+      try {
+        const item = await apiRequest('/finance/refunds/' + encodeURIComponent(decodeURIComponent(encodedId)));
+        let modal = document.getElementById('finance-refund-modal'); if (modal) modal.remove();
+        const money = value => new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(value || 0));
+        const requestedAt = item.requestedAt ? new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'short', year: 'numeric', hour: 'numeric', minute: '2-digit', timeZone: 'Asia/Kolkata' }).format(new Date(item.requestedAt)) : '—';
+        modal = document.createElement('div'); modal.id = 'finance-refund-modal'; modal.setAttribute('role', 'dialog'); modal.setAttribute('aria-modal', 'true'); modal.setAttribute('aria-label', 'Refund request details');
+        modal.style.cssText = 'position:fixed;inset:0;z-index:9999;background:rgba(0,0,0,.72);display:flex;align-items:center;justify-content:center;padding:20px';
+        modal.innerHTML = '<div class="card finance-refund-detail-modal"><div class="flex justify-between items-center mb-16"><div class="h4">Refund Request ' + escapeHtml(item.refundId) + '</div><button class="btn btn-ghost" onclick="document.getElementById(&quot;finance-refund-modal&quot;).remove()" aria-label="Close">×</button></div><div class="finance-detail-row"><span>Booking</span><strong>' + escapeHtml(item.registrationId) + '</strong></div><div class="finance-detail-row"><span>Payment</span><strong>' + escapeHtml(item.paymentId) + '</strong></div><div class="finance-detail-row"><span>Event</span><strong>' + escapeHtml(item.eventName) + '</strong></div><div class="finance-detail-row"><span>Organizer</span><strong>' + escapeHtml(item.organizerName) + '</strong></div><div class="finance-detail-row"><span>Attendee</span><strong>' + escapeHtml(item.attendeeName) + ' · ' + escapeHtml(item.attendeeEmail) + '</strong></div><div class="finance-detail-row"><span>Original payment</span><strong>' + money(item.originalPaymentAmount) + '</strong></div><div class="finance-detail-row"><span>Requested refund</span><strong>' + money(item.amount) + '</strong></div><div class="finance-detail-row"><span>Reason</span><strong>' + escapeHtml(item.reason) + '</strong></div><div class="finance-detail-row"><span>Status</span><strong>' + escapeHtml(item.status) + '</strong></div><div class="finance-detail-row"><span>Requested</span><strong>' + requestedAt + '</strong></div><div class="finance-policy-note">Refund eligibility is not calculated because no refund policy or live payment gateway is configured. Finance Executive access is read-only; no refund is initiated from this screen.</div><div class="finance-refund-modal-footer"><button class="btn btn-ghost" onclick="document.getElementById(&quot;finance-refund-modal&quot;).remove()">Close</button></div></div>';
+        modal.addEventListener('click', event => { if (event.target === modal) modal.remove(); }); document.body.appendChild(modal);
+      } catch (error) { alert(error.message || 'Could not load refund request details'); }
+    }
+    function financeChangePage(delta) { sessionStorage.setItem('finance_page', String(Math.max(1, Number(sessionStorage.getItem('finance_page') || 1) + delta))); renderPage('finance'); }
+    async function downloadFinanceCsv() {
+      try {
+        const params = new URLSearchParams({ search: sessionStorage.getItem('finance_query') || '', status: sessionStorage.getItem('finance_status') || '', paymentMethod: sessionStorage.getItem('finance_method') || '', eventId: sessionStorage.getItem('finance_event') || '', sort: sessionStorage.getItem('finance_sort') || 'date', from: sessionStorage.getItem('finance_from') || '', to: sessionStorage.getItem('finance_to') || '' });
+        const response = await fetch(API_BASE_URL + '/finance/transactions.csv?' + params.toString(), { headers: { Authorization: getAuthHeader() } });
+        if (!response.ok) throw new Error('Could not export transactions (' + response.status + ')');
+        const url = URL.createObjectURL(await response.blob()); const link = document.createElement('a'); link.href = url; link.download = 'eventflow-payment-transactions.csv'; link.click(); URL.revokeObjectURL(url);
+      } catch (error) { alert(error.message || 'Transaction export failed'); }
+    }
 
     function pageRegistrationsForEmployee() {
       const query = (sessionStorage.getItem('emp_reg_query') || '').toLowerCase();
@@ -11376,8 +11369,8 @@ window.EventFlowModules['shared'] = true;
           SUPPORT_EXECUTIVE: { key: 'employee1' },
           REGISTRATION_VERIFICATION: { key: 'employee1' },
           EVENT_OPERATIONS: { key: 'employee1' },
-          SUPPORT_FINANCE: { key: 'employee2' },
-          FINANCE_EXECUTIVE: { key: 'employee2' },
+          SUPPORT_FINANCE: { key: 'employee3' },
+          FINANCE_EXECUTIVE: { key: 'employee3' },
         };
         if (employeePages[empType]) return employeePages[empType];
       }

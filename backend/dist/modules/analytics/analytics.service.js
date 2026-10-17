@@ -133,6 +133,19 @@ let AnalyticsService = class AnalyticsService {
         const myPlans = this.db.eventPlans.filter(p => p.clientId === client.clientId);
         const approvedPlanIds = myPlans.filter(p => p.status === 'approved').map(p => p.eventId).filter(Boolean);
         const myEvents = this.db.events.filter(e => approvedPlanIds.includes(e.eventId));
+        const upcomingEvents = this.db.events
+            .filter((event) => event.clientId === client.clientId &&
+            ['published', 'ongoing'].includes(event.status) &&
+            new Date(`${event.date}T23:59:59`) >= new Date())
+            .sort((a, b) => `${a.date}T${a.time}`.localeCompare(`${b.date}T${b.time}`))
+            .map((event) => ({
+            eventId: event.eventId,
+            title: event.name,
+            date: event.date,
+            time: event.time,
+            location: event.location,
+            status: event.status,
+        }));
         return {
             success: true,
             data: {
@@ -146,6 +159,7 @@ let AnalyticsService = class AnalyticsService {
                 ongoingEvents: myEvents.filter(e => e.status === 'ongoing').length,
                 completedEvents: myEvents.filter(e => e.status === 'completed').length,
                 totalEvents: myEvents.length,
+                upcomingEvents,
             },
         };
     }

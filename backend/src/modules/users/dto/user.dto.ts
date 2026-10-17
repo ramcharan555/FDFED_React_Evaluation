@@ -1,6 +1,6 @@
 import {
   IsString, IsNotEmpty, IsOptional, IsEmail,
-  IsEnum, MinLength, Matches,
+  IsEnum, MinLength, Matches, ValidateIf,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -44,6 +44,7 @@ export class CreateUserDto {
   @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   @IsString()
   @IsOptional()
+  @ValidateIf((_, value) => value !== '')
   @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' })
   phoneNo?: string;
 }
@@ -68,6 +69,7 @@ export class UpdateUserDto {
   @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
   @IsString()
   @IsOptional()
+  @ValidateIf((_, value) => value !== '')
   @Matches(/^[6-9]\d{9}$/, { message: 'Enter a valid 10-digit Indian mobile number.' })
   phoneNo?: string;
 
@@ -78,4 +80,14 @@ export class UpdateUserDto {
   @IsEnum(['active', 'inactive', 'suspended'])
   @IsOptional()
   status?: 'active' | 'inactive' | 'suspended';
+}
+
+export class ChangePasswordDto {
+  @IsString()
+  @IsNotEmpty()
+  currentPassword!: string;
+
+  @IsString()
+  @MinLength(6)
+  newPassword!: string;
 }

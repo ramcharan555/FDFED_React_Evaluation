@@ -14,4 +14,8 @@ export declare class UpdateUserDto {
     phoneNo?: string;
     status?: 'active' | 'inactive' | 'suspended';
 }
+export declare class ChangePasswordDto {
+    currentPassword: string;
+    newPassword: string;
+}
 //# sourceMappingURL=user.dto.d.ts.map

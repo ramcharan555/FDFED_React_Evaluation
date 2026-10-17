@@ -13,6 +13,7 @@ exports.UsersService = void 0;
 const common_1 = require("@nestjs/common");
 const data_store_1 = require("../../common/data-store");
 const constants_1 = require("../../common/constants");
+const password_1 = require("../../common/password");
 let UsersService = class UsersService {
     constructor() { this.db = data_store_1.DataStore.getInstance(); }
     findAll(role) {
@@ -37,7 +38,7 @@ let UsersService = class UsersService {
             throw new common_1.ConflictException('Email already registered');
         const userId = this.db.generateId('usr');
         const user = {
-            userId, name: dto.name, email: dto.email, password: dto.password,
+            userId, name: dto.name, email: dto.email, password: (0, password_1.hashPassword)(dto.password),
             userRole: dto.userRole, status: 'active',
             address: dto.address, phoneNo: dto.phoneNo,
             createdAt: new Date(), updatedAt: new Date(),
@@ -75,13 +76,24 @@ let UsersService = class UsersService {
             user.email = dto.email;
         if (dto.address)
             user.address = dto.address;
-        if (dto.phoneNo)
+        if (dto.phoneNo !== undefined)
             user.phoneNo = dto.phoneNo;
         if (dto.status && role === constants_1.UserRole.SUPER_ADMIN)
             user.status = dto.status;
         user.updatedAt = new Date();
         const { password, ...safe } = user;
         return { success: true, message: 'User updated', data: safe };
+    }
+    changePassword(userId, dto) {
+        const user = this.db.findUserById(userId);
+        if (!user)
+            throw new common_1.NotFoundException(`User ${userId} not found`);
+        if (!(0, password_1.verifyPassword)(dto.currentPassword, user.password)) {
+            throw new common_1.UnauthorizedException('Current password is incorrect');
+        }
+        user.password = (0, password_1.hashPassword)(dto.newPassword);
+        user.updatedAt = new Date();
+        return { success: true, message: 'Password changed' };
     }
     remove(userId, role) {
         if (role !== constants_1.UserRole.SUPER_ADMIN)

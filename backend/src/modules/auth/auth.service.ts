@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { DataStore } from '../../common/data-store';
 import { LoginDto } from './dto/login.dto';
 import { jwtConfig, JwtPayload } from '../../config/jwt.config';
+import { verifyPassword } from '../../common/password';
 
 @Injectable()
 export class AuthService {
@@ -19,17 +20,7 @@ export class AuthService {
       throw new UnauthorizedException('Invalid email or password');
     }
 
-    const inputPass = (loginDto.password || '').trim();
-    const storedPass = (user.password || '').trim();
-
-    // Compare passwords: exact, case-insensitive, or normalized alphanumeric
-    const norm = (s: string) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-    const passMatches =
-      storedPass === inputPass ||
-      storedPass.toLowerCase() === inputPass.toLowerCase() ||
-      norm(inputPass) === norm(storedPass);
-
-    if (!passMatches) {
+    if (!verifyPassword(loginDto.password || '', user.password || '')) {
       throw new UnauthorizedException('Invalid email or password');
     }
 

@@ -17,12 +17,18 @@ const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const activity_log_service_1 = require("./activity-log.service");
 const role_guard_1 = require("../../common/guards/role.guard");
+const user_role_decorator_1 = require("../../common/decorators/user-role.decorator");
+const user_id_decorator_1 = require("../../common/decorators/user-id.decorator");
+const constants_1 = require("../../common/constants");
 let ActivityLogController = class ActivityLogController {
     constructor(activityLogService) {
         this.activityLogService = activityLogService;
     }
     findAll(limit, offset) {
         return this.activityLogService.findAll(limit ? parseInt(limit) : 100, offset ? parseInt(offset) : 0);
+    }
+    findMine(userId, role, limit) {
+        return this.activityLogService.findForClient(userId, role, limit ? parseInt(limit) : 5);
     }
     findByRole(role) {
         return this.activityLogService.findByRole(role);
@@ -63,6 +69,23 @@ __decorate([
     __metadata("design:paramtypes", [Number, Number]),
     __metadata("design:returntype", void 0)
 ], ActivityLogController.prototype, "findAll", null);
+__decorate([
+    (0, common_1.Get)('me'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get recent activity for the authenticated client' }),
+    (0, swagger_1.ApiQuery)({
+        name: 'limit',
+        required: false,
+        type: Number,
+        description: 'Limit results (default: 5, maximum: 20)',
+    }),
+    (0, swagger_1.ApiResponse)({ status: 200, description: 'Client activity logs' }),
+    __param(0, (0, user_id_decorator_1.UserId)()),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, common_1.Query)('limit')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, Number]),
+    __metadata("design:returntype", void 0)
+], ActivityLogController.prototype, "findMine", null);
 __decorate([
     (0, common_1.Get)('by-role/:role'),
     (0, swagger_1.ApiOperation)({ summary: 'Get activity logs by role' }),

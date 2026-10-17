@@ -37,6 +37,9 @@ let UsersController = class UsersController {
     update(id, dto, role, userId) {
         return this.usersService.update(id, dto, role, userId);
     }
+    changePassword(dto, userId) {
+        return this.usersService.changePassword(userId, dto);
+    }
     remove(id, role) {
         return this.usersService.remove(id, role);
     }
@@ -94,6 +97,15 @@ __decorate([
     __metadata("design:paramtypes", [String, user_dto_1.UpdateUserDto, String, String]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "update", null);
+__decorate([
+    (0, common_1.Patch)('me/password'),
+    (0, swagger_1.ApiOperation)({ summary: 'Change the authenticated user password' }),
+    __param(0, (0, common_1.Body)()),
+    __param(1, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_dto_1.ChangePasswordDto, String]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "changePassword", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, swagger_1.ApiOperation)({ summary: 'Delete user (SUPER_ADMIN only)' }),

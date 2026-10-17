@@ -2,6 +2,7 @@ import React from 'react';
 import LegacyRuntime from '../../components/LegacyRuntime.jsx';
 import { legacyEvent } from '../../services/legacyEvents.js';
 import source from './runtime.js?raw';
+import financeSource from './finance-workspace.js?raw';
 import './employee3.css';
 
 export default function Employee3() {
@@ -762,13 +763,12 @@ export default function Employee3() {
 </div>
 <nav className="sb-nav" id="sb-nav"></nav>
 <div className="sb-bottom">
-<div className="sb-user" onClick={event => legacyEvent("goNav('settings')", event)}>
+<div className="sb-user">
 <div className="av" id="sb-av">?</div>
 <div className="sb-user-info">
 <div className="sb-user-name" id="sb-name">User</div>
 <div className="sb-user-role" id="sb-role-lbl">Role</div>
 </div>
-<span style={{"color": "var(--text3)", "fontSize": "12px"}}>⚙</span>
 </div>
 </div>
 </aside>
@@ -831,6 +831,6 @@ export default function Employee3() {
   
   
 
-<LegacyRuntime source={source} role="employee3" />
+<LegacyRuntime source={source + '\n' + financeSource} role="employee3" />
 </>;
 }

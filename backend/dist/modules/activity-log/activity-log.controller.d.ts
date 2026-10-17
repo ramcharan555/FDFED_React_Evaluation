@@ -1,4 +1,5 @@
 import { ActivityLogService } from './activity-log.service';
+import { UserRole } from '../../common/constants';
 export declare class ActivityLogController {
     private readonly activityLogService;
     constructor(activityLogService: ActivityLogService);
@@ -6,6 +7,7 @@ export declare class ActivityLogController {
         logs: import("../../common/data-store").ActivityLog[];
         total: number;
     };
+    findMine(userId: string, role: UserRole, limit?: number): import("../../common/data-store").ActivityLog[];
     findByRole(role: string): import("../../common/data-store").ActivityLog[];
     findByAction(action: string): import("../../common/data-store").ActivityLog[];
     getStatistics(): {

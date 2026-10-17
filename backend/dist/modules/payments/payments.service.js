@@ -107,8 +107,12 @@ let PaymentsService = class PaymentsService {
         if (refund.status !== 'pending')
             throw new common_1.ConflictException('Refund is not pending');
         const payment = this.db.payments.find(item => item.paymentId === refund.paymentId);
-        if (!payment || payment.status !== 'completed')
+        if (!payment || payment.status !== 'completed' || payment.registrationId !== refund.registrationId)
             throw new common_1.ConflictException('Completed payment not found for refund');
+        if (!Number.isSafeInteger(refund.amount) || refund.amount <= 0 || refund.amount > payment.amount)
+            throw new common_1.BadRequestException('Invalid refund amount');
+        if (this.db.refunds.some(item => item.refundId !== refundId && item.paymentId === payment.paymentId && item.status === 'completed'))
+            throw new common_1.ConflictException('Payment has already been refunded');
         const registration = this.db.registrations.find(item => item.registrationId === refund.registrationId);
         const attendee = registration && this.db.attendees.find(item => item.attendeeId === registration.attendeeId);
         const now = new Date();

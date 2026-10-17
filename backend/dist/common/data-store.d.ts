@@ -14,6 +14,10 @@ export interface User {
     status: 'active' | 'inactive' | 'suspended';
     address?: string;
     phoneNo?: string;
+    bio?: string;
+    preferences?: {
+        emailNotifications: boolean;
+    };
     createdAt: Date;
     updatedAt: Date;
 }
@@ -106,10 +110,15 @@ export interface EventRequest {
     clientId: string;
     organizerId: string;
     eventName: string;
+    eventType?: string;
     eventDate: string;
+    eventTime?: string;
+    city?: string;
+    dateFlexibility?: 'exact' | 'flexible';
     budget: number;
     capacity: number;
     requirements: string;
+    notes?: string;
     status: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'confirmed' | 'approved' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';
     agreementStatus: 'not_sent' | 'pending_signature' | 'agreed' | 'declined';
     paymentStatus: 'unpaid' | 'deposit_pending' | 'deposit_paid' | 'fully_paid' | 'refunded';
@@ -178,6 +187,11 @@ export interface Refund {
     reason: string;
     requestedAt: Date;
     processedAt?: Date;
+    reviews?: Array<{
+        actorUserId: string;
+        note: string;
+        at: string;
+    }>;
 }
 export interface EventChange {
     changeId: string;
@@ -277,6 +291,7 @@ export interface ActivityLog {
     action: string;
     resource: string;
     role: string;
+    actorUserId?: string;
     timestamp: Date;
     status: string;
     details?: any;
@@ -328,6 +343,21 @@ export declare class DataStore {
     staffAssignments: StaffAssignment[];
     eventReports: EventReport[];
     staffReports: StaffReport[];
+    financeReportSubmissions: Array<{
+        id: string;
+        userId: string;
+        userName: string;
+        title: string;
+        summary: string;
+        reportType: string;
+        filters: Record<string, unknown>;
+        metrics: Record<string, number>;
+        rows: Record<string, unknown>[];
+        status: 'Submitted' | 'Reviewed';
+        feedback: string;
+        createdAt: Date;
+        reviewedAt?: Date;
+    }>;
     eventReviews: EventReview[];
     clientOrganizerReviews: ClientOrganizerReview[];
     staffReviews: StaffReview[];

@@ -951,6 +951,37 @@
         }
       }
     },
+    "/api/activity-logs/me": {
+      "get": {
+        "operationId": "ActivityLogController_findMine",
+        "summary": "Get recent activity for the authenticated client",
+        "parameters": [
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "description": "Limit results (default: 5, maximum: 20)",
+            "schema": {
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Client activity logs"
+          }
+        }
+      }
+    },
     "/api/activity-logs/by-role/{role}": {
       "get": {
         "operationId": "ActivityLogController_findByRole",
@@ -1314,6 +1345,50 @@
           },
           "404": {
             "description": "User not found"
+          }
+        },
+        "tags": [
+          "users"
+        ]
+      }
+    },
+    "/api/users/me/password": {
+      "patch": {
+        "operationId": "UsersController_changePassword",
+        "summary": "Change the authenticated user password",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
           }
         },
         "tags": [
@@ -4005,6 +4080,396 @@
           }
         ]
       }
+    },
+    "/api/finance/dashboard": {
+      "get": {
+        "operationId": "FinanceController_dashboard",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/transactions": {
+      "get": {
+        "operationId": "FinanceController_transactions",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/transactions.csv": {
+      "get": {
+        "operationId": "FinanceController_exportTransactions",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/transactions/{id}": {
+      "get": {
+        "operationId": "FinanceController_transaction",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/refunds": {
+      "get": {
+        "operationId": "FinanceController_refunds",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/refunds/{id}": {
+      "get": {
+        "operationId": "FinanceController_refund",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/refunds/{id}/reviews": {
+      "post": {
+        "operationId": "FinanceController_reviewRefund",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/overview": {
+      "get": {
+        "operationId": "FinanceController_overview",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/reconciliation": {
+      "get": {
+        "operationId": "FinanceController_reconciliation",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/reports": {
+      "get": {
+        "operationId": "FinanceController_reports",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/submissions": {
+      "get": {
+        "operationId": "FinanceController_submissions",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      },
+      "post": {
+        "operationId": "FinanceController_submitReport",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/submissions/{id}/review": {
+      "patch": {
+        "operationId": "FinanceController_reviewReport",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/reports.csv": {
+      "get": {
+        "operationId": "FinanceController_reportCsv",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
+    },
+    "/api/finance/reports.pdf": {
+      "get": {
+        "operationId": "FinanceController_reportPdf",
+        "parameters": [
+          {
+            "name": "Authorization",
+            "in": "header",
+            "description": "Bearer access token",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "finance"
+        ]
+      }
     }
   },
   "info": {
@@ -4353,6 +4818,10 @@
           }
         }
       },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {}
+      },
       "CreateEventRequestDto": {
         "type": "object",
         "properties": {
@@ -4371,10 +4840,20 @@
             "description": "Event name",
             "example": "Annual Company Gala"
           },
+          "eventType": {
+            "type": "string",
+            "description": "Event type/category",
+            "example": "Corporate Events"
+          },
           "eventDate": {
             "type": "string",
             "description": "Desired event date (YYYY-MM-DD)",
             "example": "2026-09-01"
+          },
+          "eventTime": {
+            "type": "string",
+            "description": "Preferred event start time",
+            "example": "18:00"
           },
           "budget": {
             "type": "number",
@@ -4386,19 +4865,39 @@
             "description": "Expected capacity",
             "example": 200
           },
+          "city": {
+            "type": "string",
+            "description": "Preferred event city",
+            "example": "Bangalore"
+          },
+          "dateFlexibility": {
+            "type": "string",
+            "description": "Whether the requested date is flexible",
+            "enum": [
+              "exact",
+              "flexible"
+            ]
+          },
           "requirements": {
             "type": "string",
             "description": "Special requirements",
             "example": "Need catering and live band"
+          },
+          "notes": {
+            "type": "string",
+            "description": "Additional client notes"
           }
         },
         "required": [
           "clientId",
           "organizerId",
           "eventName",
+          "eventType",
           "eventDate",
+          "eventTime",
           "budget",
-          "capacity"
+          "capacity",
+          "city"
         ]
       },
       "RequestMissingInfoDto": {

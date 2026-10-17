@@ -1,4 +1,5 @@
 import { ActivityLog } from '../../common/data-store';
+import { UserRole } from '../../common/constants';
 export declare class ActivityLogService {
     private dataStore;
     constructor();
@@ -9,6 +10,9 @@ export declare class ActivityLogService {
     };
     findByRole(role: string): ActivityLog[];
     findByAction(action: string): ActivityLog[];
+    findForClient(userId: string, role: UserRole, limit?: number): ActivityLog[];
+    private belongsToClient;
+    private containsClientIdentifier;
     getStatistics(): {
         totalActions: number;
         actionCounts: {

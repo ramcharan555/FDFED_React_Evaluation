@@ -34,11 +34,23 @@ __decorate([
     __metadata("design:type", String)
 ], CreateEventRequestDto.prototype, "eventName", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Event type/category', example: 'Corporate Events' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateEventRequestDto.prototype, "eventType", void 0);
+__decorate([
     (0, swagger_1.ApiProperty)({ description: 'Desired event date (YYYY-MM-DD)', example: '2026-09-01' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateEventRequestDto.prototype, "eventDate", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Preferred event start time', example: '18:00' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateEventRequestDto.prototype, "eventTime", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Budget in INR', example: 50000 }),
     (0, class_validator_1.IsNumber)(),
@@ -52,11 +64,30 @@ __decorate([
     __metadata("design:type", Number)
 ], CreateEventRequestDto.prototype, "capacity", void 0);
 __decorate([
+    (0, swagger_1.ApiProperty)({ description: 'Preferred event city', example: 'Bangalore' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsNotEmpty)(),
+    __metadata("design:type", String)
+], CreateEventRequestDto.prototype, "city", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Whether the requested date is flexible', enum: ['exact', 'flexible'] }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsIn)(['exact', 'flexible']),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventRequestDto.prototype, "dateFlexibility", void 0);
+__decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Special requirements', example: 'Need catering and live band' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),
     __metadata("design:type", String)
 ], CreateEventRequestDto.prototype, "requirements", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Additional client notes' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], CreateEventRequestDto.prototype, "notes", void 0);
 class UpdateEventRequestStatusDto {
 }
 exports.UpdateEventRequestStatusDto = UpdateEventRequestStatusDto;

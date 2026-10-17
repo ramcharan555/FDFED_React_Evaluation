@@ -14,6 +14,7 @@ const common_1 = require("@nestjs/common");
 const jwt_1 = require("@nestjs/jwt");
 const data_store_1 = require("../../common/data-store");
 const jwt_config_1 = require("../../config/jwt.config");
+const password_1 = require("../../common/password");
 let AuthService = class AuthService {
     constructor(jwtService) {
         this.jwtService = jwtService;
@@ -24,14 +25,7 @@ let AuthService = class AuthService {
         if (!user) {
             throw new common_1.UnauthorizedException('Invalid email or password');
         }
-        const inputPass = (loginDto.password || '').trim();
-        const storedPass = (user.password || '').trim();
-        // Compare passwords: exact, case-insensitive, or normalized alphanumeric
-        const norm = (s) => (s || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-        const passMatches = storedPass === inputPass ||
-            storedPass.toLowerCase() === inputPass.toLowerCase() ||
-            norm(inputPass) === norm(storedPass);
-        if (!passMatches) {
+        if (!(0, password_1.verifyPassword)(loginDto.password || '', user.password || '')) {
             throw new common_1.UnauthorizedException('Invalid email or password');
         }
         if (user.status !== 'active') {

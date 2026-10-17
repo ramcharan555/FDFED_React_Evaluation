@@ -1,5 +1,5 @@
 import { UserRole } from '../../common/constants';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { ChangePasswordDto, CreateUserDto, UpdateUserDto } from './dto/user.dto';
 export declare class UsersService {
     private db;
     constructor();
@@ -7,6 +7,7 @@ export declare class UsersService {
     findOne(userId: string, role: UserRole): any;
     create(dto: CreateUserDto, role: UserRole): any;
     update(userId: string, dto: UpdateUserDto, role: UserRole, requesterId: string): any;
+    changePassword(userId: string, dto: ChangePasswordDto): any;
     remove(userId: string, role: UserRole): any;
     updateStatus(userId: string, status: 'active' | 'inactive' | 'suspended', role: UserRole): any;
 }

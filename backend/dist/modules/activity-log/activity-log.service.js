@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ActivityLogService = void 0;
 const common_1 = require("@nestjs/common");
 const data_store_1 = require("../../common/data-store");
+const constants_1 = require("../../common/constants");
 let ActivityLogService = class ActivityLogService {
     constructor() {
         this.dataStore = data_store_1.DataStore.getInstance();
@@ -40,6 +41,37 @@ let ActivityLogService = class ActivityLogService {
         return this.dataStore.activityLogs
             .filter((log) => log.action === action)
             .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    }
+    findForClient(userId, role, limit = 5) {
+        if (role !== constants_1.UserRole.CLIENT) {
+            throw new common_1.ForbiddenException('Only clients can view client activity');
+        }
+        const client = this.dataStore.clients.find((item) => item.userId === userId || item.clientId === userId);
+        const clientIdentifiers = new Set([userId, client?.clientId].filter(Boolean).map(String));
+        return this.dataStore.activityLogs
+            .filter((log) => this.belongsToClient(log, clientIdentifiers))
+            .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+            .slice(0, Math.min(Math.max(limit, 1), 20));
+    }
+    belongsToClient(log, clientIdentifiers) {
+        if (log.actorUserId && clientIdentifiers.has(String(log.actorUserId))) {
+            return true;
+        }
+        return this.containsClientIdentifier(log.details, clientIdentifiers);
+    }
+    containsClientIdentifier(value, clientIdentifiers) {
+        if (!value || typeof value !== 'object') {
+            return false;
+        }
+        return Object.entries(value).some(([key, nestedValue]) => {
+            const normalizedKey = key.toLowerCase();
+            if (['clientid', 'userid', 'performedby'].includes(normalizedKey) &&
+                typeof nestedValue !== 'object' &&
+                clientIdentifiers.has(String(nestedValue))) {
+                return true;
+            }
+            return this.containsClientIdentifier(nestedValue, clientIdentifiers);
+        });
     }
     getStatistics() {
         const logs = this.dataStore.activityLogs;

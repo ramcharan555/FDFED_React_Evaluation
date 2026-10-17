@@ -23,9 +23,10 @@ export default function Landing() {
     </nav>
     <section className="hero">
       <div className="hero-bg">
+        <img className="hero-image" src="/images/eventflow-hero-concert.png" alt="" aria-hidden="true" />
+        <div className="hero-image-overlay"></div>
         <div className="orb1"></div>
         <div className="orb2"></div>
-        <div className="grid-lines"></div>
       </div>
       <div className="hero-content">
         <div className="hero-pill"> Event Registration &amp; Attendee Management Platform</div>

@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader, ApiParam } from '@nestjs/swagger';
 import { UsersService } from './users.service';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { ChangePasswordDto, CreateUserDto, UpdateUserDto } from './dto/user.dto';
 import { RoleGuard } from '../../common/guards/role.guard';
 import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
 import { UserId } from '../../common/decorators/user-id.decorator';
@@ -56,6 +56,12 @@ export class UsersController {
     @UserId() userId: string,
   ) {
     return this.usersService.update(id, dto, role, userId);
+  }
+
+  @Patch('me/password')
+  @ApiOperation({ summary: 'Change the authenticated user password' })
+  changePassword(@Body() dto: ChangePasswordDto, @UserId() userId: string) {
+    return this.usersService.changePassword(userId, dto);
   }
 
   @Delete(':id')

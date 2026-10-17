@@ -15,6 +15,7 @@ const app_service_1 = require("./app.service");
 const request_logging_middleware_1 = require("./common/middleware/request-logging.middleware");
 const events_audit_middleware_1 = require("./common/middleware/events-audit.middleware");
 const data_store_persistence_interceptor_1 = require("./common/interceptors/data-store-persistence.interceptor");
+const activity_logging_interceptor_1 = require("./common/interceptors/activity-logging.interceptor");
 // Existing modules
 const events_module_1 = require("./modules/events/events.module");
 const attendees_module_1 = require("./modules/attendees/attendees.module");
@@ -35,6 +36,7 @@ const notifications_module_1 = require("./modules/notifications/notifications.mo
 const analytics_module_1 = require("./modules/analytics/analytics.module");
 const uploads_module_1 = require("./modules/uploads/uploads.module");
 const support_module_1 = require("./modules/support/support.module");
+const finance_module_1 = require("./modules/finance/finance.module");
 let AppModule = class AppModule {
     configure(consumer) {
         consumer.apply(request_logging_middleware_1.RequestLoggingMiddleware).forRoutes('*');
@@ -70,6 +72,7 @@ exports.AppModule = AppModule = __decorate([
             analytics_module_1.AnalyticsModule,
             uploads_module_1.UploadsModule,
             support_module_1.SupportModule,
+            finance_module_1.FinanceModule,
         ],
         controllers: [app_controller_1.AppController],
         providers: [
@@ -77,6 +80,10 @@ exports.AppModule = AppModule = __decorate([
             {
                 provide: core_1.APP_INTERCEPTOR,
                 useClass: data_store_persistence_interceptor_1.DataStorePersistenceInterceptor,
+            },
+            {
+                provide: core_1.APP_INTERCEPTOR,
+                useClass: activity_logging_interceptor_1.ActivityLoggingInterceptor,
             },
         ],
     })

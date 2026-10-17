@@ -1764,10 +1764,10 @@ window.EventFlowModules['shared'] = true;
             if (!existing) {
               DB.users.push(initU);
             } else {
-              existing.password = initU.password;
+              if (!existing.settingsUpdated) existing.password = initU.password;
               existing.status = 'active';
               if (initU.role) existing.role = initU.role;
-              if (initU.name) existing.name = initU.name;
+              if (initU.name && !existing.settingsUpdated) existing.name = initU.name;
               if (initU.avatarImage) existing.avatarImage = initU.avatarImage;
               if (initU.avatar) existing.avatar = initU.avatar;
               if (initU.service) existing.service = initU.service;
@@ -2012,6 +2012,7 @@ window.EventFlowModules['shared'] = true;
           userId: userData.userId,
           name: userData.name,
           email: userData.email,
+          phoneNo: userData.phoneNo,
           token: userData.token,
           role: frontendRole,
           userRole: userData.role || userData.userRole,
@@ -2033,16 +2034,16 @@ window.EventFlowModules['shared'] = true;
         const inNorm = norm(pass);
         const stNorm = localUser ? norm(localUser.password) : '';
 
-        const localMatches = localUser && (
+        const localMatches = localUser && !(localUser.role === 'superuser' && err.status === 401) && (
           localUser.password === pass ||
-          localUser.password.toLowerCase() === pass.toLowerCase() ||
+          (!localUser.settingsUpdated && (localUser.password.toLowerCase() === pass.toLowerCase() ||
           inNorm === stNorm ||
           inNorm === 'staff123' || inNorm === 'staff' ||
           inNorm === 'employee123' || inNorm === 'employee' ||
           inNorm === 'organizer123' || inNorm === 'org123' || inNorm === 'organizer' ||
           inNorm === 'client123' || inNorm === 'client' ||
           inNorm === 'attendee123' || inNorm === 'att123' || inNorm === 'attendee' ||
-          inNorm === 'admin123' || inNorm === 'admin'
+          inNorm === 'admin123' || inNorm === 'admin'))
         );
 
         if (localMatches) {
@@ -2130,6 +2131,7 @@ window.EventFlowModules['shared'] = true;
         { ic: '👥', lbl: 'User Reports', pg: 'user-reports' },
         { ic: '🗓️', lbl: 'Event Reports', pg: 'event-reports' },
         { ic: '💰', lbl: 'Revenue Reports', pg: 'revenue-reports' },
+        { ic: '📥', lbl: 'Employee Reports', pg: 'employee-reports' },
       ],
       organizer: [
         { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
@@ -2278,7 +2280,7 @@ window.EventFlowModules['shared'] = true;
       return `<div class="admin-chart admin-chart--progress">
     ${items.map(item => {
         const pct = Math.round(((item.value || 0) / total) * 100);
-        const color = String(item.color || '').match(/#[0-9a-f]{6}/i)?.[0] || '#559ff5';
+        const color = String(item.color || '').match(/#[0-9a-f]{6}/i)?.[0] || (String(item.color || '').startsWith('var(') ? item.color : 'var(--blue)');
         return `<div class="admin-chart__progress-row"><div class="admin-chart__progress-label"><span>${adminChartText(item.label)}</span><span><strong>${item.value}</strong> <small>${pct}%</small></span></div><div class="admin-chart__progress-track"><div style="width:${pct}%;background:${color}"></div></div></div>`;
       }).join('')}
   </div>`;
@@ -2288,7 +2290,7 @@ window.EventFlowModules['shared'] = true;
       const totalEmployees = employees.length;
       const activeEmployees = employees.filter(e => e.status === 'active').length;
       const inactiveEmployees = Math.max(totalEmployees - activeEmployees, 0);
-      const revenue = DB.registrations.reduce((s, r) => s + (r.amount || 0), 0);
+      const revenue = DB.registrations.reduce((s, r) => s + (Number(r.amount) || 0), 0);
       const assignmentStats = {
         accepted: (DB.staffAssignments || []).filter(a => a.status === 'accepted').length,
         pending: (DB.staffAssignments || []).filter(a => a.status === 'pending').length,
@@ -2450,6 +2452,7 @@ window.EventFlowModules['shared'] = true;
       registrations: 'Registrations',
       'find-organizers': 'Find Event Organisers', 'upcoming-events': 'Upcoming Events', 'completed-events': 'Completed Events', 'ongoing-events': 'Ongoing Events',
       settings: 'Account Settings', 'pending-plans': 'Pending Plans', 'request-status': 'Request Status',
+      'employee-reports': 'Employee Reports',
       'new-request': 'New Event Request', 'profile': 'My Profile', 'event-requests': 'Event Requests',
       'support-center': 'Support Center', 'finance': 'Finance',
     };
@@ -2526,10 +2529,21 @@ window.EventFlowModules['shared'] = true;
         if (!allowed.includes(pg)) { el.innerHTML = `<div class="empty"><div class="empty-title">Access restricted</div><p class="empty-desc">This department does not have access to this area.</p></div>`; return; }
       }
 
-      // Restrict superuser to only the 3 analytical subpages
+      // Super Admin has analytics, the employee report inbox, and account settings.
       if (r === 'superuser') {
         if (pg === 'dashboard') {
           el.innerHTML = dashAdmin();
+          return;
+        } else if (pg === 'settings' || pg === 'profile') {
+          el.innerHTML = pageSettings();
+          return;
+        } else if (pg === 'employee-reports') {
+          el.innerHTML = '<div class="card">Loading employee reports…</div>';
+          if (CU.token) {
+            try { financeInboxReports = await apiRequest('/finance/submissions'); }
+            catch (error) { console.error('Could not load finance report submissions', error); financeInboxReports = []; }
+          }
+          el.innerHTML = pageEmployeeReports();
           return;
         } else if (pg === 'event-reports' || pg === 'events') {
           el.innerHTML = pageEventReports();
@@ -2664,74 +2678,125 @@ window.EventFlowModules['shared'] = true;
         pending: DB.staffAssignments.filter(a => a.status === 'pending').length,
         declined: DB.staffAssignments.filter(a => a.status === 'declined').length,
       };
+      const activeEvents = eventStatusCounts.upcoming + eventStatusCounts.ongoing;
+      const paidRegistrations = DB.registrations.filter(r => Number(r.amount) > 0).length;
+      const months = Array.from({ length: 6 }, (_, index) => {
+        const date = new Date();
+        date.setDate(1);
+        date.setMonth(date.getMonth() - (5 - index));
+        const key = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+        const records = DB.registrations.filter(r => String(r.date || r.createdAt || '').slice(0, 7) === key);
+        return { label: date.toLocaleString('en-IN', { month: 'short' }), registrations: records.length, revenue: records.reduce((sum, r) => sum + (Number(r.amount) || 0), 0) };
+      });
 
-      // Fetch real analytics from backend asynchronously and update stat cards
+      // Refresh the overview as one set so headline figures and breakdowns agree.
       apiGetDashboard().then(function (resp) {
         const d = resp && resp.data ? resp.data : resp;
+        if (!d || !d.users || !d.events || !d.registrations) return;
         const patch = [
-          ['adm-stat-users', d.users ? d.users.total : totalUsers],
-          ['adm-stat-events', d.events ? d.events.total : totalEvents],
-          ['adm-stat-regs', d.registrations ? d.registrations.total : totalRegs],
-          ['adm-stat-rev', '₹' + ((d.payments ? d.payments.totalRevenue : revenue) / 1000).toFixed(1) + 'K'],
+          ['adm-stat-users', d.users.total],
+          ['adm-stat-events', d.events.total],
+          ['adm-stat-regs', d.registrations.total],
+          ['adm-stat-rev', '₹' + ((d.payments?.totalRevenue || 0) / 1000).toFixed(1) + 'K'],
+          ['adm-users-detail', `${d.users.byRole?.attendee || 0} attendees · ${d.users.byRole?.event_organizer || 0} organizers`],
+          ['adm-events-detail', `${(d.events.published || 0) + (d.events.ongoing || 0)} published or ongoing`],
+          ['adm-regs-detail', 'Total registration records'],
+          ['adm-snapshot-events', (d.events.published || 0) + (d.events.ongoing || 0)],
+          ['adm-snapshot-requests', d.eventRequests?.pending || 0],
+          ['adm-snapshot-assignments', d.staffAssignments?.accepted || 0],
+          ['adm-request-total', `${d.eventRequests?.total || 0} event requests`],
         ];
         patch.forEach(([id, val]) => { const el = document.getElementById(id); if (el) el.textContent = val; });
         const pending = document.getElementById('adm-stat-pending');
-        if (pending) pending.textContent = (d.eventRequests ? d.eventRequests.pending : pendingReqs) + ' req(s) pending';
+        if (pending) pending.textContent = (d.eventRequests?.pending || 0) + ' requests pending';
+        const roleChart = document.getElementById('adm-role-chart');
+        if (roleChart) roleChart.innerHTML = buildAnalyticsBars([{ label: 'Admins', value: d.users.byRole?.super_admin || 0 }, { label: 'Organizers', value: d.users.byRole?.event_organizer || 0 }, { label: 'Clients', value: d.users.byRole?.client || 0 }, { label: 'Staff', value: d.users.byRole?.event_staff || 0 }, { label: 'Attendees', value: d.users.byRole?.attendee || 0 }], 175);
+        const requestsChart = document.getElementById('adm-requests-chart');
+        if (requestsChart) requestsChart.innerHTML = buildAnalyticsProgress([{ label: 'Pending', value: d.eventRequests?.pending || 0, color: 'var(--yellow)' }, { label: 'Approved', value: d.eventRequests?.approved || 0, color: 'var(--green)' }, { label: 'Rejected', value: d.eventRequests?.rejected || 0, color: 'var(--red)' }]);
+        const eventChart = document.getElementById('adm-events-chart');
+        if (eventChart) eventChart.innerHTML = buildAnalyticsBars([{ label: 'Published', value: d.events.published || 0 }, { label: 'Ongoing', value: d.events.ongoing || 0 }, { label: 'Completed', value: d.events.completed || 0 }, { label: 'Draft', value: d.events.draft || 0 }], 175);
       }).catch(function () { /* silently keep local stats */ });
 
       return `
-  <div class="page-hd">
-    <div class="page-hd-left"><div class="page-title">System Overview</div><div class="page-sub">Welcome back, ${CU.name}. Here's the platform at a glance.</div></div>
-    <div class="page-hd-right">
-      <button class="btn btn-ghost" onclick="goNav('users')">User Statistics</button>
-      <button class="btn btn-primary mt-4" style="margin-left: 8px;" onclick="goNav('employee-stats')">Employee Analytics</button>
+  <div class="admin-overview">
+    <div class="page-hd admin-overview-head">
+      <div class="page-hd-left"><div class="admin-eyebrow">EVENTFLOW / CONTROL CENTER</div><div class="page-title">Platform overview</div><div class="page-sub">Welcome back, ${adminChartText(CU.name)}. A clear view of activity across your platform.</div></div>
+      <div class="page-hd-right"><button class="btn btn-ghost" onclick="goNav('user-reports')">View user reports</button><button class="btn btn-primary" onclick="goNav('revenue-reports')">Open reports ↗</button></div>
     </div>
-  </div>
-  <div class="grid-4 mb-20">
-    <div class="stat-card"><div class="glow" style="background:var(--accent)"></div><div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">👥</div><div class="stat-value" id="adm-stat-users" style="color:var(--accent)">${totalUsers}</div><div class="stat-label">Total Users</div><div class="stat-sub up">↑ 12% this month</div></div>
-    <div class="stat-card"><div class="glow" style="background:var(--green)"></div><div class="stat-icon" style="background:var(--green-dim);color:var(--green)">🗓️</div><div class="stat-value" id="adm-stat-events" style="color:var(--green)">${totalEvents}</div><div class="stat-label">Total Events</div><div class="stat-sub up">↑ 3 new this week</div></div>
-    <div class="stat-card"><div class="glow" style="background:var(--yellow)"></div><div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">🎟️</div><div class="stat-value" id="adm-stat-regs" style="color:var(--yellow)">${totalRegs}</div><div class="stat-label">Registrations</div><div class="stat-sub up">↑ 8% this week</div></div>
-    <div class="stat-card"><div class="glow" style="background:var(--orange)"></div><div class="stat-icon" style="background:var(--orange-dim);color:var(--orange)">💰</div><div class="stat-value" id="adm-stat-rev" style="color:var(--orange)">₹${(revenue / 1000).toFixed(1)}K</div><div class="stat-label">Total Revenue</div><div class="stat-sub neutral" id="adm-stat-pending">${pendingReqs} req(s) pending</div></div>
-  </div>
-  <div class="grid-2" style="gap:20px;align-items:start">
-    <div class="card">
-      <div class="flex justify-between items-center mb-16"><span class="h4">Platform Role Split</span><button class="btn btn-ghost btn-xs" onclick="goNav('users')">Open User Analytics</button></div>
-      ${buildAnalyticsBars([
-        { label: 'Admins', value: roleCounts.superuser, color: 'linear-gradient(180deg, #ef4444, #b91c1c)' },
-        { label: 'Organizers', value: roleCounts.organizer, color: 'linear-gradient(180deg, #3b82f6, #1d4ed8)' },
-        { label: 'Clients', value: roleCounts.client, color: 'linear-gradient(180deg, #f59e0b, #d97706)' },
-        { label: 'Employees', value: roleCounts.staff, color: 'linear-gradient(180deg, #22c55e, #15803d)' },
-        { label: 'Attendees', value: roleCounts.attendee, color: 'linear-gradient(180deg, #8b5cf6, #7c3aed)' },
-      ], 160)}
+    <div class="admin-overview-kpis">
+      <div class="card admin-kpi"><div class="admin-kpi-top"><span class="admin-kpi-icon">👥</span><span class="admin-kpi-tag">AUDIENCE</span></div><div class="admin-kpi-label">Total users</div><div class="admin-kpi-value" id="adm-stat-users">${totalUsers}</div><div class="admin-kpi-foot" id="adm-users-detail">${roleCounts.attendee} attendees · ${roleCounts.organizer} organizers</div></div>
+      <div class="card admin-kpi"><div class="admin-kpi-top"><span class="admin-kpi-icon admin-kpi-icon--green">▣</span><span class="admin-kpi-tag">EVENTS</span></div><div class="admin-kpi-label">Total events</div><div class="admin-kpi-value" id="adm-stat-events">${totalEvents}</div><div class="admin-kpi-foot" id="adm-events-detail">${activeEvents} published or ongoing</div></div>
+      <div class="card admin-kpi"><div class="admin-kpi-top"><span class="admin-kpi-icon admin-kpi-icon--amber">◎</span><span class="admin-kpi-tag">ACTIVITY</span></div><div class="admin-kpi-label">Registrations</div><div class="admin-kpi-value" id="adm-stat-regs">${totalRegs}</div><div class="admin-kpi-foot" id="adm-regs-detail">${paidRegistrations} with recorded amount</div></div>
+      <div class="card admin-kpi"><div class="admin-kpi-top"><span class="admin-kpi-icon admin-kpi-icon--violet">₹</span><span class="admin-kpi-tag">REVENUE</span></div><div class="admin-kpi-label">Recorded revenue</div><div class="admin-kpi-value" id="adm-stat-rev">₹${(revenue / 1000).toFixed(1)}K</div><div class="admin-kpi-foot" id="adm-stat-pending">${pendingReqs} request${pendingReqs === 1 ? '' : 's'} pending</div></div>
     </div>
-    <div class="card" style="padding:16px">
-      <div class="flex justify-between items-center mb-12"><span class="h4">Request Pipeline <span class="small" style="color:var(--text3);font-weight:500">(${requestStatusCounts.pending + requestStatusCounts.approved + requestStatusCounts.rejected} total)</span></span><button class="btn btn-ghost btn-xs" onclick="goNav('reports')">Open Reports</button></div>
-      ${buildAnalyticsProgress([
-        { label: 'Pending', value: requestStatusCounts.pending, color: 'linear-gradient(90deg, #f59e0b, #d97706)' },
-        { label: 'Approved', value: requestStatusCounts.approved, color: 'linear-gradient(90deg, #22c55e, #15803d)' },
-        { label: 'Rejected', value: requestStatusCounts.rejected, color: 'linear-gradient(90deg, #ef4444, #b91c1c)' },
-      ])}
+    <div class="admin-overview-main">
+      <div class="card admin-overview-trend"><div class="admin-panel-head"><div><div class="h4">Registration trend</div><div class="small">Recorded registrations in the last six months</div></div><span class="admin-panel-chip">6 months</span></div>${buildAnalyticsLine(months.map(row => ({ label: row.label, value: row.registrations })), 280, { label: 'Registrations' })}</div>
+      <div class="card admin-overview-snapshot"><div class="admin-panel-head"><div><div class="h4">Platform snapshot</div><div class="small">Current records</div></div></div><div class="admin-snapshot-row"><span class="admin-snapshot-mark">▣</span><span>Active events<small>Published and ongoing</small></span><strong id="adm-snapshot-events">${activeEvents}</strong></div><div class="admin-snapshot-row"><span class="admin-snapshot-mark admin-snapshot-mark--amber">◷</span><span>Pending requests<small>Awaiting review</small></span><strong id="adm-snapshot-requests">${requestStatusCounts.pending}</strong></div><div class="admin-snapshot-row"><span class="admin-snapshot-mark admin-snapshot-mark--violet">✓</span><span>Accepted assignments<small>Staff coordination</small></span><strong id="adm-snapshot-assignments">${employeeAssignmentCounts.accepted}</strong></div><button class="admin-panel-link" onclick="goNav('event-reports')">Explore event reports <span>→</span></button></div>
     </div>
-  </div>
-  <div class="grid-2 mt-20" style="gap:20px;align-items:start">
-    <div class="card" style="padding:16px">
-      <div class="h4 mb-12">Employee Capacity <span class="small" style="color:var(--text3);font-weight:500">(${employeeAssignmentCounts.accepted + employeeAssignmentCounts.pending + employeeAssignmentCounts.declined} assignments)</span></div>
-      ${buildAnalyticsProgress([
-        { label: 'Accepted Assignments', value: employeeAssignmentCounts.accepted, color: 'linear-gradient(90deg, #22c55e, #16a34a)' },
-        { label: 'Pending Assignments', value: employeeAssignmentCounts.pending, color: 'linear-gradient(90deg, #f59e0b, #d97706)' },
-        { label: 'Declined Assignments', value: employeeAssignmentCounts.declined, color: 'linear-gradient(90deg, #ef4444, #dc2626)' },
-      ])}
-    </div>
-    <div class="card" style="padding:16px">
-      <div class="h4 mb-12">Event Coverage</div>
-      ${buildAnalyticsBars([
-        { label: 'Published', value: eventStatusCounts.upcoming, color: 'linear-gradient(180deg, #22c55e, #15803d)' },
-        { label: 'Ongoing', value: eventStatusCounts.ongoing, color: 'linear-gradient(180deg, #3b82f6, #1d4ed8)' },
-        { label: 'Completed', value: eventStatusCounts.completed, color: 'linear-gradient(180deg, #8b5cf6, #7c3aed)' },
-        { label: 'Draft', value: eventStatusCounts.draft, color: 'linear-gradient(180deg, #64748b, #475569)' },
-      ], 160)}
+    <div class="admin-overview-lower">
+      <div class="card"><div class="admin-panel-head"><div><div class="h4">User mix</div><div class="small">Accounts by platform role</div></div><button class="admin-panel-link" onclick="goNav('user-reports')">View details →</button></div><div id="adm-role-chart">${buildAnalyticsBars([{ label: 'Admins', value: roleCounts.superuser }, { label: 'Organizers', value: roleCounts.organizer }, { label: 'Clients', value: roleCounts.client }, { label: 'Staff', value: roleCounts.staff }, { label: 'Attendees', value: roleCounts.attendee }], 175)}</div></div>
+      <div class="card"><div class="admin-panel-head"><div><div class="h4">Request pipeline</div><div class="small" id="adm-request-total">${requestStatusCounts.pending + requestStatusCounts.approved + requestStatusCounts.rejected} event requests</div></div></div><div id="adm-requests-chart">${buildAnalyticsProgress([{ label: 'Pending', value: requestStatusCounts.pending, color: 'var(--yellow)' }, { label: 'Approved', value: requestStatusCounts.approved, color: 'var(--green)' }, { label: 'Rejected', value: requestStatusCounts.rejected, color: 'var(--red)' }])}</div></div>
+      <div class="card"><div class="admin-panel-head"><div><div class="h4">Event coverage</div><div class="small">Events by current status</div></div></div><div id="adm-events-chart">${buildAnalyticsBars([{ label: 'Published', value: eventStatusCounts.upcoming }, { label: 'Ongoing', value: eventStatusCounts.ongoing }, { label: 'Completed', value: eventStatusCounts.completed }, { label: 'Draft', value: eventStatusCounts.draft }], 175)}</div></div>
     </div>
   </div>`;
+    }
+
+    let employeeReportFilter = 'all';
+    let financeInboxReports = [];
+    function receivedEmployeeReports() {
+      const sources = [
+        ['regReports', 'Registration Executive'],
+        ['eventOpsReports', 'Event Operations Executive'],
+        ['operationalReports', 'Support & Finance Executive'],
+        ['supportExecReports', 'Support Executive'],
+      ];
+      const local = sources.flatMap(([key, department]) => (DB[key] || [])
+        .filter(report => ['Submitted', 'Pending Review', 'Pending', 'Reviewed'].includes(report.status))
+        .map(report => ({ report, department })));
+      return [...local, ...financeInboxReports.map(report => ({ report: { ...report, owner: report.userName, type: 'Finance Report', updated: report.reviewedAt || report.createdAt, reviewFeedback: report.feedback }, department: 'Finance Executive', backend: true }))];
+    }
+    function setEmployeeReportFilter(value) {
+      employeeReportFilter = ['all', 'open', 'reviewed'].includes(value) ? value : 'all';
+      renderPage('employee-reports');
+    }
+    function pageEmployeeReports() {
+      const reports = receivedEmployeeReports();
+      const open = reports.filter(item => item.report.status !== 'Reviewed').length;
+      const visible = reports.map((item, index) => ({ ...item, index })).filter(item => employeeReportFilter === 'all' || (employeeReportFilter === 'reviewed' ? item.report.status === 'Reviewed' : item.report.status !== 'Reviewed'));
+      return `<div class="page-hd"><div class="page-hd-left"><div class="page-title">Employee Reports</div><div class="page-sub">Reports submitted by registration, event operations, support, and finance employees.</div></div></div>
+        <div class="grid-3 mb-20">
+          <div class="stat-card"><div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">📥</div><div class="stat-value">${reports.length}</div><div class="stat-label">Received Reports</div></div>
+          <div class="stat-card"><div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">◷</div><div class="stat-value">${open}</div><div class="stat-label">Awaiting Review</div></div>
+          <div class="stat-card"><div class="stat-icon" style="background:var(--green-dim);color:var(--green)">✓</div><div class="stat-value">${reports.length - open}</div><div class="stat-label">Reviewed</div></div>
+        </div>
+        <div class="card"><div class="flex justify-between items-center mb-16"><div class="h4">Received submissions</div><select class="form-control" style="width:auto" aria-label="Filter employee reports" onchange="setEmployeeReportFilter(this.value)"><option value="all" ${employeeReportFilter === 'all' ? 'selected' : ''}>All reports</option><option value="open" ${employeeReportFilter === 'open' ? 'selected' : ''}>Awaiting review</option><option value="reviewed" ${employeeReportFilter === 'reviewed' ? 'selected' : ''}>Reviewed</option></select></div>
+          ${visible.length ? `<div class="table-wrap"><table><thead><tr><th>Report</th><th>Employee</th><th>Department</th><th>Status</th><th>Updated</th><th></th></tr></thead><tbody>${visible.map(({ report, department, index }) => `<tr><td><strong>${adminChartText(report.title || report.type || 'Untitled report')}</strong><div class="small">${adminChartText(report.type || report.category || report.id || '')}</div></td><td>${adminChartText(report.owner || report.author || 'Employee')}</td><td>${adminChartText(department)}</td><td><span class="badge badge-${report.status === 'Reviewed' ? 'green' : 'purple'}">${adminChartText(report.status)}</span></td><td>${adminChartText(report.updated || report.submittedAt || '—')}</td><td><button class="btn btn-ghost btn-xs" onclick="viewEmployeeReport(${index})">View report</button></td></tr>`).join('')}</tbody></table></div>` : '<div class="empty"><div class="empty-icon">📭</div><div class="empty-title">No reports in this view</div><div class="empty-desc">Submitted employee reports will appear here.</div></div>'}</div>`;
+    }
+    function viewEmployeeReport(index) {
+      const item = receivedEmployeeReports()[index];
+      if (!item) return;
+      const report = item.report;
+      openModal('Employee Report', `<div class="info-row"><span class="info-label">Title</span><span class="info-value">${adminChartText(report.title || report.type || 'Untitled report')}</span></div><div class="info-row"><span class="info-label">Submitted by</span><span class="info-value">${adminChartText(report.owner || report.author || 'Employee')} · ${adminChartText(item.department)}</span></div><div class="info-row"><span class="info-label">Type</span><span class="info-value">${adminChartText(report.type || report.category || 'Report')}</span></div><div class="info-row"><span class="info-label">Status</span><span class="info-value">${adminChartText(report.status)}</span></div>${report.period ? `<div class="info-row"><span class="info-label">Period</span><span class="info-value">${adminChartText(report.period)}</span></div>` : ''}${report.scope ? `<div class="info-row"><span class="info-label">Scope</span><span class="info-value">${adminChartText(report.scope)}</span></div>` : ''}${report.fileName ? `<div class="info-row"><span class="info-label">File reference</span><span class="info-value">${adminChartText(report.fileName)}</span></div>` : ''}${report.metrics ? `<div class="info-row"><span class="info-label">Saved records</span><span class="info-value">${Number(report.metrics.recordCount) || 0}</span></div>` : ''}<div class="card mt-16"><div class="h4 mb-8">Summary</div><p class="small">${adminChartText(report.summary || report.description || report.details || 'No written summary was included with this report.')}</p></div>${report.status !== 'Reviewed' ? `<label class="form-label mt-16">Review feedback<textarea class="form-control" id="employee-report-feedback" rows="3" placeholder="Optional feedback for the employee"></textarea></label><button class="btn btn-primary mt-16" onclick="markEmployeeReportReviewed(${index})">Mark as reviewed</button>` : `<div class="card mt-16"><div class="h4 mb-8">Review feedback</div><p class="small">${adminChartText(report.reviewFeedback || 'Reviewed by Super Admin')}</p></div>`}`);
+    }
+    async function markEmployeeReportReviewed(index) {
+      const item = receivedEmployeeReports()[index];
+      if (!item || item.report.status === 'Reviewed') return;
+      const feedback = v('employee-report-feedback');
+      if (item.backend) {
+        try { await apiRequest(`/finance/submissions/${encodeURIComponent(item.report.id)}/review`, { method: 'PATCH', body: JSON.stringify({ feedback }) }); }
+        catch (error) { toast(error.message || 'Could not review report', 'error'); return; }
+        closeModal();
+        renderPage('employee-reports');
+        toast('Report marked as reviewed', 'success');
+        return;
+      }
+      item.report.status = 'Reviewed';
+      item.report.reviewFeedback = feedback || 'Reviewed by Super Admin';
+      item.report.updated = today();
+      saveDB();
+      closeModal();
+      renderPage('employee-reports');
+      toast('Report marked as reviewed', 'success');
     }
 
     function dashEmployee() {
@@ -8711,13 +8776,12 @@ window.EventFlowModules['shared'] = true;
     <div class="card card-lg">
       <div class="h4 mb-20">Personal Information</div>
       <div class="profile-banner" style="margin-bottom:20px;padding:18px">
-        ${CU.avatarImage ? `<div class="av av-lg"><img src="${CU.avatarImage}" alt="${CU.name}" onerror="this.style.display='none';this.nextElementSibling.style.display='block'"><span style="display:none">${CU.avatar || CU.name[0]}</span></div>` : `<div class="av av-lg">${CU.avatar || CU.name[0]}</div>`}
-        <div><div style="font-weight:700">${CU.name}</div><div class="small">${ROLE_LABELS[CU.role]}</div></div>
+        <div class="av av-lg">${adminChartText(CU.avatar || CU.name[0])}</div>
+        <div><div style="font-weight:700">${adminChartText(CU.name)}</div><div class="small">${adminChartText(ROLE_LABELS[CU.role])}</div></div>
       </div>
-      <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="st-name" value="${CU.name}"></div>
-      <div class="form-group"><label class="form-label">Email Address</label><input class="form-control" id="st-email" value="${CU.email}"></div>
-      <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control" id="st-phone" value="${CU.phone || ''}"></div>
-      <div class="form-group"><label class="form-label">Bio</label><textarea class="form-control" id="st-bio">${CU.bio || ''}</textarea></div>
+      <div class="form-group"><label class="form-label">Full Name</label><input class="form-control" id="st-name" value="${adminChartText(CU.name)}"></div>
+      <div class="form-group"><label class="form-label">Email Address</label><input class="form-control" id="st-email" type="email" value="${adminChartText(CU.email)}"></div>
+      <div class="form-group"><label class="form-label">Phone Number</label><input class="form-control" id="st-phone" value="${adminChartText(CU.phone || CU.phoneNo || '')}"></div>
       <button class="btn btn-primary w-full" onclick="saveSettings()" style="justify-content:center">Save Changes</button>
     </div>
     <div style="display:flex;flex-direction:column;gap:20px">
@@ -8729,39 +8793,45 @@ window.EventFlowModules['shared'] = true;
         <button class="btn btn-primary w-full" onclick="changePass()" style="justify-content:center">Update Password</button>
       </div>
       <div class="card">
-        <div class="h4 mb-16">Preferences</div>
-        <div class="info-row"><span class="info-label">Email Notifications</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-        <div class="info-row"><span class="info-label">SMS Reminders</span><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
-        <div class="info-row"><span class="info-label">Event Recommendations</span><div class="toggle on" onclick="this.classList.toggle('on')"></div></div>
-      </div>
-      <div class="card">
         <button class="btn btn-danger w-full mb-8" onclick="doLogout()" style="justify-content:center">Sign Out</button>
       </div>
     </div>
   </div>`;
     }
-    function saveSettings() {
-      const name = v('st-name'), email = v('st-email'), phone = v('st-phone'), bio = v('st-bio');
+    async function saveSettings() {
+      const name = v('st-name'), email = v('st-email'), phone = v('st-phone');
       if (!name) { toast('Name is required', 'error'); return; }
       if (!email || !email.includes('@')) { toast('Enter a valid email', 'error'); return; }
-      CU.name = name; CU.email = email; CU.phone = phone; CU.bio = bio;
+      if (CU.token) {
+        try { await apiUpdateUser(CU.userId || CU.id, { name, email, phoneNo: phone }); }
+        catch (error) { toast(error.message || 'Could not save settings', 'error'); return; }
+      }
+      CU.name = name; CU.email = email; CU.phone = phone; CU.phoneNo = phone;
       CU.avatar = (name.split(' ').map(n => n[0]).join('').toUpperCase()).slice(0, 2);
-      const u = DB.users.find(u => u.id === CU.id);
-      if (u) { Object.assign(u, { name, email, phone, bio, avatar: CU.avatar }); }
+      const u = DB.users.find(u => String(u.id || u.userId) === String(CU.id));
+      if (u) { Object.assign(u, { name, email, phone, avatar: CU.avatar, settingsUpdated: true }); }
+      setCurrentUser(CU);
+      saveDB();
       g('sb-name').textContent = name;
       updateHeaderUser();
       g('sb-av').textContent = CU.avatar;
       toast('Settings saved successfully!', 'success');
     }
-    function changePass() {
+    async function changePass() {
       const cur = v('st-cur'), nw = v('st-new'), conf = v('st-conf');
       if (!cur || !nw || !conf) { toast('Fill all password fields', 'error'); return; }
-      if (cur !== CU.password) { toast('Current password is incorrect', 'error'); return; }
       if (nw.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
       if (nw !== conf) { toast('Passwords do not match', 'error'); return; }
-      CU.password = nw;
-      const u = DB.users.find(u => u.id === CU.id);
-      if (u) u.password = nw;
+      if (CU.token) {
+        try { await apiRequest('/users/me/password', { method: 'PATCH', body: JSON.stringify({ currentPassword: cur, newPassword: nw }) }); }
+        catch (error) { toast(error.message || 'Could not change password', 'error'); return; }
+      } else {
+        const u = DB.users.find(u => String(u.id) === String(CU.id));
+        if (!u || cur !== u.password) { toast('Current password is incorrect', 'error'); return; }
+        u.password = nw;
+        u.settingsUpdated = true;
+        saveDB();
+      }
       ['st-cur', 'st-new', 'st-conf'].forEach(id => { const el = g(id); if (el) el.value = ''; });
       toast('Password changed successfully!', 'success');
     }

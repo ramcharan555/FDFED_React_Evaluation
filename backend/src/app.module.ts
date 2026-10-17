@@ -29,6 +29,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AnalyticsModule } from './modules/analytics/analytics.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { SupportModule } from './modules/support/support.module';
+import { FinanceModule } from './modules/finance/finance.module';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { SupportModule } from './modules/support/support.module';
     AnalyticsModule,
     UploadsModule,
     SupportModule,
+    FinanceModule,
   ],
   controllers: [AppController],
   providers: [

@@ -2,10 +2,15 @@ export declare class CreateEventRequestDto {
     clientId: string;
     organizerId: string;
     eventName: string;
+    eventType: string;
     eventDate: string;
+    eventTime: string;
     budget: number;
     capacity: number;
+    city: string;
+    dateFlexibility?: 'exact' | 'flexible';
     requirements?: string;
+    notes?: string;
 }
 export declare class UpdateEventRequestStatusDto {
     status: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'confirmed' | 'approved' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';

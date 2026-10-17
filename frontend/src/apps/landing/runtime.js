@@ -2039,7 +2039,7 @@ function doLogin() {
     const inNorm = norm(pass);
     const stNorm = localUser ? norm(localUser.password) : '';
 
-    const localMatches = localUser && (
+    const localMatches = localUser && !['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(String(localUser.employeeType || '').toUpperCase()) && (
       localUser.password === pass ||
       localUser.password.toLowerCase() === pass.toLowerCase() ||
       inNorm === stNorm ||
@@ -10009,8 +10009,8 @@ function getRoleWorkspace(user) {
       SUPPORT_EXECUTIVE: { key: 'employee1' },
       REGISTRATION_VERIFICATION: { key: 'employee1' },
       EVENT_OPERATIONS: { key: 'employee1' },
-      SUPPORT_FINANCE: { key: 'employee2' },
-      FINANCE_EXECUTIVE: { key: 'employee2' },
+      SUPPORT_FINANCE: { key: 'employee3' },
+      FINANCE_EXECUTIVE: { key: 'employee3' },
     };
     if (employeePages[empType]) return employeePages[empType];
   }

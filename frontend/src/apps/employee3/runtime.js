@@ -2051,7 +2051,7 @@ window.EventFlowModules['shared'] = true;
         const inNorm = norm(pass);
         const stNorm = localUser ? norm(localUser.password) : '';
 
-        const localMatches = localUser && (
+        const localMatches = localUser && !['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(String(localUser.employeeType || '').toUpperCase()) && (
           localUser.password === pass ||
           localUser.password.toLowerCase() === pass.toLowerCase() ||
           inNorm === stNorm ||
@@ -2346,7 +2346,10 @@ window.EventFlowModules['shared'] = true;
       updateNotifDot();
       buildNav(navRole);
       if (isDepartmentEmployee()) buildEmployeeNav(CU.employeeType);
-      goNav('dashboard');
+      if (['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(CU.employeeType)) {
+        financeNav();
+        financeNavigate(new URLSearchParams(location.search).get('financePage') || 'dashboard', false);
+      } else goNav('dashboard');
     }
 
     function buildEmployeeNav(employeeType) {
@@ -2439,6 +2442,11 @@ window.EventFlowModules['shared'] = true;
     }
 
     function goNav(pg) {
+      if (CU && ['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(CU.employeeType) && ['profile', 'settings', 'settlements'].includes(pg)) pg = 'dashboard';
+      if (CU && ['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(CU.employeeType) && ['dashboard', 'finance', 'transactions', 'refunds', 'commissions', 'reconciliation', 'reports'].includes(pg)) {
+        financeNavigate(pg === 'finance' ? 'transactions' : pg);
+        return;
+      }
       _currentPage = pg;
       // Keep event-request tabs associated with their parent sidebar section.
       const sidebarPage = pg === 'staff-event-requests'
@@ -2495,10 +2503,15 @@ window.EventFlowModules['shared'] = true;
         const allowed = {
           REGISTRATION_VERIFICATION: ['dashboard', 'registrations', 'attendees', 'attendeeVerification', 'reports', 'profile', 'settings', 'notifications'],
           EVENT_OPERATIONS: ['dashboard', 'events', 'event-requests', 'staff-event-requests', 'reports', 'profile', 'settings', 'notifications'],
-          SUPPORT_FINANCE: ['dashboard', 'finance', 'reports', 'profile', 'settings', 'notifications'],
-          FINANCE_EXECUTIVE: ['dashboard', 'finance', 'reports', 'profile', 'settings', 'notifications'],
+          SUPPORT_FINANCE: ['dashboard', 'finance', 'transactions', 'refunds', 'commissions', 'reconciliation', 'reports', 'notifications'],
+          FINANCE_EXECUTIVE: ['dashboard', 'finance', 'transactions', 'refunds', 'commissions', 'reconciliation', 'reports', 'notifications'],
         }[CU.employeeType] || [];
         if (!allowed.includes(pg)) { el.innerHTML = `<div class="empty"><div class="empty-title">Access restricted</div><p class="empty-desc">This department does not have access to this area.</p></div>`; return; }
+      }
+
+      if (['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(CU.employeeType) && ['dashboard', 'transactions', 'refunds', 'commissions', 'reconciliation', 'reports'].includes(pg)) {
+        await financeRender(pg);
+        return;
       }
 
       // Restrict superuser to only the 3 analytical subpages
@@ -9641,8 +9654,8 @@ window.EventFlowModules['shared'] = true;
           SUPPORT_EXECUTIVE: { key: 'employee1' },
           REGISTRATION_VERIFICATION: { key: 'employee1' },
           EVENT_OPERATIONS: { key: 'employee1' },
-          SUPPORT_FINANCE: { key: 'employee2' },
-          FINANCE_EXECUTIVE: { key: 'employee2' },
+          SUPPORT_FINANCE: { key: 'employee3' },
+          FINANCE_EXECUTIVE: { key: 'employee3' },
         };
         if (employeePages[empType]) return employeePages[empType];
       }
@@ -9856,6 +9869,6 @@ window.EventFlowModules['shared'] = true;
 
 /* ===== Role-owned frontend configuration ===== */
 window.EventFlowRole = {
-  key: 'employee2',
+  key: 'employee3',
   label: 'Finance Executive'
 };

@@ -1,9 +1,10 @@
 import {
-  Injectable, NotFoundException, ConflictException, ForbiddenException,
+  Injectable, NotFoundException, ConflictException, ForbiddenException, UnauthorizedException,
 } from '@nestjs/common';
 import { DataStore } from '../../common/data-store';
 import { UserRole } from '../../common/constants';
-import { CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { ChangePasswordDto, CreateUserDto, UpdateUserDto } from './dto/user.dto';
+import { hashPassword, verifyPassword } from '../../common/password';
 
 @Injectable()
 export class UsersService {
@@ -30,7 +31,7 @@ export class UsersService {
 
     const userId = this.db.generateId('usr');
     const user = {
-      userId, name: dto.name, email: dto.email, password: dto.password,
+      userId, name: dto.name, email: dto.email, password: hashPassword(dto.password),
       userRole: dto.userRole, status: 'active' as const,
       address: dto.address, phoneNo: dto.phoneNo,
       createdAt: new Date(), updatedAt: new Date(),
@@ -64,12 +65,23 @@ export class UsersService {
     if (dto.name) user.name = dto.name;
     if (dto.email) user.email = dto.email;
     if (dto.address) user.address = dto.address;
-    if (dto.phoneNo) user.phoneNo = dto.phoneNo;
+    if (dto.phoneNo !== undefined) user.phoneNo = dto.phoneNo;
     if (dto.status && role === UserRole.SUPER_ADMIN) user.status = dto.status;
     user.updatedAt = new Date();
 
     const { password, ...safe } = user;
     return { success: true, message: 'User updated', data: safe };
+  }
+
+  changePassword(userId: string, dto: ChangePasswordDto): any {
+    const user = this.db.findUserById(userId);
+    if (!user) throw new NotFoundException(`User ${userId} not found`);
+    if (!verifyPassword(dto.currentPassword, user.password)) {
+      throw new UnauthorizedException('Current password is incorrect');
+    }
+    user.password = hashPassword(dto.newPassword);
+    user.updatedAt = new Date();
+    return { success: true, message: 'Password changed' };
   }
 
   remove(userId: string, role: UserRole): any {

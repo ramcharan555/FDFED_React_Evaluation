@@ -82,3 +82,14 @@ body:has(> #landing:not([style*="display: none"])) > .theme-toggle {
     padding-top: 176px;
   }
 }
+
+/* EventFlow landing hero photography */
+#landing .hero-bg { z-index: 0; }
+#landing .hero-bg .hero-image { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; object-position:center 54%; }
+#landing .hero-bg .hero-image-overlay { position:absolute; inset:0; background:linear-gradient(180deg,rgba(8,11,19,.48) 0%,rgba(8,11,19,.64) 48%,rgba(8,11,19,.92) 100%); }
+#landing .hero-bg .orb1, #landing .hero-bg .orb2 { z-index:1; }
+
+@media (max-width: 600px) {
+  #landing .hero-bg .hero-image { object-position: center 58%; }
+  #landing .hero-bg .hero-image-overlay { background: linear-gradient(180deg,rgba(8,11,19,.55) 0%,rgba(8,11,19,.74) 48%,rgba(8,11,19,.94) 100%); }
+}

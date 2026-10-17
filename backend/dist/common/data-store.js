@@ -60,6 +60,7 @@ const DATA_COLLECTIONS = [
     'staffAssignments',
     'eventReports',
     'staffReports',
+    'financeReportSubmissions',
     'eventReviews',
     'clientOrganizerReviews',
     'staffReviews',
@@ -108,6 +109,7 @@ class DataStore {
         // Reports & Reviews
         this.eventReports = [];
         this.staffReports = [];
+        this.financeReportSubmissions = [];
         this.eventReviews = [];
         this.clientOrganizerReviews = [];
         this.staffReviews = [];

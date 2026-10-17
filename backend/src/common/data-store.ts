@@ -26,6 +26,7 @@ const DATA_COLLECTIONS = [
   'staffAssignments',
   'eventReports',
   'staffReports',
+  'financeReportSubmissions',
   'eventReviews',
   'clientOrganizerReviews',
   'staffReviews',
@@ -65,6 +66,8 @@ export interface User {
   status: 'active' | 'inactive' | 'suspended';
   address?: string;
   phoneNo?: string;
+  bio?: string;
+  preferences?: { emailNotifications: boolean };
   createdAt: Date;
   updatedAt: Date;
 }
@@ -254,6 +257,7 @@ export interface Refund {
   reason: string;
   requestedAt: Date;
   processedAt?: Date;
+  reviews?: Array<{ actorUserId: string; note: string; at: string }>;
 }
 
 export interface EventChange {
@@ -438,6 +442,12 @@ export class DataStore {
   // Reports & Reviews
   eventReports: EventReport[] = [];
   staffReports: StaffReport[] = [];
+  financeReportSubmissions: Array<{
+    id: string; userId: string; userName: string; title: string; summary: string;
+    reportType: string; filters: Record<string, unknown>; metrics: Record<string, number>;
+    rows: Record<string, unknown>[]; status: 'Submitted' | 'Reviewed';
+    feedback: string; createdAt: Date; reviewedAt?: Date;
+  }> = [];
   eventReviews: EventReview[] = [];
   clientOrganizerReviews: ClientOrganizerReview[] = [];
   staffReviews: StaffReview[] = [];
