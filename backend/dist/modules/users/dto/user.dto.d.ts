@@ -8,6 +8,7 @@ export declare class CreateUserDto {
     phoneNo?: string;
 }
 export declare class UpdateUserDto {
+    bio?: string;
     name?: string;
     email?: string;
     address?: string;

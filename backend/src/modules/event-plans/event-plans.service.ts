@@ -265,7 +265,7 @@ export class EventPlansService {
     plan.updatedAt = new Date();
     request.updatedAt = new Date();
     request.auditHistory = request.auditHistory || [];
-    if (dto.approvalStatus === 'revision_requested') {
+    if (dto.approvalStatus === 'revision_requested' || dto.approvalStatus === 'rejected') {
       if (!dto.reason?.trim()) throw new BadRequestException('A reason is required when requesting a new plan');
       plan.approvalStatus = 'revision_requested';
       plan.status = 'revised';
@@ -284,6 +284,14 @@ export class EventPlansService {
       return { success: true, message: 'Plan revision requested', data: plan };
     }
 
+    if (this.db.events.some(event =>
+      event.organizerId === request.organizerId &&
+      event.date === request.eventDate &&
+      event.status !== 'cancelled',
+    )) {
+      throw new BadRequestException('The organizer already has an event on this date. Request a revised plan.');
+    }
+
     plan.approvalStatus = 'approved';
     plan.status = 'approved';
     const eventId = this.db.generateId('evt');
@@ -300,6 +308,7 @@ export class EventPlansService {
       ticketPrice: 0,
       status: 'ongoing' as const,
       description: request.requirements || plan.description,
+      policySnapshot: request.policySnapshot,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

@@ -7,6 +7,7 @@
 import { UserRole, EmployeeType } from './constants';
 import * as fs from 'fs';
 import * as path from 'path';
+import type { EventPolicy } from './event-policy';
 
 const DATA_COLLECTIONS = [
   'users',
@@ -19,6 +20,7 @@ const DATA_COLLECTIONS = [
   'eventRequests',
   'eventPlans',
   'eventWorkflowPayments',
+  'eventWorkflowRefunds',
   'eventCompletionReports',
   'clientOrganizerReviews',
   'registrations',
@@ -29,6 +31,7 @@ const DATA_COLLECTIONS = [
   'staffAssignments',
   'eventReports',
   'staffReports',
+  'supportExecutiveReports',
   'eventReviews',
   'staffReviews',
   'notifications',
@@ -53,6 +56,9 @@ const DATE_FIELDS = new Set([
   'resolutionEmailSentAt',
   'reviewedAt',
   'declineViewedAt',
+  'submittedAt',
+  'clientPolicyAcceptedAt',
+  'organizerPolicyAcceptedAt',
 ]);
 
 // ==================== USER ENTITIES ====================
@@ -64,9 +70,11 @@ export interface User {
   password: string;
   userRole: UserRole;
   employeeType?: EmployeeType | string;
-  status: 'active' | 'inactive' | 'suspended';
+  status: 'active' | 'inactive' | 'suspended' | 'pending';
   address?: string;
   phoneNo?: string;
+  bio?: string;
+  profile?: Record<string, unknown>;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -132,6 +140,8 @@ export interface Event {
   cancellationDeadline?: string;
   eligibility?: string;
   waitlistEnabled?: boolean;
+  policySnapshot?: EventPolicy;
+  cancellation?: EventCancellation;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -182,6 +192,12 @@ export interface EventRequest {
   paymentStatus: 'unpaid' | 'deposit_pending' | 'deposit_paid' | 'fully_paid' | 'refunded';
   rejectionReason?: string;
   withdrawalReason?: string;
+  policySnapshot?: EventPolicy;
+  clientPolicyAcceptedAt?: Date;
+  clientPolicyAcceptedBy?: string;
+  organizerPolicyAcceptedAt?: Date;
+  organizerPolicyAcceptedBy?: string;
+  cancellation?: EventCancellation;
   currentProposalVersion?: number;
   proposals?: ProposalVersion[];
   negotiations?: Array<{
@@ -253,6 +269,35 @@ export interface EventWorkflowPayment {
   paymentMethod: 'DEMO_PROVIDER';
   createdAt: Date;
   updatedAt: Date;
+}
+
+export interface EventCancellation {
+  reason: string;
+  cancelledBy: string;
+  cancelledAt: Date;
+  policyVersion: string;
+  paidAmount: number;
+  cancellationFeePercent: number;
+  cancellationFee: number;
+  refundAmount: number;
+  refundStatus: 'pending' | 'not_applicable';
+  refundId?: string;
+  cancellationDeadline: string;
+}
+
+export interface EventWorkflowRefund {
+  refundId: string;
+  paymentId: string;
+  eventId: string;
+  requestId?: string;
+  clientId: string;
+  organizerId: string;
+  paidAmount: number;
+  cancellationFee: number;
+  amount: number;
+  reason: string;
+  status: 'pending';
+  requestedAt: Date;
 }
 
 export interface EventCompletionReport {
@@ -363,6 +408,9 @@ export interface StaffAssignment {
   eventId: string;
   organizerId: string;
   staffId: string;
+  role?: string;
+  fee?: number;
+  notes?: string;
   status: 'pending' | 'accepted' | 'declined' | 'completed' | 'cancelled';
   assignedAt: Date;
   updatedAt: Date;
@@ -379,6 +427,10 @@ export interface EventReport {
   reportTitle: string;
   reportDetails: string;
   submissionDate: string;
+  documentName?: string;
+  documentFileName?: string;
+  documentMimeType?: string;
+  documentSize?: number;
   status: 'draft' | 'submitted' | 'reviewed';
   createdAt: Date;
   updatedAt: Date;
@@ -391,6 +443,28 @@ export interface StaffReport {
   eventId: string;
   reportText: string;
   status: 'draft' | 'submitted' | 'reviewed';
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SupportExecutiveReport {
+  reportId: string;
+  submittedBy: string;
+  sourceReference?: string;
+  title: string;
+  category: string;
+  scope: string;
+  period: string;
+  summary: string;
+  status: 'draft' | 'submitted' | 'reviewed';
+  documentName?: string;
+  documentFileName?: string;
+  documentMimeType?: string;
+  documentSize?: number;
+  reviewFeedback?: string;
+  reviewedBy?: string;
+  submittedAt?: Date;
+  reviewedAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -421,6 +495,8 @@ export interface StaffReview {
 export interface Notification {
   notificationId: string;
   userId: string;
+  supportTicketId?: string;
+  supportReportId?: string;
   eventId?: string;
   registrationId?: string;
   paymentId?: string;
@@ -465,6 +541,8 @@ export interface SupportTicket {
     sender: 'requester' | 'support';
     message: string;
     createdAt: Date;
+    senderId?: string;
+    senderName?: string;
   }>;
   attachments: Omit<SupportAttachment, 'userId' | 'filePath' | 'createdAt'>[];
   status: 'open' | 'in_progress' | 'resolved';
@@ -491,6 +569,7 @@ export class DataStore {
   eventRequests: EventRequest[] = [];
   eventPlans: EventPlan[] = [];
   eventWorkflowPayments: EventWorkflowPayment[] = [];
+  eventWorkflowRefunds: EventWorkflowRefund[] = [];
   eventCompletionReports: EventCompletionReport[] = [];
   clientOrganizerReviews: ClientOrganizerReview[] = [];
 
@@ -507,6 +586,7 @@ export class DataStore {
   // Reports & Reviews
   eventReports: EventReport[] = [];
   staffReports: StaffReport[] = [];
+  supportExecutiveReports: SupportExecutiveReport[] = [];
   eventReviews: EventReview[] = [];
   staffReviews: StaffReview[] = [];
 
@@ -544,8 +624,8 @@ export class DataStore {
 
     const demoSeeds = {
       events: this.events.filter(event => event.eventId.startsWith('evt-demo-')),
-      historicalClientEvents: this.events.filter(event => ['evt-001', 'evt-002'].includes(event.eventId)),
       clientOrganizerReviews: this.clientOrganizerReviews,
+      supportExecutiveReports: this.supportExecutiveReports,
       registrations: this.registrations.filter(registration => registration.registrationId.startsWith('reg-demo-')),
       payments: this.payments.filter(payment => payment.paymentId.startsWith('pay-demo-')),
       refunds: this.refunds.filter(refund => refund.refundId.startsWith('ref-demo-')),
@@ -574,20 +654,46 @@ export class DataStore {
       if (Array.isArray(rows)) Object.assign(this, { [collection]: rows });
     }
 
-    if (Number(parsed.demoSeedVersion || 0) < 3) {
+    let reportSampleUpdated = false;
+    for (const report of this.supportExecutiveReports) {
+      if (report.sourceReference === 'legacy:RVR-002' && !report.documentFileName &&
+        report.title === 'Duplicate Account Detection & Resolution Summary — Q2 2026') {
+        const previousTitle = report.title;
+        report.title = 'Account Access & Verification Summary — Q2 2026';
+        if (report.summary === previousTitle) report.summary = report.title;
+        reportSampleUpdated = true;
+      }
+    }
+    if (reportSampleUpdated) this.persist();
+
+    if (Number(parsed.supportReportSeedVersion || 0) < 1) {
+      const existingIds = new Set(this.supportExecutiveReports.map(report => report.reportId));
+      for (const report of demoSeeds.supportExecutiveReports) {
+        if (!existingIds.has(report.reportId) && this.users.some(user => user.userId === report.submittedBy)) {
+          this.supportExecutiveReports.push(report);
+        }
+      }
+      this.persist();
+    }
+
+    if (Number(parsed.organizerReviewSeedVersion || 0) < 1) {
+      for (const review of demoSeeds.clientOrganizerReviews) {
+        if (
+          this.events.some(event => event.eventId === review.eventId && event.organizerId === review.organizerId) &&
+          this.clients.some(client => client.clientId === review.clientId) &&
+          this.organizers.some(organizer => organizer.organizerId === review.organizerId) &&
+          !this.clientOrganizerReviews.some(existing => existing.reviewId === review.reviewId || (existing.eventId === review.eventId && existing.clientId === review.clientId))
+        ) this.clientOrganizerReviews.push(review);
+      }
+      this.persist();
+    }
+
+    if (Number(parsed.demoSeedVersion || 0) < 2) {
       const mergeSeedRows = <T>(existing: T[], seeds: T[], key: keyof T): T[] => {
         const existingIds = new Set(existing.map(row => row[key]));
         return [...existing, ...seeds.filter(row => !existingIds.has(row[key]))];
       };
-      for (const seedEvent of demoSeeds.historicalClientEvents) {
-        const event = this.events.find(item => item.eventId === seedEvent.eventId);
-        if (event && event.date === seedEvent.date && event.date < new Date().toISOString().slice(0, 10)) {
-          event.status = 'completed';
-          event.clientId = seedEvent.clientId;
-        }
-      }
       this.events = mergeSeedRows(this.events, demoSeeds.events, 'eventId');
-      this.clientOrganizerReviews = mergeSeedRows(this.clientOrganizerReviews, demoSeeds.clientOrganizerReviews, 'reviewId');
       this.registrations = mergeSeedRows(this.registrations, demoSeeds.registrations, 'registrationId');
       this.payments = mergeSeedRows(this.payments, demoSeeds.payments, 'paymentId');
       this.refunds = mergeSeedRows(this.refunds, demoSeeds.refunds, 'refundId');
@@ -613,7 +719,7 @@ export class DataStore {
     fs.mkdirSync(directory, { recursive: true });
     const snapshot: Partial<Record<DataCollection, unknown>> = {};
     for (const collection of DATA_COLLECTIONS) snapshot[collection] = this[collection];
-    Object.assign(snapshot, { demoSeedVersion: 3 });
+    Object.assign(snapshot, { demoSeedVersion: 2, organizerReviewSeedVersion: 1, supportReportSeedVersion: 1 });
 
     const temporaryPath = `${this.persistencePath}.tmp`;
     fs.writeFileSync(temporaryPath, JSON.stringify(snapshot, null, 2), { encoding: 'utf8', mode: 0o600 });
@@ -1144,7 +1250,7 @@ export class DataStore {
         location: 'Grand Ballroom, Chennai',
         capacity: 500,
         ticketPrice: 1500,
-        status: 'completed',
+        status: 'published',
         createdAt: new Date('2024-01-20'),
         updatedAt: new Date('2024-01-20'),
         description: 'Join Sarah Chen for the biggest AI summit of the year. Featuring speakers from Google, Meta, and OpenAI.',
@@ -1153,7 +1259,6 @@ export class DataStore {
       {
         eventId: 'evt-002',
         organizerId: 'org-001',
-        clientId: 'cli-001',
         name: 'Yoga & Wellness Retreat 2024',
         category: 'Health',
         date: '2024-07-20',
@@ -1161,7 +1266,7 @@ export class DataStore {
         location: 'Zen Gardens, Bangalore',
         capacity: 100,
         ticketPrice: 500,
-        status: 'completed',
+        status: 'published',
         createdAt: new Date('2024-01-21'),
         updatedAt: new Date('2024-01-21'),
         description: 'A relaxing weekend retreat focusing on mental health and physical well-being.',
@@ -1694,6 +1799,56 @@ export class DataStore {
       },
     ];
 
+    // ==================== SAMPLE SUPPORT EXECUTIVE REPORTS ====================
+    this.supportExecutiveReports = [
+      {
+        reportId: 'SER-demo-001', submittedBy: 'usr-emp-001', sourceReference: 'demo:support-report-001',
+        title: 'Weekly Customer Support Summary (Sample)', category: 'Support & Issue Summary',
+        scope: 'Platform Wide', period: '12–16 October 2026', status: 'submitted',
+        summary: 'Handled 42 customer requests: 36 resolved and 6 in progress. Common topics included ticket downloads, payment confirmations, and event schedule changes. Average first response was 24 minutes. Follow up on the remaining payment confirmations before the next weekly review.',
+        createdAt: new Date('2026-10-16T09:00:00Z'), submittedAt: new Date('2026-10-16T09:30:00Z'), updatedAt: new Date('2026-10-16T09:30:00Z'),
+      },
+      {
+        reportId: 'SER-demo-002', submittedBy: 'usr-emp-002', sourceReference: 'demo:support-report-002',
+        title: 'Registration Verification Audit (Sample)', category: 'Registration & User Management',
+        scope: 'October Event Registrations', period: '1–15 October 2026', status: 'submitted',
+        summary: 'Reviewed 128 event registrations. Approved 122 complete submissions; 6 remain pending supporting documents. All approved attendees received confirmation messages. Recommend clearer upload instructions to reduce incomplete submissions.',
+        createdAt: new Date('2026-10-15T10:00:00Z'), submittedAt: new Date('2026-10-15T10:30:00Z'), updatedAt: new Date('2026-10-15T10:30:00Z'),
+      },
+      {
+        reportId: 'SER-demo-003', submittedBy: 'usr-emp-003', sourceReference: 'demo:support-report-003',
+        title: 'AI Product & Cloud Summit Readiness (Sample)', category: 'Event Operations Report',
+        scope: 'AI Product & Cloud Summit', period: 'October 2026', status: 'submitted',
+        summary: 'Completed 8 of 10 readiness checks, covering registration links, attendee communications, capacity settings, and venue directions. Final venue signage and accessibility confirmations are pending. Recommend completing both checks before sending the attendee reminder.',
+        createdAt: new Date('2026-10-14T08:00:00Z'), submittedAt: new Date('2026-10-14T08:30:00Z'), updatedAt: new Date('2026-10-14T08:30:00Z'),
+      },
+      {
+        reportId: 'SER-demo-004', submittedBy: 'usr-emp-001', sourceReference: 'demo:support-report-004',
+        title: 'Customer Request Resolution Review (Sample)', category: 'Support & Issue Summary',
+        scope: 'Customer Requests', period: '5–9 October 2026', status: 'reviewed',
+        summary: 'Resolved 35 customer requests, including 14 booking questions, 12 payment queries, and 9 event information requests. Two repeat questions were added to the help guide. No unresolved requests remained at the end of the reporting period.',
+        reviewFeedback: 'Reviewed. Include a comparison of response and resolution times in the next report.', reviewedBy: 'usr-admin-001',
+        createdAt: new Date('2026-10-09T09:00:00Z'), submittedAt: new Date('2026-10-09T09:30:00Z'),
+        reviewedAt: new Date('2026-10-12T10:00:00Z'), updatedAt: new Date('2026-10-12T10:00:00Z'),
+      },
+      {
+        reportId: 'SER-demo-005', submittedBy: 'usr-emp-002', sourceReference: 'demo:support-report-005',
+        title: 'Account Access & Verification Summary (Sample)', category: 'Registration & User Management',
+        scope: 'Customer Accounts', period: 'September 2026', status: 'reviewed',
+        summary: 'Completed 58 account verification requests and resolved 17 sign-in or password recovery queries. All account access requests were closed after customer confirmation. Recommend improving the verification email instructions and password recovery help text.',
+        reviewFeedback: 'Approved. Share the proposed help text updates for the next release.', reviewedBy: 'usr-admin-001',
+        createdAt: new Date('2026-10-01T08:00:00Z'), submittedAt: new Date('2026-10-01T08:30:00Z'),
+        reviewedAt: new Date('2026-10-02T09:00:00Z'), updatedAt: new Date('2026-10-02T09:00:00Z'),
+      },
+      {
+        reportId: 'SER-demo-006', submittedBy: 'usr-emp-003', sourceReference: 'demo:support-report-006',
+        title: 'Food & Farm Festival Operations Update (Sample)', category: 'Event Operations Report',
+        scope: 'Sustainable Food & Farm Festival', period: '1–10 October 2026', status: 'submitted',
+        summary: 'Verified event details, booking limits, attendee instructions, and venue contact information. Resolved 7 event information requests and corrected 2 schedule entries. The organizer has been asked to confirm the final arrival instructions before publication.',
+        createdAt: new Date('2026-10-10T11:00:00Z'), submittedAt: new Date('2026-10-10T11:30:00Z'), updatedAt: new Date('2026-10-10T11:30:00Z'),
+      },
+    ];
+
     // ==================== NOTIFICATIONS ====================
     this.notifications = [
       {
@@ -1880,22 +2035,12 @@ export class DataStore {
 
     this.clientOrganizerReviews = [
       {
-        reviewId: 'rev-org-demo-001',
-        eventId: 'evt-001',
-        requestId: 'req-001',
-        clientId: 'cli-001',
-        organizerId: 'org-001',
-        rating: 5,
-        comment: 'Sarah and her team delivered a polished summit from planning through event day. Communication was clear, the speakers and schedule were well coordinated, and our guests had a great experience.',
+        reviewId: 'rev-org-demo-001', eventId: 'evt-001', clientId: 'cli-001', organizerId: 'org-001', rating: 5,
+        comment: 'Sarah and her team delivered a polished summit. Communication was clear, the speakers and schedule were well coordinated, and our guests had a great experience.',
         createdAt: new Date('2024-06-20'),
       },
       {
-        reviewId: 'rev-org-demo-002',
-        eventId: 'evt-002',
-        requestId: 'req-002',
-        clientId: 'cli-001',
-        organizerId: 'org-001',
-        rating: 5,
+        reviewId: 'rev-org-demo-002', eventId: 'evt-002', clientId: 'cli-001', organizerId: 'org-001', rating: 5,
         comment: 'The wellness retreat was thoughtfully organized and ran smoothly. The venue, session timing, and on-site coordination made the day relaxing for everyone.',
         createdAt: new Date('2024-07-23'),
       },
@@ -2000,6 +2145,7 @@ export class DataStore {
     this.eventRequests = [];
     this.eventPlans = [];
     this.eventWorkflowPayments = [];
+    this.eventWorkflowRefunds = [];
     this.eventCompletionReports = [];
     this.clientOrganizerReviews = [];
     this.registrations = [];
@@ -2010,6 +2156,7 @@ export class DataStore {
     this.staffAssignments = [];
     this.eventReports = [];
     this.staffReports = [];
+    this.supportExecutiveReports = [];
     this.eventReviews = [];
     this.staffReviews = [];
     this.notifications = [];
@@ -2021,7 +2168,8 @@ export class DataStore {
 
   // User lookup utilities
   findUserByEmail(email: string): User | undefined {
-    return this.users.find(u => u.email.toLowerCase() === email.toLowerCase());
+    const normalized = email.trim().toLowerCase();
+    return this.users.find(u => u.email.trim().toLowerCase() === normalized);
   }
 
   findUserById(userId: string): User | undefined {

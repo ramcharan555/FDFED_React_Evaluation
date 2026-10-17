@@ -2,8 +2,9 @@ import {
   IsString, IsNotEmpty, IsOptional, IsNumber, IsPositive, IsEnum, IsInt, Min, IsBoolean, IsDateString,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EventPolicyAcknowledgementDto } from '../../../common/event-policy';
 
-export class CreateEventRequestDto {
+export class CreateEventRequestDto extends EventPolicyAcknowledgementDto {
   @ApiProperty({ description: 'Client ID', example: 'cli-001' })
   @IsString()
   @IsNotEmpty()
@@ -116,6 +117,14 @@ export class ReviseProposalDto extends SendProposalDto {
 }
 
 export class RejectRequestDto {
+  @IsBoolean()
+  @IsOptional()
+  policyAccepted?: boolean;
+
+  @IsString()
+  @IsOptional()
+  acceptedPolicyVersion?: string;
+
   @ApiProperty({ description: 'Reason for a permanent rejection or requested change', example: 'The requested date is unavailable.' })
   @IsString()
   @IsNotEmpty()

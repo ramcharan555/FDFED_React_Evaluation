@@ -9,10 +9,11 @@ export declare class SupportController {
     listTickets(userId: string, role: UserRole): (import("../../common/data-store").SupportTicket & {
         requesterName?: string;
         requesterEmail?: string;
+        requesterRole?: string;
     })[];
     createTicket(userId: string, role: UserRole, dto: CreateSupportTicketDto): import("../../common/data-store").SupportTicket;
     addRequesterFollowUp(ticketId: string, userId: string, dto: CreateSupportFollowUpDto): import("../../common/data-store").SupportTicket;
-    uploadAttachment(userId: string, file?: Express.Multer.File): Omit<import("../../common/data-store").SupportAttachment, "userId" | "createdAt" | "filePath">;
+    uploadAttachment(userId: string, file?: Express.Multer.File): Omit<import("../../common/data-store").SupportAttachment, "createdAt" | "userId" | "filePath">;
     downloadAttachment(attachmentId: string, userId: string, role: UserRole, response: Response): Promise<StreamableFile>;
     updateStatus(ticketId: string, userId: string, role: UserRole, dto: UpdateSupportTicketStatusDto): Promise<import("../../common/data-store").SupportTicket & {
         emailNotificationSent: boolean;

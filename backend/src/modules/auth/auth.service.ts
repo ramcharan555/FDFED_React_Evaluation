@@ -3,6 +3,9 @@ import { JwtService } from '@nestjs/jwt';
 import { DataStore } from '../../common/data-store';
 import { LoginDto } from './dto/login.dto';
 import { jwtConfig, JwtPayload } from '../../config/jwt.config';
+import { ChangePasswordDto, RegisterDto } from './dto/register.dto';
+import { UsersService } from '../users/users.service';
+import { UserRole } from '../../common/constants';
 
 @Injectable()
 export class AuthService {
@@ -10,6 +13,34 @@ export class AuthService {
 
   constructor(private jwtService: JwtService) {
     this.dataStore = DataStore.getInstance();
+  }
+
+  register(dto: RegisterDto): any {
+    // Public registration never accepts administrator or department employee roles.
+    if (![UserRole.ATTENDEE, UserRole.CLIENT, UserRole.EVENT_ORGANIZER, UserRole.EVENT_STAFF].includes(dto.userRole)) {
+      throw new BadRequestException('Choose an attendee, client, organizer, or staff account');
+    }
+    const created = new UsersService().create(dto, UserRole.SUPER_ADMIN).data;
+    const user = this.dataStore.findUserById(created.userId)!;
+    const fields = ['dateOfBirth', 'gender', 'city', 'interests', 'organizationType', 'organizationName',
+      'organizationAddress', 'yearsExperience', 'eventCategories', 'service', 'staffPosition',
+      'staffCompany', 'staffCity', 'previousExperience'];
+    user.profile = Object.fromEntries(fields.filter(field => ['string', 'number'].includes(typeof dto.profile?.[field]))
+      .map(field => [field, dto.profile![field]]));
+    user.status = dto.userRole === UserRole.ATTENDEE ? 'active' : 'pending';
+    this.dataStore.persist();
+    if (user.status === 'active') return this.login({ email: user.email, password: dto.password });
+    const { password, ...safe } = user;
+    return { success: true, message: 'Account created and awaiting approval', data: safe };
+  }
+
+  changePassword(dto: ChangePasswordDto, userId: string) {
+    const user = this.dataStore.findUserById(userId);
+    if (!user || user.password !== dto.currentPassword) throw new BadRequestException('Current password is incorrect');
+    user.password = dto.newPassword;
+    user.updatedAt = new Date();
+    this.dataStore.persist();
+    return { success: true, message: 'Password changed successfully' };
   }
 
   login(loginDto: LoginDto): any {

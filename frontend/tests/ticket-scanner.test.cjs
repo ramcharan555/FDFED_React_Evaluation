@@ -149,8 +149,16 @@ test('navigation, signing out, and hiding the tab release the camera', async () 
 test('all entry points use the compact panel and verify scanned IDs only for the selected event', () => {
   const roles = ['attendee', 'client', 'employee1', 'employee2', 'employee3', 'landing', 'organizer', 'staff', 'admin'];
   for (const role of roles) {
-    const source = fs.readFileSync(path.join(frontend, 'src/apps', role, 'runtime.js'), 'utf8');
-    const component = fs.readFileSync(path.join(frontend, 'src/apps', role, role.charAt(0).toUpperCase() + role.slice(1) + '.jsx'), 'utf8');
+    let componentPath = path.join(frontend, 'src/apps', role, role.charAt(0).toUpperCase() + role.slice(1) + '.jsx');
+    let component = fs.readFileSync(componentPath, 'utf8');
+    const delegatedComponent = component.match(/import\s+(\w+)\s+from\s+['"]([^'"]+\.jsx)['"]/);
+    if (delegatedComponent && new RegExp(`return\\s+<${delegatedComponent[1]}\\s*\\/>`).test(component)) {
+      componentPath = path.resolve(path.dirname(componentPath), delegatedComponent[2]);
+      component = fs.readFileSync(componentPath, 'utf8');
+    }
+    const runtimeImport = component.match(/import\s+source\s+from\s+['"]([^'"]+)\?raw['"]/);
+    assert.ok(runtimeImport, `${role} must render a component with a runtime`);
+    const source = fs.readFileSync(path.resolve(path.dirname(componentPath), runtimeImport[1]), 'utf8');
     const h = harness();
     const saved = new Map([['verify_eventId', '101']]);
     const registration = { id: 1, eventId: 101, attendeeId: 'a1', ticketId: 'TKT-EMP-101', verificationId: 'aB3deF6HiJ9k', checkedIn: false };

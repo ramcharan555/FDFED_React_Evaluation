@@ -94,6 +94,7 @@ async function apiRequest(endpoint, options = {}) {
       throw new ApiError(msg, res.status, data);
     }
 
+    if (options.method && options.method.toUpperCase() !== 'GET') window.EventFlowData?.invalidate();
     return data;
   } catch (e) {
     if (e instanceof ApiError) throw e;
@@ -456,11 +457,18 @@ document.addEventListener("DOMContentLoaded", () => {
 // ═══════════════════ CRUD: USERS ═══════════════════
 
 function createUser(userData) {
+  if (!window.EventFlowAccountPolicy.canManageAccount(CU, userData)) { addNotification(null, 'Only an admin can manage employee or admin accounts.', 'warning'); return null; }
+  const email = window.EventFlowAccountPolicy.normalizeEmail(userData.email);
+  if (window.EventFlowAccountPolicy.isEmailInUse(AppState.users, email)) {
+    addNotification(null, 'Email already registered', 'warning');
+    return null;
+  }
   const newUser = {
     id: "u" + Date.now(),
     joinedAt: new Date().toISOString().split("T")[0],
     status: "active",
-    ...userData
+    ...userData,
+    email
   };
   AppState.users.push(newUser);
   saveState();
@@ -471,7 +479,13 @@ function createUser(userData) {
 function updateUser(userId, updates) {
   const user = AppState.users.find(u => u.id === userId);
   if (user) {
+    if (!window.EventFlowAccountPolicy.canApplyAccountUpdate(CU, user, updates)) { addNotification(null, 'This account change requires an admin.', 'warning'); return null; }
+    if (updates.email && window.EventFlowAccountPolicy.isEmailInUse(AppState.users, updates.email, userId)) {
+      addNotification(null, 'Email already registered', 'warning');
+      return null;
+    }
     Object.assign(user, updates);
+    if (updates.email) user.email = window.EventFlowAccountPolicy.normalizeEmail(updates.email);
     saveState();
     addNotification(null, `User "${user.name}" updated`, "success");
     return user;
@@ -480,6 +494,8 @@ function updateUser(userId, updates) {
 }
 
 function deleteUser(userId) {
+  const target = AppState.users.find(user => String(user.id) === String(userId));
+  if (!window.EventFlowAccountPolicy.canManageAccount(CU, target)) { addNotification(null, 'Only an admin can manage employee or admin accounts.', 'warning'); return false; }
   const index = AppState.users.findIndex(u => u.id === userId);
   if (index > -1) {
     const name = AppState.users[index].name;
@@ -1086,7 +1102,7 @@ function submitAddUser(e) {
     phone: document.getElementById("newUserPhone").value
   };
   
-  createUser(user);
+  if (!createUser(user)) return;
   closeModal();
   updateAllTables();
 }
@@ -1529,7 +1545,6 @@ window.EventFlowModules['shared'] = true;
         { id: 'usr-client-001', name: 'Michael Torres', email: 'client@example.com', password: 'Client@123', role: 'client', phone: '+91 9876543203', avatar: 'MT', avatarImage: '/images/avatars/user-michael-torres.jpg', status: 'active', joined: '2024-03-10', bio: 'Head of Events at TechCorp Ltd.', company: 'TechCorp Ltd' },
         { id: 'usr-staff-001', name: 'James Wilson', email: 'staff@example.com', password: 'Staff@123', role: 'staff', phone: '+91 9876543204', avatar: 'JW', avatarImage: '/images/avatars/staff-james-wilson.jpg', status: 'active', joined: '2024-02-15', bio: 'Professional photographer and event videographer.', service: 'Photography & Videography', rate: 800 },
         { id: 'usr-attendee-001', name: 'Priya Patel', email: 'attendee@example.com', password: 'Attendee@123', role: 'attendee', phone: '+91 9876543205', avatar: 'PP', avatarImage: '/images/avatars/user-priya-patel.jpg', status: 'active', joined: '2024-04-01', bio: 'Tech enthusiast and frequent conference attendee.' },
-        { id: 'usr-dup-001', name: 'Priya Patel (Secondary)', email: 'attendee@example.com', password: 'Attendee@123', role: 'attendee', phone: '+91 9876543205', avatar: 'PP', avatarImage: '/images/avatars/user-priya-patel.jpg', status: 'active', joined: '2024-04-12', bio: 'Secondary registration under same email.' },
         { id: 6, name: 'Emma Brown', email: 'emma@eventflow.com', password: 'org123', role: 'organizer', phone: '+91 9876543206', avatar: 'EB', avatarImage: '/images/avatars/organizer-emma-brown.jpg', status: 'active', joined: '2024-02-20', service: 'Weddings & Social Events', city: 'Pune', rating: 4.7, color: '#f56565', bio: 'Expert in creating memorable wedding and social event experiences with meticulous attention to detail.' },
         { id: 7, name: 'David Kim', email: 'david@eventflow.com', password: 'staff123', role: 'staff', phone: '+91 9876543207', avatar: 'DK', avatarImage: '/images/avatars/staff-david-kim.jpg', status: 'inactive', joined: '2024-03-01', service: 'Catering & Hospitality', rate: 1200 },
         { id: 8, name: 'Lisa Zhang', email: 'lisa@eventflow.com', password: 'att123', role: 'attendee', phone: '+91 9876543208', avatar: 'LZ', avatarImage: '/images/avatars/user-lisa-zhang.jpg', status: 'active', joined: '2024-04-15' },
@@ -1587,11 +1602,11 @@ window.EventFlowModules['shared'] = true;
         { id: 8, attendeeId: 3, eventId: 1, date: '2026-03-15', ticketId: 'TKT-2026-008', status: 'confirmed', payment: 'paid', amount: 150, checkedIn: false, seat: 'A-046', verificationStatus: 'Verified', verified: true, docType: 'Client Pass', docRef: 'CLT-PASS-104', notes: 'Client registration verified.' },
       ],
       userQueries: [
-        { id: 'UQR-501', userId: 'usr-attendee-001', userName: 'Priya Patel', userEmail: 'attendee@example.com', type: 'Account Deletion', subject: 'Request to delete duplicate attendee account', detail: 'User requested deletion of duplicate account created during Summit registration.', source: 'User Request', status: 'Pending', date: 'Today, 10:30 AM' },
+        { id: 'UQR-501', userId: 'usr-attendee-001', userName: 'Priya Patel', userEmail: 'attendee@example.com', type: 'Account Deletion', subject: 'Request permanent account deletion', detail: 'User requested permanent deletion of their attendee account and associated personal data.', source: 'User Request', status: 'Pending', date: 'Today, 10:30 AM' },
         { id: 'UQR-502', userId: 'usr-client-001', userName: 'Michael Torres', userEmail: 'client@example.com', type: 'Email Change', subject: 'Update profile email address to corporate domain', detail: 'Requested email update from client@example.com to m.torres@techcorp.com.', source: 'User Request', status: 'In Progress', date: 'Yesterday, 4:15 PM' },
         { id: 'UQR-503', userId: 8, userName: 'Lisa Zhang', userEmail: 'lisa@eventflow.com', type: 'Escalated Support', subject: 'Verification failed for Hackathon registration badge', detail: 'Escalated by Customer Support (Employee 3): Student ID upload unreadable, needs re-verification.', source: 'Employee 3 Escalation', status: 'Pending', date: '2 days ago' },
         { id: 'UQR-504', userId: 9, userName: 'Robert Singh', userEmail: 'robert@eventflow.com', type: 'Profile Update', subject: 'Contact phone number correction & name spelling', detail: 'Requested phone update to +91 9876543209 and correction on badge name.', source: 'User Request', status: 'Resolved', date: '2026-08-26' },
-        { id: 'UQR-505', userId: 5, userName: 'Priya Patel (Secondary)', userEmail: 'attendee@example.com', type: 'Escalated Support', subject: 'Duplicate ticket registration merge inquiry', detail: 'Escalated by Employee 3: User registered twice for Tech Summit under different tickets.', source: 'Employee 3 Escalation', status: 'Pending', date: 'Today, 8:45 AM' }
+        { id: 'UQR-505', userId: 'usr-attendee-001', userName: 'Priya Patel', userEmail: 'attendee@example.com', type: 'Escalated Support', subject: 'Ticket details correction request', detail: 'User requested a correction to the attendee name on their Tech Summit ticket.', source: 'Employee 3 Escalation', status: 'Pending', date: 'Today, 8:45 AM' }
       ],
       staffAssignments: [
         { id: 101, staffId: 'usr-staff-001', eventId: 101, role: 'Lead Event Photographer', status: 'accepted', fee: 1200, notes: 'Full photo coverage for keynote hall and exhibition pavilion.' },
@@ -1699,7 +1714,7 @@ window.EventFlowModules['shared'] = true;
       ],
       regReports: [
         { id: 'RVR-001', type: 'Registration Report', title: 'Monthly Online Registration & Conversion Audit — August 2026', owner: 'Arjun Kapoor', status: 'Reviewed', period: 'August 2026', fileName: 'Monthly_Registration_Audit_Aug2026.pdf', updated: '2026-08-25' },
-        { id: 'RVR-002', type: 'User Management Report', title: 'Duplicate Account Detection & Resolution Summary — Q2 2026', owner: 'Arjun Kapoor', status: 'Submitted', period: 'Q2 2026 (Apr–Jun)', fileName: 'Duplicate_Account_Resolution_Q2_2026.docx', updated: 'Yesterday' },
+        { id: 'RVR-002', type: 'User Management Report', title: 'Account Access & Verification Summary — Q2 2026', owner: 'Arjun Kapoor', status: 'Submitted', period: 'Q2 2026 (Apr–Jun)', fileName: 'Account_Access_Verification_Q2_2026.docx', updated: 'Yesterday' },
         { id: 'RVR-003', type: 'Registration Activity Report', title: 'Q2 Attendee Registration Activity & Demographics Analysis', owner: 'Arjun Kapoor', status: 'Reviewed', period: 'Q2 2026 (Apr–Jun)', fileName: 'Q2_Registration_Activity_Demographics.xlsx', updated: '2026-08-20' },
         { id: 'RVR-004', type: 'Registration Report', title: 'Tech Summit 2026 — Online Registration Status & Completion Report', owner: 'Arjun Kapoor', status: 'Submitted', period: 'July 2026', fileName: 'TechSummit_Registration_Report.pdf', updated: '2 days ago' },
         { id: 'RVR-005', type: 'User Management Report', title: 'User Account Deactivation & Access Audit — July 2026', owner: 'Arjun Kapoor', status: 'Draft', period: 'July 2026', fileName: null, updated: 'Today' },
@@ -1741,6 +1756,7 @@ window.EventFlowModules['shared'] = true;
           const initialUserQueries = [...(DB.userQueries || [])];
 
           Object.assign(DB, parsed);
+      window.EventFlowAccountPolicy.migrateLegacyDemoData(DB);
 
           // Ensure optional arrays exist
           if (!DB.staffRequests) DB.staffRequests = [];
@@ -2112,7 +2128,7 @@ window.EventFlowModules['shared'] = true;
       if (!name) { toast('Name is required', 'error'); return; }
       if (!email || !email.includes('@')) { toast('Valid email is required', 'error'); return; }
       if (!pass || pass.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
-      if (DB.users.find(u => u.email === email)) { toast('Email already registered', 'error'); return; }
+      if (window.EventFlowAccountPolicy.isEmailInUse(DB.users, email)) { toast('Email already registered', 'error'); return; }
       const initials = (name.split(' ').map(n => n[0]).join('')).toUpperCase().slice(0, 2);
       DB.users.push({ id: DB._nextId.users++, name, email, password: pass, role, phone, avatar: initials, status: 'active', joined: today(), service });
       closeModal();
@@ -2127,6 +2143,7 @@ window.EventFlowModules['shared'] = true;
     const NAV = {
       superuser: [
         { ic: '📊', lbl: 'Dashboard', pg: 'dashboard' },
+        { ic: '📄', lbl: 'Reports', pg: 'reports' },
         { ic: '👥', lbl: 'User Reports', pg: 'user-reports' },
         { ic: '🗓️', lbl: 'Event Reports', pg: 'event-reports' },
         { ic: '💰', lbl: 'Revenue Reports', pg: 'revenue-reports' },
@@ -2168,68 +2185,118 @@ window.EventFlowModules['shared'] = true;
     // ════════════════════════════════════════════════
     //  ADMIN: Employee Stats & Management (superuser)
     // ════════════════════════════════════════════════
-    function buildGroupedAnalyticsBars(groups, height, legend) {
-      let max = 1;
-      groups.forEach(g => {
-        (g.bars || []).forEach(b => { if ((b.value || 0) > max) max = b.value; });
-      });
-      const chartHeight = height || 200;
-      return `
-  <div style="display:flex;flex-direction:column;gap:10px">
-    ${legend ? `
-    <div style="display:flex;justify-content:flex-end;gap:16px;font-size:12px;color:var(--text2);margin-bottom:4px">
-      ${legend.map(l => `<span style="display:inline-flex;align-items:center;gap:6px"><span style="width:10px;height:10px;border-radius:3px;background:${l.color}"></span>${l.label}</span>`).join('')}
-    </div>` : ''}
-    <div style="display:flex;align-items:flex-end;gap:16px;height:${chartHeight}px;padding-top:16px;border-bottom:1px solid var(--border)">
-      ${groups.map(group => {
-        return `
-        <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:6px;height:100%">
-          <div style="display:flex;align-items:flex-end;gap:5px;width:100%;height:100%;justify-content:center">
-            ${group.bars.map(bar => {
-          const barHeight = Math.max(8, Math.round(((bar.value || 0) / max) * Math.max(chartHeight - 52, 40)));
-          return `
-              <div style="flex:1;max-width:26px;display:flex;flex-direction:column;align-items:center;height:100%;justify-content:flex-end;gap:4px">
-                <div style="font-size:10px;font-weight:700;color:var(--text3)">${bar.value}</div>
-                <div style="width:100%;height:${barHeight}px;flex-shrink:0;border-radius:6px 6px 2px 2px;background:linear-gradient(180deg,var(--green),#15803d);box-shadow:0 8px 16px rgba(15,23,42,.12)" title="${bar.label || ''}: ${bar.value}"></div>
-              </div>`;
-        }).join('')}
-          </div>
-          <div style="font-size:11px;font-weight:600;color:var(--text2);text-align:center;line-height:1.2;margin-top:4px">${group.label}</div>
-        </div>`;
-      }).join('')}
-    </div>
-  </div>`;
+    let adminChartSequence = 0;
+    const ADMIN_CHART_COLORS = ['#559ff5', '#edb65c', '#67c4bb', '#aa9ce5'];
+
+    function adminChartText(value) {
+      return escapeHtml(String(value)).replace(/"/g, '&quot;').replace(/'/g, '&#39;');
     }
-    function buildAnalyticsBars(items, height) {
-      const max = Math.max(1, ...items.map(item => item.value || 0));
-      const chartHeight = height || 180;
-      return `
-  <div style="display:flex;align-items:flex-end;gap:14px;height:${chartHeight}px;padding-top:12px">
-    ${items.map(item => {
-        const barHeight = Math.max(8, Math.round(((item.value || 0) / max) * Math.max(chartHeight - 52, 40)));
-        return `
-      <div style="flex:1;min-width:0;display:flex;flex-direction:column;justify-content:flex-end;align-items:center;gap:8px">
-        <div style="font-size:11px;color:var(--text3)">${item.value}</div>
-        <div style="width:100%;max-width:58px;height:${barHeight}px;flex-shrink:0;border-radius:18px 18px 8px 8px;background:linear-gradient(180deg,var(--green),#15803d);box-shadow:0 16px 28px rgba(15,23,42,.18)"></div>
-        <div style="font-size:11px;color:var(--text2);text-align:center;line-height:1.35">${item.label}</div>
+
+    function adminChartNumber(value, options = {}) {
+      const number = new Intl.NumberFormat('en-IN', { maximumFractionDigits: 1 }).format(value);
+      return `${options.prefix || ''}${number}${options.suffix || ''}`;
+    }
+
+    // Monotone curves pass through the data without overshooting peaks or zero.
+    function adminChartLine(points) {
+      if (!points.length) return '';
+      if (points.length === 1) return `M ${points[0].x} ${points[0].y}`;
+      const slopes = points.slice(1).map((point, index) => (point.y - points[index].y) / (point.x - points[index].x));
+      const tangents = points.map((point, index) => {
+        if (!index) return slopes[0];
+        if (index === points.length - 1) return slopes[slopes.length - 1];
+        return slopes[index - 1] * slopes[index] <= 0 ? 0 : 2 / (1 / slopes[index - 1] + 1 / slopes[index]);
+      });
+      return points.slice(1).reduce((path, point, index) => {
+        const previous = points[index];
+        const dx = (point.x - previous.x) / 3;
+        return `${path} C ${previous.x + dx} ${previous.y + tangents[index] * dx}, ${point.x - dx} ${point.y - tangents[index + 1] * dx}, ${point.x} ${point.y}`;
+      }, `M ${points[0].x} ${points[0].y}`);
+    }
+
+    function buildAdminAnalyticsChart(groups, height, options = {}) {
+      const data = (groups || []).map(group => ({
+        label: String(group.label || ''),
+        bars: (group.bars || []).map(bar => ({ ...bar, value: Number.isFinite(Number(bar.value)) ? Math.max(0, Number(bar.value)) : 0 })),
+      }));
+      if (!data.length) return '<div class="admin-chart admin-chart--empty">No data available for this period.</div>';
+      const id = `admin-chart-${++adminChartSequence}`;
+      const width = 600, plotHeight = 180;
+      const highest = Math.max(1, ...data.flatMap(group => group.bars.map(bar => bar.value)));
+      const roughStep = highest / 4;
+      const magnitude = Math.pow(10, Math.floor(Math.log10(roughStep)));
+      const step = Math.max(1, ([1, 2, 5, 10].find(value => value * magnitude >= roughStep) || 10) * magnitude);
+      const maximum = step * 4;
+      const groupWidth = width / data.length;
+      const seriesCount = Math.max(1, ...data.map(group => group.bars.length));
+      const color = index => ADMIN_CHART_COLORS[index % ADMIN_CHART_COLORS.length];
+      const y = value => plotHeight - value / maximum * plotHeight;
+      const ticks = Array.from({ length: 5 }, (_, index) => maximum - index * step);
+      const paths = Array.from({ length: seriesCount }, (_, series) => data.map((group, index) => ({ x: groupWidth * (index + 0.5), y: y(group.bars[series]?.value || 0) })));
+      const legend = options.legend || [];
+      const marks = options.kind === 'line' ? paths.map((points, series) => {
+        const path = adminChartLine(points);
+        const area = `${path} L ${points[points.length - 1].x} ${plotHeight} L ${points[0].x} ${plotHeight} Z`;
+        return `<path d="${area}" fill="url(#${id}-fill-${series})"/><path d="${path}" fill="none" stroke="${color(series)}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" vector-effect="non-scaling-stroke"/>
+          ${points.map((point, index) => `<circle cx="${point.x}" cy="${point.y}" r="${index === points.length - 1 ? 3 : 2}" fill="${index === points.length - 1 ? '#edb65c' : color(series)}" stroke="var(--surface)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>`).join('')}`;
+      }).join('') : data.map((group, index) => {
+        const barWidth = Math.min(14, groupWidth / (seriesCount * 3));
+        const gap = 5;
+        const start = groupWidth * (index + 0.5) - (seriesCount * barWidth + (seriesCount - 1) * gap) / 2;
+        return group.bars.map((bar, series) => `<rect x="${start + series * (barWidth + gap)}" y="${y(bar.value)}" width="${barWidth}" height="${plotHeight - y(bar.value)}" rx="2" fill="${color(series)}" fill-opacity="0.92"/>`).join('');
+      }).join('');
+
+      return `<div class="admin-chart admin-chart--${options.kind || 'bar'}" role="group" aria-label="${adminChartText(options.label || 'Analytics chart')}" style="--admin-chart-height:${Math.max(112, (height || 200) - 36)}px">
+        ${legend.length ? `<div class="admin-chart__legend">${legend.map((item, index) => `<span><i style="background:${color(index)}"></i>${adminChartText(item.label)}</span>`).join('')}</div>` : ''}
+        <div class="admin-chart__body">
+          <div class="admin-chart__axis-y" aria-hidden="true">${ticks.map((tick, index) => `<span style="top:${index * 25}%">${adminChartNumber(tick, options)}</span>`).join('')}</div>
+          <div class="admin-chart__plot">
+            <svg class="admin-chart__svg" viewBox="0 0 ${width} ${plotHeight}" preserveAspectRatio="none" aria-hidden="true">
+              <defs>${paths.map((points, series) => `<linearGradient id="${id}-fill-${series}" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${color(series)}" stop-opacity="0.2"/><stop offset="100%" stop-color="${color(series)}" stop-opacity="0.015"/></linearGradient>`).join('')}</defs>
+              ${ticks.map(tick => `<line x1="0" y1="${y(tick)}" x2="${width}" y2="${y(tick)}" class="admin-chart__grid" vector-effect="non-scaling-stroke"/>`).join('')}
+              ${marks}
+            </svg>
+            <div class="admin-chart__targets">${data.map((group, index) => {
+              const values = group.bars.map((bar, series) => `${legend[series]?.label || options.label || (bar.label !== group.label ? bar.label : '') || 'Total'}: ${adminChartNumber(bar.value, options)}`);
+              return `<button type="button" class="admin-chart__target" style="--point-y:${y(group.bars[0]?.value || 0) / plotHeight * 100}%" aria-label="${adminChartText(`${group.label}. ${values.join('. ')}`)}">
+                <span class="admin-chart__tooltip" aria-hidden="true"><strong>${adminChartText(group.label)}</strong>${values.map((value, series) => `<span><i style="background:${color(series)}"></i>${adminChartText(value)}</span>`).join('')}</span>
+                ${options.kind === 'line' ? '<svg class="admin-chart__focus-point" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="7" fill="#559ff5" fill-opacity="0.18"/><circle cx="8" cy="8" r="3.5" fill="#559ff5"/></svg>' : ''}
+              </button>`;
+            }).join('')}</div>
+          </div>
+        </div>
+        <div class="admin-chart__axis-x" style="grid-template-columns:repeat(${data.length},minmax(0,1fr))" aria-hidden="true">${data.map(group => `<span>${adminChartText(group.label)}</span>`).join('')}</div>
       </div>`;
-      }).join('')}
-  </div>`;
+    }
+
+    function buildGroupedAnalyticsBars(groups, height, legend) {
+      return buildAdminAnalyticsChart(groups, height, { legend });
+    }
+
+    function buildAnalyticsBars(items, height, options = {}) {
+      return buildAdminAnalyticsChart(items.map(item => ({ label: item.label, bars: [item] })), height, options);
+    }
+
+    function buildAnalyticsLine(items, height, options = {}) {
+      return buildAnalyticsBars(items, height, { ...options, kind: 'line' });
+    }
+
+    function buildAnalyticsRings(items) {
+      const circumference = 2 * Math.PI * 30;
+      return `<div class="admin-chart admin-chart--rings">${items.map(item => {
+        const value = Math.min(100, Math.max(0, Number(item.value) || 0));
+        return `<div class="admin-chart__ring-item" role="img" aria-label="${adminChartText(`${item.label}: ${value}% active`)}"><div class="admin-chart__ring">
+          <svg viewBox="0 0 76 76" aria-hidden="true"><circle class="admin-chart__ring-track" cx="38" cy="38" r="30"/><circle class="admin-chart__ring-value" cx="38" cy="38" r="30" stroke-dasharray="${circumference}" stroke-dashoffset="${circumference * (1 - value / 100)}"/></svg><strong>${value}%</strong>
+          </div><span>${adminChartText(item.label)}</span></div>`;
+      }).join('')}</div>`;
     }
     function buildAnalyticsProgress(items) {
       const total = items.reduce((sum, item) => sum + (item.value || 0), 0) || 1;
-      return `<div style="display:flex;flex-direction:column;gap:14px">
+      return `<div class="admin-chart admin-chart--progress">
     ${items.map(item => {
         const pct = Math.round(((item.value || 0) / total) * 100);
-        return `<div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-        <span style="font-size:12px;color:var(--text2)">${item.label}</span>
-        <span style="font-size:12px;color:var(--text)">${item.value} · ${pct}%</span>
-      </div>
-      <div style="height:10px;border-radius:999px;background:var(--surface3);overflow:hidden">
-        <div style="width:${pct}%;height:100%;border-radius:999px;background:${item.color}"></div>
-      </div>
-    </div>`;
+        const color = String(item.color || '').match(/#[0-9a-f]{6}/i)?.[0] || '#559ff5';
+        return `<div class="admin-chart__progress-row"><div class="admin-chart__progress-label"><span>${adminChartText(item.label)}</span><span><strong>${item.value}</strong> <small>${pct}%</small></span></div><div class="admin-chart__progress-track"><div style="width:${pct}%;background:${color}"></div></div></div>`;
       }).join('')}
   </div>`;
     }
@@ -2238,7 +2305,7 @@ window.EventFlowModules['shared'] = true;
       const totalEmployees = employees.length;
       const activeEmployees = employees.filter(e => e.status === 'active').length;
       const inactiveEmployees = Math.max(totalEmployees - activeEmployees, 0);
-      const revenue = DB.registrations.reduce((s, r) => s + (r.amount || 0), 0);
+      const revenue = (DB.financeTransactions || []).filter(payment => payment.status === 'Successful').reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
       const assignmentStats = {
         accepted: (DB.staffAssignments || []).filter(a => a.status === 'accepted').length,
         pending: (DB.staffAssignments || []).filter(a => a.status === 'pending').length,
@@ -2395,7 +2462,7 @@ window.EventFlowModules['shared'] = true;
       'revenue-reports': 'Revenue Reports & Analytics',
       dashboard: 'Dashboard', 'users': 'User Statistics', 'events': 'Events', 'browse-events': 'Browse Events',
       'my-tickets': 'My Tickets', 'assignments': 'Manage Events', 'staff': 'Staff Management', 'staff-admin': 'Staff Overview', 'staff-availability': 'My Availability', 'staff-event-requests': 'Event Requests',
-      attendees: 'Attendee Management', 'reports': 'Reports & Analytics', 'notifications': 'Notifications', 'attendeeVerification': 'Attendee Verification',
+      attendees: 'Attendee Management', 'reports': 'Reports', 'notifications': 'Notifications', 'attendeeVerification': 'Attendee Verification',
       'employee-stats': 'Employee Statistics',
       registrations: 'Registrations',
       'find-organizers': 'Find Event Organisers', 'upcoming-events': 'Upcoming Events', 'completed-events': 'Completed Events', 'ongoing-events': 'Ongoing Events',
@@ -2462,6 +2529,7 @@ window.EventFlowModules['shared'] = true;
       const r = CU.role;
 
       if (pg === 'customer-support') {
+        if (!window.EventFlowSupport.canRequestSupport(CU)) return renderPageContent('settings');
         el.innerHTML = await window.EventFlowSupport.render(CU);
         window.EventFlowSupport.bind(el, CU, () => goNav('settings'));
         return;
@@ -2476,15 +2544,18 @@ window.EventFlowModules['shared'] = true;
         if (!allowed.includes(pg)) { el.innerHTML = `<div class="empty"><div class="empty-title">Access restricted</div><p class="empty-desc">This department does not have access to this area.</p></div>`; return; }
       }
 
-      // Restrict superuser to only the 3 analytical subpages
-      if (r === 'superuser') {
+      // Admin account pages use the shared profile and settings handlers below.
+      if (r === 'superuser' && !['profile', 'settings'].includes(pg)) {
         if (pg === 'dashboard') {
           el.innerHTML = dashAdmin();
+          return;
+        } else if (pg === 'reports') {
+          await window.EventFlowSupportReports.renderAdmin(el, CU);
           return;
         } else if (pg === 'event-reports' || pg === 'events') {
           el.innerHTML = pageEventReports();
           return;
-        } else if (pg === 'revenue-reports' || pg === 'reports' || pg === 'staff-reports' || pg === 'employee-stats') {
+        } else if (pg === 'revenue-reports' || pg === 'staff-reports' || pg === 'employee-stats') {
           el.innerHTML = pageRevenueReports();
           return;
         } else {
@@ -2571,7 +2642,7 @@ window.EventFlowModules['shared'] = true;
           break;
         case 'settings':
           el.innerHTML = pageSettings();
-          window.EventFlowSupport.addSettingsEntry(el, () => goNav('customer-support'));
+          window.EventFlowSupport.addSettingsEntry(el, () => goNav('customer-support'), CU);
           break;
         case 'users':
           el.innerHTML = pageUsers();
@@ -2589,8 +2660,8 @@ window.EventFlowModules['shared'] = true;
     // ════════════════════════════════════════════════
     function dashAdmin() {
       const totalUsers = DB.users.length, totalEvents = DB.events.length, totalRegs = DB.registrations.length;
-      const revenue = DB.registrations.reduce((s, r) => s + (r.amount || 0), 0);
-      const pendingReqs = DB.eventRequests.filter(r => r.status === 'pending').length;
+      const revenue = (DB.financeTransactions || []).filter(payment => payment.status === 'Successful').reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      const pendingReqs = DB.eventRequests.filter(r => ['pending', 'submitted', 'planning', 'changes_requested', 'counteroffered', 'plan_submitted', 'plan_revision_requested'].includes(r.status)).length;
       const roleCounts = {
         superuser: DB.users.filter(u => u.role === 'superuser').length,
         organizer: DB.users.filter(u => u.role === 'organizer').length,
@@ -2605,8 +2676,8 @@ window.EventFlowModules['shared'] = true;
         draft: DB.events.filter(e => e.status === 'draft').length,
       };
       const requestStatusCounts = {
-        pending: DB.eventRequests.filter(r => r.status === 'pending').length,
-        approved: DB.eventRequests.filter(r => r.status === 'approved').length,
+        pending: DB.eventRequests.filter(r => ['pending', 'submitted', 'planning', 'changes_requested', 'counteroffered', 'plan_submitted', 'plan_revision_requested'].includes(r.status)).length,
+        approved: DB.eventRequests.filter(r => ['approved', 'confirmed', 'completed'].includes(r.status)).length,
         rejected: DB.eventRequests.filter(r => r.status === 'rejected').length,
       };
       const employeeAssignmentCounts = {
@@ -3595,7 +3666,7 @@ window.EventFlowModules['shared'] = true;
           prefillEvent = e.title && e.title !== 'Unknown Event' ? e.title : '';
           // Auto-suggest route based on subject keywords
           const subjectLow = (item.subject || '').toLowerCase() + ' ' + (item.message || '').toLowerCase();
-          const emp1Keywords = ['registration', 'account', 'duplicate', 'verification', 'user', 'profile', 'email', 'login', 'password', 'access'];
+          const emp1Keywords = ['registration', 'account', 'verification', 'user', 'profile', 'email', 'login', 'password', 'access'];
           const emp2Keywords = ['event', 'venue', 'schedule', 'location', 'capacity', 'slot', 'cancel', 'speaker', 'av', 'equipment'];
           if (emp2Keywords.some(k => subjectLow.includes(k))) autoRouteTo = 'Employee 2 – Event Operations Executive';
           else if (emp1Keywords.some(k => subjectLow.includes(k))) autoRouteTo = 'Employee 1 – Registration & Verification Executive';
@@ -3630,7 +3701,6 @@ window.EventFlowModules['shared'] = true;
           <label class="form-label">Request Category *</label>
           <select class="form-control" id="route-category">
             <option>User Account Issue</option>
-            <option>Duplicate Account / Merge</option>
             <option>Registration Problem</option>
             <option>Identity Verification Issue</option>
             <option>Event Information Query</option>
@@ -3700,7 +3770,7 @@ window.EventFlowModules['shared'] = true;
       if (routeToEl) {
         const subjectLow = (item.subject || '').toLowerCase() + ' ' + (item.message || '').toLowerCase();
         const emp2Keywords = ['event', 'venue', 'schedule', 'location', 'capacity', 'slot', 'cancel', 'speaker', 'av', 'equipment'];
-        const emp1Keywords = ['registration', 'account', 'duplicate', 'verification', 'user', 'profile', 'email', 'login', 'password'];
+        const emp1Keywords = ['registration', 'account', 'verification', 'user', 'profile', 'email', 'login', 'password'];
         if (emp2Keywords.some(k => subjectLow.includes(k))) routeToEl.value = 'Employee 2 – Event Operations Executive';
         else if (emp1Keywords.some(k => subjectLow.includes(k))) routeToEl.value = 'Employee 1 – Registration & Verification Executive';
       }
@@ -3849,7 +3919,7 @@ window.EventFlowModules['shared'] = true;
       const allTransactions = Array.isArray(DB.financeTransactions) ? DB.financeTransactions : [];
       const refundRecords = Array.isArray(DB.financeRefunds) ? DB.financeRefunds : [];
       const paidRegistrations = (DB.registrations || []).filter(reg => String(reg.payment || '').toLowerCase() === 'paid' && ['confirmed', 'verified'].includes(String(reg.status || '').toLowerCase()));
-      const successfulTransactions = paidRegistrations.length ? paidRegistrations : allTransactions.filter(tx => String(tx.status || '').toLowerCase() === 'successful' && Number(tx.amount || 0) > 0);
+      const successfulTransactions = allTransactions.filter(tx => tx.status === 'Successful');
       const totalRevenue = successfulTransactions.reduce((sum, item) => sum + Number(item.amount || 0), 0);
       const platformCommission = totalRevenue * commissionRate;
       const organizerPayout = totalRevenue - platformCommission;
@@ -3874,8 +3944,8 @@ window.EventFlowModules['shared'] = true;
           <div class="stat-card">
             <div class="stat-icon" style="background:var(--green-dim);color:var(--green)">💰</div>
             <div class="stat-value" style="color:var(--green)">₹${totalRevenue.toLocaleString('en-IN')}</div>
-            <div class="stat-label">Total Registration Revenue</div>
-            <div class="stat-sub neutral">Successful attendee payments</div>
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-sub neutral">Completed payment records</div>
           </div>
           <div class="stat-card">
             <div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">📈</div>
@@ -3907,7 +3977,7 @@ window.EventFlowModules['shared'] = true;
               <thead>
                 <tr>
                   <th>Event</th>
-                  <th>Attendees</th>
+                  <th>Payments</th>
                   <th>Gross Revenue</th>
                   <th>Platform Commission</th>
                   <th>Organizer Payout</th>
@@ -4137,26 +4207,8 @@ window.EventFlowModules['shared'] = true;
       const query = (sessionStorage.getItem('usrmgt_query') || '').toLowerCase();
       const roleFilter = sessionStorage.getItem('usrmgt_role') || '';
 
-      const users = DB.users || [];
+      const users = window.EventFlowAccountPolicy.visibleAccounts(CU, DB.users || []);
 
-      // Detect Duplicate Users by email or phone
-      const emailCounts = {};
-      const phoneCounts = {};
-      users.forEach(u => {
-        if (u.email) {
-          const em = u.email.toLowerCase();
-          emailCounts[em] = (emailCounts[em] || 0) + 1;
-        }
-        if (u.phone && u.phone !== '—') {
-          phoneCounts[u.phone] = (phoneCounts[u.phone] || 0) + 1;
-        }
-      });
-
-      const duplicateUsers = users.filter(u => {
-        const em = (u.email || '').toLowerCase();
-        const ph = u.phone || '';
-        return (emailCounts[em] > 1) || (ph !== '—' && phoneCounts[ph] > 1);
-      });
 
       const filtered = users.filter(u => {
         const matchesQuery = !query || `${u.name} ${u.email} ${u.phone} ${u.role} ${u.id}`.toLowerCase().includes(query);
@@ -4168,22 +4220,10 @@ window.EventFlowModules['shared'] = true;
         <div class="page-hd">
           <div class="page-hd-left">
             <div class="page-title">User Management</div>
-            <div class="page-sub">View, update, detect duplicate accounts, and safely manage platform users.</div>
+            <div class="page-sub">View, update, and manage platform users and account access.</div>
           </div>
         </div>
 
-        ${duplicateUsers.length > 0 ? `
-          <div style="padding:14px 18px;background:rgba(234,179,8,0.12);border:1px solid var(--yellow);border-radius:10px;margin-bottom:20px" class="flex justify-between items-center">
-            <div class="flex items-center gap-10">
-              <span style="font-size:22px">⚠️</span>
-              <div>
-                <div style="font-weight:700;color:var(--yellow);font-size:14px">Duplicate Accounts Detected</div>
-                <div class="small muted">${duplicateUsers.length} user records share matching email addresses or contact numbers.</div>
-              </div>
-            </div>
-            <button class="btn btn-warning btn-sm" onclick="openDuplicateUsersModal()">🔍 Review &amp; Resolve Duplicates</button>
-          </div>
-        ` : ''}
 
         <div class="filter-row">
           <div class="search-box input-group">
@@ -4195,7 +4235,7 @@ window.EventFlowModules['shared'] = true;
             <option value="attendee" ${roleFilter === 'attendee' ? 'selected' : ''}>Attendee</option>
             <option value="client" ${roleFilter === 'client' ? 'selected' : ''}>Client</option>
             <option value="organizer" ${roleFilter === 'organizer' ? 'selected' : ''}>Organizer</option>
-            <option value="staff" ${roleFilter === 'staff' ? 'selected' : ''}>Staff</option>
+            ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<option value="staff" ${roleFilter === 'staff' ? 'selected' : ''}>Staff</option>`}
           </select>
         </div>
 
@@ -4214,17 +4254,15 @@ window.EventFlowModules['shared'] = true;
               </thead>
               <tbody>
                 ${filtered.map(u => {
-        const em = (u.email || '').toLowerCase();
-        const isDup = emailCounts[em] > 1 || (u.phone && phoneCounts[u.phone] > 1);
         const isDeactivated = u.status === 'deactivated' || u.status === 'inactive';
 
         return `
-                    <tr style="${isDup ? 'background:rgba(234,179,8,0.04)' : ''}">
+                    <tr>
                       <td>
                         <div class="flex items-center gap-10">
                           <div class="av av-xs">${u.avatar || u.name[0]}</div>
                           <div>
-                            <div style="font-weight:700;font-size:14px;color:var(--text)">${u.name} ${isDup ? '<span class="badge badge-yellow" style="font-size:10px;padding:1px 5px">Duplicate</span>' : ''}</div>
+                            <div style="font-weight:700;font-size:14px;color:var(--text)">${u.name}</div>
                             <div class="small muted">ID: ${u.id}</div>
                           </div>
                         </div>
@@ -4241,11 +4279,11 @@ window.EventFlowModules['shared'] = true;
                         <span class="badge badge-${isDeactivated ? 'red' : 'green'}">${isDeactivated ? 'Deactivated' : 'Active'}</span>
                       </td>
                       <td>
-                        <div class="flex items-center gap-6">
+                        ${window.EventFlowAccountPolicy.canManageAccount(CU, u) ? `<div class="flex items-center gap-6">
                           <button class="btn btn-ghost btn-xs" onclick="openEditUserModal('${u.id}')" title="Edit Details">✏️ Edit</button>
                           <button class="btn btn-ghost btn-xs" onclick="toggleUserStatus('${u.id}')" title="Deactivate/Activate">${isDeactivated ? '🔓 Activate' : '🔒 Deactivate'}</button>
                           <button class="btn btn-xs btn-danger" onclick="deleteUserOps('${u.id}')" title="Delete User">🗑️</button>
-                        </div>
+                        </div>` : '<span class="small muted">Admin managed</span>'}
                       </td>
                     </tr>
                   `;
@@ -4266,6 +4304,7 @@ window.EventFlowModules['shared'] = true;
     function openEditUserModal(userId) {
       const u = DB.users.find(user => String(user.id) === String(userId));
       if (!u) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, u)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       openModal(`Edit User: ${u.name}`, `
         <div class="form-group">
           <label class="form-label">Full Name *</label>
@@ -4281,11 +4320,11 @@ window.EventFlowModules['shared'] = true;
         </div>
         <div class="form-group">
           <label class="form-label">User Role</label>
-          <select class="form-control" id="edit-usr-role">
+          <select class="form-control" id="edit-usr-role" ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? 'disabled' : ''}>
             <option value="attendee" ${u.role === 'attendee' ? 'selected' : ''}>Attendee</option>
             <option value="client" ${u.role === 'client' ? 'selected' : ''}>Client</option>
             <option value="organizer" ${u.role === 'organizer' ? 'selected' : ''}>Organizer</option>
-            <option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Staff</option>
+            ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Staff</option>`}
           </select>
         </div>
       `, [
@@ -4296,9 +4335,12 @@ window.EventFlowModules['shared'] = true;
     function saveEditUser(userId) {
       const u = DB.users.find(user => String(user.id) === String(userId));
       if (!u) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, u)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       const name = v('edit-usr-name');
       const email = v('edit-usr-email');
       if (!name || !email) { toast('Name and email are required', 'error'); return; }
+      if (window.EventFlowAccountPolicy.isEmailInUse(DB.users, email, userId)) { toast('Email already registered', 'error'); return; }
+      if (!window.EventFlowAccountPolicy.canApplyAccountUpdate(CU, u, { role: v('edit-usr-role') })) { toast('Only an admin can change account roles.', 'error'); return; }
       u.name = name;
       u.email = email;
       u.phone = v('edit-usr-phone');
@@ -4312,6 +4354,7 @@ window.EventFlowModules['shared'] = true;
     function toggleUserStatus(userId) {
       const u = DB.users.find(user => String(user.id) === String(userId));
       if (!u) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, u)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       const newStatus = (u.status === 'deactivated' || u.status === 'inactive') ? 'active' : 'deactivated';
       u.status = newStatus;
       saveDB();
@@ -4320,39 +4363,16 @@ window.EventFlowModules['shared'] = true;
     }
 
     function deleteUserOps(userId) {
+      const target = DB.users.find(user => String(user.id) === String(userId));
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, target)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       confirm2('Delete User', 'Are you sure you want to permanently delete this user record?', () => {
+        const current = DB.users.find(user => String(user.id) === String(userId));
+        if (!window.EventFlowAccountPolicy.canManageAccount(CU, current)) { toast('This account can only be managed by an admin.', 'error'); return; }
         DB.users = DB.users.filter(u => String(u.id) !== String(userId));
         saveDB();
         renderPage('attendees');
         toast('User deleted successfully', 'info');
       });
-    }
-
-    function openDuplicateUsersModal() {
-      const users = DB.users || [];
-      const emailCounts = {};
-      users.forEach(u => {
-        if (u.email) {
-          const em = u.email.toLowerCase();
-          emailCounts[em] = (emailCounts[em] || 0) + 1;
-        }
-      });
-      const dupes = users.filter(u => emailCounts[(u.email || '').toLowerCase()] > 1);
-
-      openModal('Review Duplicate Accounts', `
-        <div class="small muted mb-14">The following accounts share identical email addresses. You can deactivate secondary duplicate accounts to resolve conflicts.</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          ${dupes.map(u => `
-            <div style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2)" class="flex justify-between items-center">
-              <div>
-                <div style="font-weight:700;font-size:13.5px">${u.name} <span class="mono small muted">(${u.id})</span></div>
-                <div class="small muted">${u.email} · Phone: ${u.phone || '—'}</div>
-              </div>
-              <button class="btn btn-warning btn-xs" onclick="closeModal();toggleUserStatus('${u.id}')">Deactivate Secondary</button>
-            </div>
-          `).join('') || '<div class="empty">No duplicate accounts found.</div>'}
-        </div>
-      `, []);
     }
 
     function pageAttendeeVerification() {
@@ -4958,11 +4978,6 @@ window.EventFlowModules['shared'] = true;
         const match = joinedStr.match(/(\d{4}-\d{2})/);
         if (match && monthlyBuckets[match[1]]) {
           monthlyBuckets[match[1]].count++;
-        } else {
-          const firstKey = Object.keys(monthlyBuckets)[0];
-          if (firstKey && monthlyBuckets[firstKey]) {
-            monthlyBuckets[firstKey].count++;
-          }
         }
       });
 
@@ -5001,7 +5016,7 @@ window.EventFlowModules['shared'] = true;
   <div class="page-hd">
     <div class="page-hd-left">
       <div class="page-title">User Reports & Analytics</div>
-      <div class="page-sub">Visual bar graphs: monthly registrations, active vs inactive users, and role distributions.</div>
+      <div class="page-sub">Monthly registrations, account activity, and user role distribution.</div>
     </div>
     <div class="page-hd-right">
       <div style="display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:10px;border:1px solid var(--border)">
@@ -5049,11 +5064,11 @@ window.EventFlowModules['shared'] = true;
   <!-- Bar Graphs Row 1: Monthly Joins & Active vs Inactive Grouped Bar Chart -->
   <div class="grid-2 mb-20" style="gap:20px;align-items:start">
     <div class="card">
-      <div class="h4 mb-12">📊 Monthly Users Joining</div>
-      ${buildAnalyticsBars(monthBars, 145)}
+      <div class="h4 mb-12">Monthly Registrations</div>
+      ${buildAnalyticsLine(monthBars, 180, { label: 'New users' })}
     </div>
     <div class="card">
-      <div class="h4 mb-12">👥 Active vs Inactive Users by Role (Grouped Bar Graph)</div>
+      <div class="h4 mb-12">Active & Inactive Users</div>
       ${buildGroupedAnalyticsBars(activeInactiveGroups, 145, [
         { label: 'Active Users', color: 'linear-gradient(180deg, #22c55e, #15803d)' },
         { label: 'Inactive Users', color: 'linear-gradient(180deg, #ef4444, #b91c1c)' }
@@ -5064,12 +5079,12 @@ window.EventFlowModules['shared'] = true;
   <!-- Bar Graphs Row 2: Platform Role Breakdown & Activity Rate % -->
   <div class="grid-2" style="gap:20px;align-items:start">
     <div class="card">
-      <div class="h4 mb-12">🏷️ Total Users by Role (Bar Graph)</div>
+      <div class="h4 mb-12">Users by Role</div>
       ${buildAnalyticsBars(roleBars, 145)}
     </div>
     <div class="card">
-      <div class="h4 mb-12">📈 Activity Rate by Role (% Active Bar Graph)</div>
-      ${buildAnalyticsBars(activityRateBars, 145)}
+      <div class="h4 mb-12">Activity Rate by Role</div>
+      ${buildAnalyticsRings(activityRateBars)}
       <div style="margin-top:12px;text-align:center;font-size:11.5px;color:var(--text2)">
         Percentage of accounts actively participating in each role category.
       </div>
@@ -5082,7 +5097,7 @@ window.EventFlowModules['shared'] = true;
     // ════════════════════════════════════════════════
     function filterEventReportsStage(stage) {
       sessionStorage.setItem('admin_event_reports_stage', stage);
-      renderPage('event-reports');
+      return renderPage('event-reports');
     }
 
     function pageEventReports() {
@@ -5092,13 +5107,12 @@ window.EventFlowModules['shared'] = true;
       const ongoingEvents = allEvents.filter(e => e.status === 'ongoing');
       const upcomingEvents = allEvents.filter(e => e.status === 'upcoming' || e.status === 'published' || e.status === 'full');
       const completedEvents = allEvents.filter(e => e.status === 'completed');
-      const draftEvents = allEvents.filter(e => e.status === 'draft');
+      const draftEvents = allEvents.filter(e => ['draft', 'pending'].includes(e.status));
 
       let eventsToAnalyze = allEvents;
       if (selectedStage === 'ongoing') eventsToAnalyze = ongoingEvents;
       else if (selectedStage === 'upcoming') eventsToAnalyze = upcomingEvents;
       else if (selectedStage === 'completed') eventsToAnalyze = completedEvents;
-
       const totalEvents = eventsToAnalyze.length;
 
       // 1. Lifecycle Stage Bar Graph
@@ -5173,7 +5187,7 @@ window.EventFlowModules['shared'] = true;
   <div class="page-hd">
     <div class="page-hd-left">
       <div class="page-title">Event Reports & Analytics</div>
-      <div class="page-sub">Bar graph analytics for ongoing events, completed events, and events about to happen.</div>
+      <div class="page-sub">Event activity, category breakdowns, and registration trends.</div>
     </div>
     <div class="page-hd-right">
       <div style="display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:10px;border:1px solid var(--border)">
@@ -5224,11 +5238,11 @@ window.EventFlowModules['shared'] = true;
   <!-- Bar Graphs Row 1: Lifecycle Stages Comparison & Category Breakdown -->
   <div class="grid-2 mb-20" style="gap:20px">
     <div class="card">
-      <div class="h4 mb-12">📊 Event Lifecycle Stages (Bar Graph)</div>
+      <div class="h4 mb-12">Event Lifecycle</div>
       ${buildAnalyticsBars(lifecycleBars, 215)}
     </div>
     <div class="card">
-      <div class="h4 mb-12">🏷️ Event Category Breakdown (Bar Graph)</div>
+      <div class="h4 mb-12">Event Categories</div>
       ${buildAnalyticsBars(catBars.length ? catBars : [{ label: 'No Events', value: 0, color: 'linear-gradient(180deg, #64748b, #475569)' }], 215)}
     </div>
   </div>
@@ -5236,11 +5250,11 @@ window.EventFlowModules['shared'] = true;
   <!-- Bar Graphs Row 2: Monthly Timeline & Grouped Capacity vs Registrations -->
   <div class="grid-2" style="gap:20px">
     <div class="card">
-      <div class="h4 mb-12">📅 Monthly Event Timeline (Past, Current & Future Bar Graph)</div>
-      ${buildAnalyticsBars(monthlyBars, 215)}
+      <div class="h4 mb-12">Monthly Event Timeline</div>
+      ${buildAnalyticsLine(monthlyBars, 215, { label: 'Events' })}
     </div>
     <div class="card">
-      <div class="h4 mb-12">🎟️ Booked Seats vs Total Capacity (Grouped Bar Graph)</div>
+      <div class="h4 mb-12">Booked Seats & Capacity</div>
       ${buildGroupedAnalyticsBars(capacityOccupancyGroups, 215, [
         { label: 'Booked Seats', color: 'linear-gradient(180deg, #22c55e, #15803d)' },
         { label: 'Total Capacity', color: 'linear-gradient(180deg, #3b82f6, #1d4ed8)' }
@@ -5262,9 +5276,12 @@ window.EventFlowModules['shared'] = true;
       const allEvents = DB.events;
       const allRegs = DB.registrations;
 
-      const regRevenue = allRegs.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-      const eventCalculatedRevenue = allEvents.reduce((sum, e) => sum + ((Number(e.registered) || 0) * (Number(e.price) || 0)), 0);
-      const totalRevenue = Math.max(regRevenue, eventCalculatedRevenue, 134700);
+      const ticketPayments = (DB.financeTransactions || []).filter(payment => payment.kind !== 'event' && payment.status === 'Successful');
+      const eventPayments = (DB.eventWorkflowPayments || []).filter(payment => payment.status === 'completed');
+      const actualPayments = [...ticketPayments, ...eventPayments];
+      const regRevenue = ticketPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      const eventRevenue = eventPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      const totalRevenue = regRevenue + eventRevenue;
 
       const paidEvents = allEvents.filter(e => e.price > 0);
       const freeEvents = allEvents.filter(e => !e.price || e.price === 0);
@@ -5284,47 +5301,27 @@ window.EventFlowModules['shared'] = true;
         monthlyRevenueMap[key] = { label: monthNames[d.getMonth()], amount: 0 };
       }
 
-      allRegs.forEach(r => {
-        const dateStr = (r.date || '').toString();
-        const match = dateStr.match(/(\d{4}-\d{2})/);
-        if (match && monthlyRevenueMap[match[1]]) {
-          monthlyRevenueMap[match[1]].amount += (Number(r.amount) || 0);
-        }
-      });
-
-      allEvents.forEach(e => {
-        const dateStr = (e.date || '').toString();
-        const match = dateStr.match(/(\d{4}-\d{2})/);
-        if (match && monthlyRevenueMap[match[1]]) {
-          monthlyRevenueMap[match[1]].amount += ((Number(e.registered) || 0) * (Number(e.price) || 0));
-        }
-      });
-
-      const baseRevenues = [18500, 24200, 31800, 42500, 58400, 72600, 64000, 81200, 95400, 112000, 128500, 145000];
-      const monthKeys = Object.keys(monthlyRevenueMap);
-      monthKeys.forEach((key, idx) => {
-        if (monthlyRevenueMap[key].amount < 5000) {
-          monthlyRevenueMap[key].amount += (baseRevenues[(idx + (12 - numMonths)) % baseRevenues.length] || 25000);
-        }
+      actualPayments.forEach(payment => {
+        const month = String(payment.paymentDate || payment.date || '').slice(0, 7);
+        if (monthlyRevenueMap[month]) monthlyRevenueMap[month].amount += Number(payment.amount || 0);
       });
 
       const revenueBars = Object.values(monthlyRevenueMap).map((m, idx) => ({
         label: m.label,
-        value: Math.round(m.amount / 1000),
+        value: Number((m.amount / 1000).toFixed(2)),
         color: ['linear-gradient(180deg, #22c55e, #15803d)', 'linear-gradient(180deg, #10b981, #047857)', 'linear-gradient(180deg, #3b82f6, #1d4ed8)', 'linear-gradient(180deg, #6366f1, #4338ca)', 'linear-gradient(180deg, #8b5cf6, #7c3aed)', 'linear-gradient(180deg, #f59e0b, #d97706)'][idx % 6]
       }));
 
       // 2. Category Revenue Bar Graph
       const catRevenueMap = {};
-      allEvents.forEach(e => {
-        const cat = e.category || 'General';
-        const evRev = (Number(e.registered) || 0) * (Number(e.price) || 0);
-        catRevenueMap[cat] = (catRevenueMap[cat] || 0) + (evRev || 15000);
+      actualPayments.forEach(payment => {
+        const category = allEvents.find(event => String(event.id) === String(payment.eventId))?.category || 'General';
+        catRevenueMap[category] = (catRevenueMap[category] || 0) + Number(payment.amount || 0);
       });
 
       const catRevenueBars = Object.entries(catRevenueMap).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([label, value], idx) => ({
         label,
-        value: Math.round(value / 1000),
+        value: Number((value / 1000).toFixed(2)),
         color: ['linear-gradient(180deg, #22c55e, #15803d)', 'linear-gradient(180deg, #3b82f6, #1d4ed8)', 'linear-gradient(180deg, #f59e0b, #d97706)', 'linear-gradient(180deg, #8b5cf6, #7c3aed)', 'linear-gradient(180deg, #ec4899, #be185d)', 'linear-gradient(180deg, #14b8a6, #0f766e)'][idx % 6]
       }));
 
@@ -5338,15 +5335,15 @@ window.EventFlowModules['shared'] = true;
 
       // 4. Revenue Streams Contribution Bar Graph
       const streamBars = [
-        { label: 'Ticket Sales', value: Math.round((totalRevenue * 0.88) / 1000), color: 'linear-gradient(180deg, #22c55e, #15803d)' },
-        { label: 'Corporate Sponsors', value: Math.round((totalRevenue * 0.12) / 1000), color: 'linear-gradient(180deg, #3b82f6, #1d4ed8)' },
+        { label: 'Ticket Sales', value: Number((regRevenue / 1000).toFixed(2)), color: 'linear-gradient(180deg, #22c55e, #15803d)' },
+        { label: 'Client Event Payments', value: Number((eventRevenue / 1000).toFixed(2)), color: 'linear-gradient(180deg, #3b82f6, #1d4ed8)' },
       ];
 
       return `
   <div class="page-hd">
     <div class="page-hd-left">
       <div class="page-title">Revenue Reports & Analytics</div>
-      <div class="page-sub">Bar graph visualizations of platform revenue over time, pricing tiers, and category income.</div>
+      <div class="page-sub">Revenue trends, ticket pricing, and income by event category.</div>
     </div>
     <div class="page-hd-right">
       <div style="display:flex;gap:6px;background:var(--surface2);padding:4px;border-radius:10px;border:1px solid var(--border)">
@@ -5363,7 +5360,7 @@ window.EventFlowModules['shared'] = true;
       <div class="stat-icon" style="background:var(--green-dim);color:var(--green)">💰</div>
       <div class="stat-value" style="color:var(--green)">₹${(totalRevenue / 1000).toFixed(1)}K</div>
       <div class="stat-label">Total Platform Revenue</div>
-      <div class="stat-sub up">↑ 18.4% quarterly growth</div>
+      <div class="stat-sub neutral">Recorded payment revenue</div>
     </div>
     <div class="stat-card">
       <div class="glow" style="background:var(--accent)"></div>
@@ -5377,7 +5374,7 @@ window.EventFlowModules['shared'] = true;
       <div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">🎟️</div>
       <div class="stat-value" style="color:var(--yellow)">${totalPaidSeats}</div>
       <div class="stat-label">Paid Ticket Registrations</div>
-      <div class="stat-sub up">↑ 12% week-on-week</div>
+      <div class="stat-sub neutral">Paid registrations recorded</div>
     </div>
     <div class="stat-card">
       <div class="glow" style="background:var(--blue)"></div>
@@ -5392,10 +5389,10 @@ window.EventFlowModules['shared'] = true;
   <div class="grid-2 mb-20" style="gap:20px">
     <div class="card">
       <div class="flex justify-between items-center mb-12">
-        <span class="h4">📈 Platform Revenue Over Time (₹ in Thousands)</span>
+        <span class="h4">Platform Revenue</span>
         <span class="badge badge-green">${numMonths} Months Trend</span>
       </div>
-      ${buildAnalyticsBars(revenueBars, 215)}
+      ${buildAnalyticsLine(revenueBars, 215, { label: 'Revenue', prefix: '₹', suffix: 'K' })}
       <div style="margin-top:12px;font-size:11.5px;color:var(--text2);text-align:center">
         Monthly revenue performance trajectory in thousands (₹K).
       </div>
@@ -5403,9 +5400,9 @@ window.EventFlowModules['shared'] = true;
 
     <div class="card">
       <div class="flex justify-between items-center mb-12">
-        <span class="h4">🏷️ Revenue by Event Category (₹ in Thousands)</span>
+        <span class="h4">Revenue by Category</span>
       </div>
-      ${buildAnalyticsBars(catRevenueBars, 215)}
+      ${buildAnalyticsBars(catRevenueBars, 215, { label: 'Revenue', prefix: '₹', suffix: 'K' })}
       <div style="margin-top:12px;font-size:11.5px;color:var(--text2);text-align:center">
         Revenue breakdown by event category.
       </div>
@@ -5415,13 +5412,13 @@ window.EventFlowModules['shared'] = true;
   <!-- Bar Graphs Row 2: Ticket Pricing Tiers & Revenue Streams -->
   <div class="grid-2" style="gap:20px">
     <div class="card">
-      <div class="h4 mb-12">🎟️ Event Count by Pricing Tier (Bar Graph)</div>
+      <div class="h4 mb-12">Events by Ticket Price</div>
       ${buildAnalyticsBars(pricingTierBars, 215)}
     </div>
 
     <div class="card">
-      <div class="h4 mb-12">💼 Revenue Stream Contribution (₹ in Thousands)</div>
-      ${buildAnalyticsBars(streamBars, 215)}
+      <div class="h4 mb-12">Revenue Sources</div>
+      ${buildAnalyticsBars(streamBars, 215, { label: 'Revenue', prefix: '₹', suffix: 'K' })}
     </div>
   </div>`;
     }
@@ -5429,7 +5426,7 @@ window.EventFlowModules['shared'] = true;
     //  NON-ADMIN PAGES (ORGANIZER / CLIENT / ATTENDEE)
     // ════════════════════════════════════════════════
     function pageUsers() {
-      const users = DB.users.filter(u => u.role !== 'superuser');
+      const users = window.EventFlowAccountPolicy.visibleAccounts(CU, DB.users).filter(u => u.role !== 'superuser');
       return `
   <div class="page-hd">
     <div class="page-hd-left">
@@ -5445,7 +5442,7 @@ window.EventFlowModules['shared'] = true;
     <select class="form-control filter-select" id="um-role" onchange="refreshDirectoryUserManagement()">
       <option value="">All Users</option>
       <option value="attendee">Attendee</option>
-      <option value="staff">Staff</option>
+      ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<option value="staff">Staff</option>`}
       <option value="organizer">Event Manager</option>
       <option value="client">Client</option>
     </select>
@@ -5454,6 +5451,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function buildUserManagementTable(users) {
+      users = window.EventFlowAccountPolicy.visibleAccounts(CU, users);
       if (users.length === 0) {
         return `<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">No users found</div><p class="empty-desc">Try changing your search or role filter.</p></div>`;
       }
@@ -5473,7 +5471,7 @@ window.EventFlowModules['shared'] = true;
       <td><span class="badge badge-${ROLE_COLORS[u.role] || 'blue'}">${u.role === 'organizer' ? 'Event Manager' : ROLE_LABELS[u.role] || u.role}</span></td>
       <td><span class="badge badge-${u.status === 'active' ? 'green' : 'red'}">${u.status || 'unknown'}</span></td>
       <td>${u.joined || u.createdAt || '—'}</td>
-      <td><div class="actions"><button class="btn btn-ghost btn-xs" onclick="openEditUserModal('${u.id}')">Edit</button><button class="btn btn-xs btn-danger" onclick="removeUser('${u.id}')">Remove</button></div></td>
+      <td>${window.EventFlowAccountPolicy.canManageAccount(CU, u) ? `<div class="actions"><button class="btn btn-ghost btn-xs" onclick="openEditUserModal('${u.id}')">Edit</button><button class="btn btn-xs btn-danger" onclick="removeUser('${u.id}')">Remove</button></div>` : '<span class="small muted">Admin managed</span>'}</td>
     </tr>`;
       }).join('')}</tbody>
   </table>`;
@@ -5482,7 +5480,7 @@ window.EventFlowModules['shared'] = true;
     function refreshDirectoryUserManagement() {
       const query = (g('um-q')?.value || '').trim().toLowerCase();
       const role = g('um-role')?.value || '';
-      const users = DB.users.filter(u => {
+      const users = window.EventFlowAccountPolicy.visibleAccounts(CU, DB.users).filter(u => {
         const matchesRole = !role || u.role === role;
         const matchesQuery = !query || [u.name, u.email, u.phone].some(value => String(value || '').toLowerCase().includes(query));
         return u.role !== 'superuser' && matchesRole && matchesQuery;
@@ -5493,12 +5491,13 @@ window.EventFlowModules['shared'] = true;
     function openEditUserModal(userId) {
       const user = DB.users.find(u => String(u.id) === String(userId));
       if (!user) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, user)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       openModal('Edit User', `
   <div class="form-group"><label class="form-label">Full Name *</label><input class="form-control" id="um-edit-name" value="${user.name || ''}"></div>
   <div class="form-group"><label class="form-label">Email *</label><input class="form-control" id="um-edit-email" type="email" value="${user.email || ''}"></div>
   <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="um-edit-phone" value="${user.phone || ''}"></div>
   <div class="grid-2">
-    <div class="form-group"><label class="form-label">Role</label><select class="form-control" id="um-edit-role"><option value="attendee" ${user.role === 'attendee' ? 'selected' : ''}>Attendee</option><option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option><option value="organizer" ${user.role === 'organizer' ? 'selected' : ''}>Event Manager</option><option value="client" ${user.role === 'client' ? 'selected' : ''}>Client</option></select></div>
+    <div class="form-group"><label class="form-label">Role</label><select class="form-control" id="um-edit-role" ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? 'disabled' : ''}><option value="attendee" ${user.role === 'attendee' ? 'selected' : ''}>Attendee</option>${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option>`}<option value="organizer" ${user.role === 'organizer' ? 'selected' : ''}>Event Manager</option><option value="client" ${user.role === 'client' ? 'selected' : ''}>Client</option></select></div>
     <div class="form-group"><label class="form-label">Status</label><select class="form-control" id="um-edit-status"><option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option><option value="inactive" ${user.status !== 'active' ? 'selected' : ''}>Inactive</option></select></div>
   </div>`, [{ lbl: 'Save Changes', cls: 'btn-primary', fn: `saveUser('${user.id}')` }]);
     }
@@ -5507,10 +5506,12 @@ window.EventFlowModules['shared'] = true;
       const user = DB.users.find(u => String(u.id) === String(userId));
       const name = v('um-edit-name'), email = v('um-edit-email');
       if (!user) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, user)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       if (!name) { toast('Name is required', 'error'); return; }
       if (!email || !email.includes('@')) { toast('Valid email is required', 'error'); return; }
-      const duplicate = DB.users.find(u => u.email === email && String(u.id) !== String(userId));
+      const duplicate = window.EventFlowAccountPolicy.isEmailInUse(DB.users, email, userId);
       if (duplicate) { toast('Email already registered', 'error'); return; }
+      if (!window.EventFlowAccountPolicy.canApplyAccountUpdate(CU, user, { role: v('um-edit-role') })) { toast('Only an admin can change account roles.', 'error'); return; }
       user.name = name;
       user.email = email;
       user.phone = v('um-edit-phone');
@@ -5526,7 +5527,10 @@ window.EventFlowModules['shared'] = true;
     function removeUser(userId) {
       const user = DB.users.find(u => String(u.id) === String(userId));
       if (!user) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, user)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       confirm2('Remove User', `Remove ${user.name || 'this user'} from the user list?`, () => {
+        const current = DB.users.find(user => String(user.id) === String(userId));
+        if (!window.EventFlowAccountPolicy.canManageAccount(CU, current)) { toast('This account can only be managed by an admin.', 'error'); return; }
         const index = DB.users.findIndex(u => String(u.id) === String(userId));
         if (index === -1) return;
         DB.users.splice(index, 1);
@@ -5754,7 +5758,7 @@ window.EventFlowModules['shared'] = true;
       <div class="info-row"><span class="info-label">Capacity</span><span class="info-value">${e.registered} / ${e.capacity}</span></div>
       <div class="info-row"><span class="info-label">Price</span><span class="info-value" style="color:var(--green)">${e.price === 0 ? 'Free' : '₹' + e.price}</span></div>
       <div class="info-row"><span class="info-label">Registrations</span><span class="info-value">${regs.length}</span></div>
-      <div class="info-row"><span class="info-label">Staff Assigned</span><span class="info-value">${assigns.length}</span></div>
+      ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<div class="info-row"><span class="info-label">Staff Assigned</span><span class="info-value">${assigns.length}</span></div>`}
     </div>
     ${e.description ? `<div class="label mb-8">Description</div><p class="muted" style="font-size:13px;line-height:1.7">${e.description}</p>` : ''}
     ${(e.tags || []).length ? `<div class="label mt-16 mb-8">Tags</div><div class="tag-list">${e.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
@@ -6595,6 +6599,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageStaffAvailability() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const staff = DB.users.find(u => u.id === CU.id) || {};
       const month = parseInt(sessionStorage.getItem('avail_month') || new Date().getMonth());
       const year = parseInt(sessionStorage.getItem('avail_year') || new Date().getFullYear());
@@ -6762,6 +6767,7 @@ window.EventFlowModules['shared'] = true;
     //  STAFF MANAGEMENT
     // ════════════════════════════════════════════════
     function pageStaffCombined() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const tab = sessionStorage.getItem('staff_tab') || 'manage';
       const allStaffList = DB.users.filter(u => u.role === 'staff');
       let content = '';
@@ -6872,9 +6878,9 @@ window.EventFlowModules['shared'] = true;
     <div style="margin-bottom:16px;color:var(--text2);font-size:13px">Showing ${staffList.length} staff member${staffList.length !== 1 ? 's' : ''}</div>
     <div class="grid-3" style="gap:20px">
         ${staffList.length === 0 ? `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No staff found</div></div>` : staffList.map(s => {
-          const rating = s.rating || 4.0;
-          const reviews = Math.floor(Math.random() * 150) + 20;
-          const completedJobs = Math.floor(Math.random() * 200) + 30;
+          const rating = s.rating || 0;
+          const reviews = s.reviewCount || 0;
+          const completedJobs = s.completedJobs || 0;
           const earnings = DB.staffAssignments.filter(a => String(a.staffId) === String(s.id)).reduce((sum, a) => sum + (parseFloat(a.fee) || 0), 0);
           const staffCardAv = s.avatarImage ? `
             <img src="${s.avatarImage}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -6938,9 +6944,11 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageStaff() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       return pageStaffCombined();
     }
     function openAssignStaffModal(preStaffId = null, preEventId = null) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const staffList = DB.users.filter(u => u.role === 'staff');
       const myEvs = CU.role === 'superuser' ? DB.events : DB.events.filter(e => String(e.organizer) === String(CU.id));
       openModal('Assign Staff to Event', `
@@ -7008,11 +7016,12 @@ window.EventFlowModules['shared'] = true;
       });
     }
     function viewStaffModal(id) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const s = DB.users.find(u => String(u.id) === String(id)); if (!s) return;
       const assigns = DB.staffAssignments.filter(a => String(a.staffId) === String(id));
       const earnings = assigns.reduce((sum, a) => sum + (parseFloat(a.fee) || 0), 0);
       const acceptedAssigns = assigns.filter(a => a.status === 'accepted');
-      const rating = s.rating || 4.0;
+      const rating = s.rating || 0;
       const reviews = s.reviews || 156;
       const completedJobs = acceptedAssigns.length || 155;
 
@@ -7130,6 +7139,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageStaffEventRequests() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const requests = DB.staffAssignments.filter(a => {
         const isMe = String(a.staffId) === String(CU.id);
         const u = DB.users.find(usr => String(usr.id) === String(a.staffId));
@@ -7195,6 +7205,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function viewStaffEventDetails(eventId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const e = DB.events.find(ev => String(ev.id) === String(eventId));
       if (!e) return;
       const organizer = DB.users.find(u => String(u.id) === String(e.organizer)) || { name: 'Unknown', email: '' };
@@ -7577,6 +7588,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function viewOngoingEventDetail(eventId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return openViewEventDrawer(eventId);
       const e = DB.events.find(ev => String(ev.id) === String(eventId)); if (!e) return;
       const attendees = DB.registrations.filter(r => String(r.eventId) === String(eventId));
       const staffList = DB.staffAssignments.filter(a => String(a.eventId) === String(eventId));
@@ -8310,6 +8322,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function openSubmitStaffReportModal(eventId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       openSubmitReportModal(eventId);
     }
 
@@ -8317,6 +8330,7 @@ window.EventFlowModules['shared'] = true;
     //  STAFF REPORTS
     // ════════════════════════════════════════════════
     function pageStaffReports() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const myAssignments = DB.staffAssignments.filter(a => a.staffId === CU.id && a.status === 'accepted');
       const myEvents = myAssignments.map(a => {
         const e = DB.events.find(ev => ev.id === a.eventId);
@@ -8497,7 +8511,7 @@ window.EventFlowModules['shared'] = true;
         REGISTRATION_VERIFICATION: {
           title: 'User Executive',
           purpose: 'Protect event access by reviewing registrations, validating attendee documents, and resolving account verification issues.',
-          focus: ['Review pending registrations and identity documents', 'Verify attendee eligibility and ticket details', 'Resolve duplicate-account and registration queries'],
+          focus: ['Review pending registrations and identity documents', 'Verify attendee eligibility and ticket details', 'Resolve account access and registration queries'],
           primaryAction: "goNav('registrations')",
           primaryLabel: 'Open Registrations',
           secondaryAction: "goNav('attendees')",
@@ -8694,6 +8708,7 @@ window.EventFlowModules['shared'] = true;
       const name = v('st-name'), email = v('st-email'), phone = v('st-phone'), bio = v('st-bio');
       if (!name) { toast('Name is required', 'error'); return; }
       if (!email || !email.includes('@')) { toast('Enter a valid email', 'error'); return; }
+      if (window.EventFlowAccountPolicy.isEmailInUse(DB.users, email, CU.id || CU.userId)) { toast('Email already registered', 'error'); return; }
       CU.name = name; CU.email = email; CU.phone = phone; CU.bio = bio;
       CU.avatar = (name.split(' ').map(n => n[0]).join('').toUpperCase()).slice(0, 2);
       const u = DB.users.find(u => u.id === CU.id);
@@ -8734,7 +8749,7 @@ window.EventFlowModules['shared'] = true;
       }
       if (rating !== 'all') {
         const minRating = parseFloat(rating);
-        organizers = organizers.filter(o => (o.rating || 4) >= minRating);
+        organizers = organizers.filter(o => (o.rating || 0) >= minRating);
       }
 
       return `
@@ -8770,7 +8785,7 @@ window.EventFlowModules['shared'] = true;
   
   <div class="grid-3" style="gap:16px">
     ${organizers.length === 0 ? `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No organizers found</div><p>Try adjusting your search filters</p></div>` : organizers.map(o => {
-        const rt = o.rating || 4.2;
+        const rt = o.rating || 0;
         const rv = o.reviews || (Math.floor(rt * 38) + 12);
         const ev = o.eventsCount || (Math.floor(rt * 65) + 20);
         const orgAv = o.avatarImage ? `
@@ -8821,9 +8836,9 @@ window.EventFlowModules['shared'] = true;
       const org = DB.users.find(u => String(u.id) === String(organizerId));
       if (!org) return;
 
-      const rating = org.rating || 4.2;
-      const reviews = Math.floor(Math.random() * 200) + 50;
-      const events = Math.floor(Math.random() * 300) + 50;
+      const rating = org.rating || 0;
+      const reviews = org.reviewCount || 0;
+      const events = org.eventCount || 0;
       const completedEvents = Math.floor(events * 0.9);
 
       const orgModalAv = org.avatarImage ? `
@@ -8928,6 +8943,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageFindStaff() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const staffList = DB.users.filter(u => u.role === 'staff');
       return `
   <div class="page-hd">
@@ -8962,9 +8978,9 @@ window.EventFlowModules['shared'] = true;
   
   <div class="grid-3" style="gap:20px">
     ${staffList.length === 0 ? `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No staff found</div></div>` : staffList.map(s => {
-        const rating = s.rating || 4.0;
-        const reviews = Math.floor(Math.random() * 150) + 20;
-        const completedJobs = Math.floor(Math.random() * 200) + 30;
+        const rating = s.rating || 0;
+        const reviews = s.reviewCount || 0;
+        const completedJobs = s.completedJobs || 0;
         const staffAvatarContent = s.avatarImage ? `
           <img src="${s.avatarImage}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
           <div style="display:none;font-size:80px;font-weight:700;color:${s.color || 'var(--green)'}">${s.avatar || s.name[0]}</div>
@@ -9008,10 +9024,11 @@ window.EventFlowModules['shared'] = true;
     }
 
     function viewStaffProfile(staffId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const s = DB.users.find(u => String(u.id) === String(staffId));
       if (!s) return;
 
-      const rating = s.rating || 4.0;
+      const rating = s.rating || 0;
       const reviews = s.reviews || (Math.floor(staffId * 37) % 130 + 25);
       const completedJobs = DB.staffAssignments.filter(a => a.staffId === staffId && a.status === 'accepted').length || (Math.floor(staffId * 53) % 170 + 30);
       const avail = getAvailability(staffId);
@@ -9118,6 +9135,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function assignStaffToEvent(staffId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const s = DB.users.find(u => String(u.id) === String(staffId));
       const myEvs = DB.events.filter(e => String(e.organizer) === String(CU.id));
       if (!s) return;
@@ -9181,6 +9199,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function sendStaffRequest(staffId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const staff = DB.users.find(u => u.id === staffId);
       if (!staff) return;
 
@@ -9380,6 +9399,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageStaffRequests() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const requests = getStaffRequests(CU.id);
       const pending = requests.filter(r => r.status === 'pending');
       const accepted = DB.staffRequests.filter(r => r.staffId === CU.id && r.status === 'accepted');

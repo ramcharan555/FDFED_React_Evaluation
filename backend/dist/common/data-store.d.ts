@@ -4,6 +4,7 @@
  * Includes all entities from the ER diagram
  */
 import { UserRole, EmployeeType } from './constants';
+import type { EventPolicy } from './event-policy';
 export interface User {
     userId: string;
     name: string;
@@ -11,9 +12,11 @@ export interface User {
     password: string;
     userRole: UserRole;
     employeeType?: EmployeeType | string;
-    status: 'active' | 'inactive' | 'suspended';
+    status: 'active' | 'inactive' | 'suspended' | 'pending';
     address?: string;
     phoneNo?: string;
+    bio?: string;
+    profile?: Record<string, unknown>;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -69,6 +72,8 @@ export interface Event {
     cancellationDeadline?: string;
     eligibility?: string;
     waitlistEnabled?: boolean;
+    policySnapshot?: EventPolicy;
+    cancellation?: EventCancellation;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -115,6 +120,12 @@ export interface EventRequest {
     paymentStatus: 'unpaid' | 'deposit_pending' | 'deposit_paid' | 'fully_paid' | 'refunded';
     rejectionReason?: string;
     withdrawalReason?: string;
+    policySnapshot?: EventPolicy;
+    clientPolicyAcceptedAt?: Date;
+    clientPolicyAcceptedBy?: string;
+    organizerPolicyAcceptedAt?: Date;
+    organizerPolicyAcceptedBy?: string;
+    cancellation?: EventCancellation;
     currentProposalVersion?: number;
     proposals?: ProposalVersion[];
     negotiations?: Array<{
@@ -184,6 +195,33 @@ export interface EventWorkflowPayment {
     paymentMethod: 'DEMO_PROVIDER';
     createdAt: Date;
     updatedAt: Date;
+}
+export interface EventCancellation {
+    reason: string;
+    cancelledBy: string;
+    cancelledAt: Date;
+    policyVersion: string;
+    paidAmount: number;
+    cancellationFeePercent: number;
+    cancellationFee: number;
+    refundAmount: number;
+    refundStatus: 'pending' | 'not_applicable';
+    refundId?: string;
+    cancellationDeadline: string;
+}
+export interface EventWorkflowRefund {
+    refundId: string;
+    paymentId: string;
+    eventId: string;
+    requestId?: string;
+    clientId: string;
+    organizerId: string;
+    paidAmount: number;
+    cancellationFee: number;
+    amount: number;
+    reason: string;
+    status: 'pending';
+    requestedAt: Date;
 }
 export interface EventCompletionReport {
     reportId: string;
@@ -282,6 +320,9 @@ export interface StaffAssignment {
     eventId: string;
     organizerId: string;
     staffId: string;
+    role?: string;
+    fee?: number;
+    notes?: string;
     status: 'pending' | 'accepted' | 'declined' | 'completed' | 'cancelled';
     assignedAt: Date;
     updatedAt: Date;
@@ -295,6 +336,10 @@ export interface EventReport {
     reportTitle: string;
     reportDetails: string;
     submissionDate: string;
+    documentName?: string;
+    documentFileName?: string;
+    documentMimeType?: string;
+    documentSize?: number;
     status: 'draft' | 'submitted' | 'reviewed';
     createdAt: Date;
     updatedAt: Date;
@@ -306,6 +351,27 @@ export interface StaffReport {
     eventId: string;
     reportText: string;
     status: 'draft' | 'submitted' | 'reviewed';
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface SupportExecutiveReport {
+    reportId: string;
+    submittedBy: string;
+    sourceReference?: string;
+    title: string;
+    category: string;
+    scope: string;
+    period: string;
+    summary: string;
+    status: 'draft' | 'submitted' | 'reviewed';
+    documentName?: string;
+    documentFileName?: string;
+    documentMimeType?: string;
+    documentSize?: number;
+    reviewFeedback?: string;
+    reviewedBy?: string;
+    submittedAt?: Date;
+    reviewedAt?: Date;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -331,6 +397,8 @@ export interface StaffReview {
 export interface Notification {
     notificationId: string;
     userId: string;
+    supportTicketId?: string;
+    supportReportId?: string;
     eventId?: string;
     registrationId?: string;
     paymentId?: string;
@@ -370,6 +438,8 @@ export interface SupportTicket {
         sender: 'requester' | 'support';
         message: string;
         createdAt: Date;
+        senderId?: string;
+        senderName?: string;
     }>;
     attachments: Omit<SupportAttachment, 'userId' | 'filePath' | 'createdAt'>[];
     status: 'open' | 'in_progress' | 'resolved';
@@ -389,6 +459,7 @@ export declare class DataStore {
     eventRequests: EventRequest[];
     eventPlans: EventPlan[];
     eventWorkflowPayments: EventWorkflowPayment[];
+    eventWorkflowRefunds: EventWorkflowRefund[];
     eventCompletionReports: EventCompletionReport[];
     clientOrganizerReviews: ClientOrganizerReview[];
     registrations: Registration[];
@@ -399,6 +470,7 @@ export declare class DataStore {
     staffAssignments: StaffAssignment[];
     eventReports: EventReport[];
     staffReports: StaffReport[];
+    supportExecutiveReports: SupportExecutiveReport[];
     eventReviews: EventReview[];
     staffReviews: StaffReview[];
     notifications: Notification[];

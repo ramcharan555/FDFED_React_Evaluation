@@ -51,6 +51,7 @@ export class StaffAssignmentsService {
       eventId: dto.eventId,
       organizerId: dto.organizerId,
       staffId: dto.staffId,
+      role: dto.role, fee: dto.fee, notes: dto.notes,
       status: 'pending' as const,
       assignedAt: new Date(),
       updatedAt: new Date(),

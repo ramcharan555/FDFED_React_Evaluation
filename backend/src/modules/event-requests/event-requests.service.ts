@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { DataStore } from '../../common/data-store';
 import { UserRole } from '../../common/constants';
+import { assertEventPolicyAccepted, EventPolicyAcknowledgementDto, getEventPolicy } from '../../common/event-policy';
 import {
   CreateEventRequestDto,
   UpdateEventRequestStatusDto,
@@ -174,6 +175,8 @@ export class EventRequestsService {
     if (role !== UserRole.CLIENT && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only CLIENT can create event requests');
     }
+    const policy = getEventPolicy();
+    assertEventPolicyAccepted(dto, policy);
 
     if (this.isPastDate(dto.eventDate)) {
       throw new BadRequestException('Desired event date must be in the future');
@@ -227,6 +230,9 @@ export class EventRequestsService {
       budget: Number(dto.budget),
       capacity: Number(dto.capacity),
       requirements: dto.requirements || '',
+      policySnapshot: policy,
+      clientPolicyAcceptedAt: new Date(),
+      clientPolicyAcceptedBy: userId || clientProfile.userId,
       status: 'submitted' as const,
       agreementStatus: 'not_sent' as const,
       paymentStatus: 'unpaid' as const,
@@ -321,11 +327,19 @@ export class EventRequestsService {
     return request;
   }
 
+  private findMutableRequest(requestId: string, role: UserRole, userId?: string): any {
+    const request = this.findOne(requestId, role, userId);
+    if (['cancelled', 'completed'].includes(request.status)) {
+      throw new BadRequestException(`Cannot change a request that is already ${request.status}`);
+    }
+    return request;
+  }
+
   /**
    * Organizer starts review of a submitted request
    */
   startReview(requestId: string, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+    const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers can start request reviews');
     }
@@ -352,8 +366,8 @@ export class EventRequestsService {
     return { success: true, message: 'Request is now under review', data: request };
   }
 
-  acceptRequest(requestId: string, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+  acceptRequest(requestId: string, role: UserRole, userId?: string, acknowledgement?: EventPolicyAcknowledgementDto): any {
+    const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers can accept event requests');
     }
@@ -362,7 +376,12 @@ export class EventRequestsService {
     }
     const availability = this.checkDateAvailability(request.organizerId, request.eventDate);
     if (!availability.available) throw new ConflictException(availability.reason);
+    const policy = request.policySnapshot || getEventPolicy();
+    assertEventPolicyAccepted(acknowledgement || {}, policy);
 
+    request.policySnapshot = policy;
+    request.organizerPolicyAcceptedAt = new Date();
+    request.organizerPolicyAcceptedBy = userId;
     request.status = 'planning';
     request.updatedAt = new Date();
     request.auditHistory = request.auditHistory || [];
@@ -381,7 +400,7 @@ export class EventRequestsService {
    * Organizer requests missing info from client
    */
   requestMissingInfo(requestId: string, dto: RequestMissingInfoDto, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+    const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers can request missing information');
     }
@@ -441,7 +460,7 @@ export class EventRequestsService {
    * Client provides missing information
    */
   provideMissingInfo(requestId: string, dto: ProvideMissingInfoDto, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+    const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.CLIENT && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only client can respond to missing information requests');
     }
@@ -496,7 +515,7 @@ export class EventRequestsService {
    * Organizer sends proposal
    */
   sendProposal(requestId: string, dto: SendProposalDto, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+    const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers can send proposals');
     }
@@ -605,7 +624,7 @@ export class EventRequestsService {
    * Organizer rejects request with mandatory reason
    */
   rejectRequest(requestId: string, dto: RejectRequestDto, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+    const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers can reject event requests');
     }
@@ -620,6 +639,8 @@ export class EventRequestsService {
 
     const reasonType = dto.reasonType || 'permanent';
     if (reasonType !== 'permanent') {
+      const policy = request.policySnapshot || getEventPolicy();
+      assertEventPolicyAccepted(dto, policy);
       if (reasonType === 'budget' || reasonType === 'both') {
         if (!dto.proposedBudget || dto.proposedBudget <= request.budget) {
           throw new BadRequestException('A requested budget increase must be greater than the current budget');
@@ -633,6 +654,9 @@ export class EventRequestsService {
         if (!availability.available) throw new ConflictException(availability.reason);
       }
       request.negotiations = request.negotiations || [];
+      request.policySnapshot = policy;
+      request.organizerPolicyAcceptedAt = new Date();
+      request.organizerPolicyAcceptedBy = userId;
       request.negotiations.push({
         id: this.db.generateId('neg'),
         action: 'changes_requested',
@@ -705,7 +729,7 @@ export class EventRequestsService {
    * Client responds to proposal (accept, request_revision, reject, withdraw)
    */
   clientResponse(requestId: string, dto: ClientResponseDto, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+    const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.CLIENT && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only clients can respond to proposals');
     }
@@ -903,8 +927,8 @@ export class EventRequestsService {
     return { success: true, message: `Response "${dto.decision}" recorded`, data: request };
   }
 
-  acceptCounteroffer(requestId: string, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+  acceptCounteroffer(requestId: string, role: UserRole, userId?: string, acknowledgement?: EventPolicyAcknowledgementDto): any {
+    const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers can accept client counteroffers');
     }
@@ -913,6 +937,8 @@ export class EventRequestsService {
     }
     const counteroffer = [...(request.negotiations || [])].reverse().find(n => n.action === 'counteroffer');
     if (!counteroffer) throw new BadRequestException('Counteroffer details are missing');
+    const policy = request.policySnapshot || getEventPolicy();
+    assertEventPolicyAccepted(acknowledgement || {}, policy);
     if (counteroffer.eventDate) {
       const availability = this.checkDateAvailability(request.organizerId, counteroffer.eventDate);
       if (!availability.available) throw new ConflictException(availability.reason);
@@ -924,6 +950,9 @@ export class EventRequestsService {
     if (counteroffer.capacity !== undefined) request.capacity = counteroffer.capacity;
     if (counteroffer.venue !== undefined) request.venue = counteroffer.venue;
     if (counteroffer.requirements !== undefined) request.requirements = counteroffer.requirements;
+    request.policySnapshot = policy;
+    request.organizerPolicyAcceptedAt = new Date();
+    request.organizerPolicyAcceptedBy = userId;
     request.status = 'planning';
     request.updatedAt = new Date();
     this.addAudit(request, 'Organizer Accepted Client Counteroffer', userId, role, {
@@ -943,7 +972,7 @@ export class EventRequestsService {
    * Update Agreement Status (agreed, pending_signature, declined)
    */
   updateAgreementStatus(requestId: string, dto: UpdateAgreementStatusDto, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+    const request = this.findMutableRequest(requestId, role, userId);
 
     request.agreementStatus = dto.agreementStatus;
     request.updatedAt = new Date();
@@ -963,7 +992,7 @@ export class EventRequestsService {
    * Update Payment Status (unpaid, deposit_pending, deposit_paid, fully_paid)
    */
   updatePaymentStatus(requestId: string, dto: UpdatePaymentStatusDto, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+    const request = this.findMutableRequest(requestId, role, userId);
     if (request.activeEventPlanId) {
       throw new ForbiddenException('Payment for an approved-plan event must be verified through the event payment workflow');
     }
@@ -985,7 +1014,7 @@ export class EventRequestsService {
    * Confirm booking: STRICTLY requires agreementStatus === 'agreed' AND paymentStatus satisfied
    */
   confirmBooking(requestId: string, dto: ConfirmBookingDto, role: UserRole, userId?: string): any {
-    const request = this.findOne(requestId, role, userId);
+    const request = this.findMutableRequest(requestId, role, userId);
     if (role !== UserRole.EVENT_ORGANIZER && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers can confirm event bookings');
     }
@@ -1123,7 +1152,7 @@ export class EventRequestsService {
     if (['confirmed', 'approved', 'ongoing'].includes(dto.status)) {
       throw new BadRequestException('A request can only move to ongoing after the client approves its final event plan');
     }
-    const request = this.findOne(requestId, role, userId);
+    const request = this.findMutableRequest(requestId, role, userId);
     request.status = dto.status;
     request.updatedAt = new Date();
     return { success: true, message: `Request status updated to ${dto.status}`, data: request };

@@ -1,7 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { DataStore, Event } from '../../common/data-store';
-import { CreateEventDto, UpdateEventDto } from './dtos/event.dto';
+import { Injectable, NotFoundException, BadRequestException, ForbiddenException, ConflictException } from '@nestjs/common';
+import { DataStore, Event, EventCancellation } from '../../common/data-store';
+import { CancelClientEventDto, CreateEventDto, UpdateEventDto } from './dtos/event.dto';
 import { UserRole } from '../../common/constants';
+import { assertEventPolicyAccepted, getEventPolicy } from '../../common/event-policy';
 
 @Injectable()
 export class EventsService {
@@ -175,6 +176,9 @@ export class EventsService {
     } else if (role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers and super admin can update events');
     }
+    if (event.cancellation) {
+      throw new BadRequestException('A client-cancelled event cannot be edited. Its cancellation and refund record must be preserved.');
+    }
 
     const before = { date: event.date, time: event.time, location: event.location, status: event.status };
     if (event.clientId && updateEventDto.status === 'completed') {
@@ -226,6 +230,116 @@ export class EventsService {
       }
     }
     return this.mapEventToFrontend(event);
+  }
+
+  private ownClientEvent(eventId: string, role: UserRole, userId?: string): Event {
+    if (role !== UserRole.CLIENT) throw new ForbiddenException('Only the event client can cancel this event');
+    const event = this.dataStore.events.find(item => item.eventId === eventId);
+    if (!event) throw new NotFoundException(`Event ${eventId} not found`);
+    const client = this.dataStore.clients.find(item => item.userId === userId);
+    if (!client || event.clientId !== client.clientId) throw new ForbiddenException('You can only cancel your own events');
+    return event;
+  }
+
+  clientCancellationPreview(eventId: string, role: UserRole, userId?: string) {
+    const event = this.ownClientEvent(eventId, role, userId);
+    const request = this.dataStore.eventRequests.find(item => item.eventId === eventId);
+    const policy = event.policySnapshot || request?.policySnapshot || getEventPolicy();
+    const payment = this.dataStore.eventWorkflowPayments.find(item => item.eventId === eventId && item.status === 'completed');
+    const paidPaise = Math.round((payment?.amount || 0) * 100);
+    const feePaise = Math.round(paidPaise * policy.cancellation.feePercent / 100);
+    const match = String(event.time || '10:00').trim().match(/^(\d{1,2}):(\d{2})(?::\d{2})?\s*(AM|PM)?$/i);
+    let hours = match ? Number(match[1]) : NaN;
+    if (match?.[3]) hours = hours % 12 + (match[3].toUpperCase() === 'PM' ? 12 : 0);
+    const time = match && hours >= 0 && hours <= 23 && Number(match[2]) <= 59
+      ? `${String(hours).padStart(2, '0')}:${match[2]}:00` : '';
+    const start = time ? new Date(`${event.date}T${time}+05:30`) : new Date(NaN);
+    const deadline = new Date(start.getTime() - policy.cancellation.minimumNoticeDays * 86400000);
+    const validDate = !Number.isNaN(deadline.getTime());
+    const canCancel = event.status === 'ongoing' && validDate && new Date() <= deadline;
+    const unavailableReason = event.status !== 'ongoing'
+      ? 'Only an ongoing event can be cancelled.'
+      : !validDate ? 'The scheduled event date or time is unavailable.'
+      : `Cancellation closes ${policy.cancellation.minimumNoticeDays} days before the scheduled event start.`;
+    return {
+      eventId, canCancel, unavailableReason: canCancel ? '' : unavailableReason,
+      cancellationDeadline: validDate ? deadline.toISOString() : null,
+      minimumNoticeDays: policy.cancellation.minimumNoticeDays,
+      paidAmount: paidPaise / 100, cancellationFeePercent: policy.cancellation.feePercent,
+      cancellationFee: feePaise / 100, refundAmount: (paidPaise - feePaise) / 100,
+      policy, paymentId: payment?.paymentId,
+    };
+  }
+
+  cancelClientEvent(eventId: string, dto: CancelClientEventDto, role: UserRole, userId?: string): any {
+    const event = this.ownClientEvent(eventId, role, userId);
+    if (event.status === 'cancelled') throw new ConflictException('This event has already been cancelled');
+    const preview = this.clientCancellationPreview(eventId, role, userId);
+    if (!preview.canCancel) throw new BadRequestException(preview.unavailableReason);
+    assertEventPolicyAccepted(dto, preview.policy);
+    const reason = typeof dto.reason === 'string' ? dto.reason.trim() : '';
+    if (reason.length < 10 || reason.length > 1000) throw new BadRequestException('Provide a cancellation reason of 10 to 1000 characters');
+    if (dto.expectedPaidAmount !== preview.paidAmount) {
+      throw new ConflictException('The amount paid has changed. Review the updated cancellation fee and refund amount before confirming.');
+    }
+
+    const now = new Date();
+    const request = this.dataStore.eventRequests.find(item => item.eventId === eventId);
+    const refundId = preview.refundAmount > 0 ? this.dataStore.generateId('ref-event') : undefined;
+    const cancellation: EventCancellation = {
+      reason, cancelledBy: userId!, cancelledAt: now, policyVersion: preview.policy.version,
+      paidAmount: preview.paidAmount, cancellationFeePercent: preview.cancellationFeePercent,
+      cancellationFee: preview.cancellationFee, refundAmount: preview.refundAmount,
+      refundStatus: refundId ? 'pending' : 'not_applicable', refundId,
+      cancellationDeadline: preview.cancellationDeadline!,
+    };
+    if (refundId && preview.paymentId) {
+      this.dataStore.eventWorkflowRefunds.push({
+        refundId, paymentId: preview.paymentId, eventId, requestId: request?.requestId,
+        clientId: event.clientId!, organizerId: event.organizerId,
+        paidAmount: preview.paidAmount, cancellationFee: preview.cancellationFee,
+        amount: preview.refundAmount, reason, status: 'pending', requestedAt: now,
+      });
+    }
+    event.status = 'cancelled';
+    event.cancellation = cancellation;
+    event.updatedAt = now;
+    if (request) {
+      request.status = 'cancelled';
+      request.cancellation = cancellation;
+      request.updatedAt = now;
+      request.auditHistory = request.auditHistory || [];
+      request.auditHistory.push({ id: this.dataStore.generateId('aud'), action: 'Event Cancelled by Client', performedBy: userId!, role, timestamp: now, details: { ...cancellation } });
+    }
+    this.dataStore.eventChanges.push({ changeId: this.dataStore.generateId('chg'), eventId, type: 'cancelled', summary: `Event cancelled by client: ${reason}`, createdAt: now });
+    const notify = (recipient: string, message: string, registrationId?: string, paymentId?: string) => {
+      this.dataStore.notifications.push({ notificationId: this.dataStore.generateId('notif'), userId: recipient, eventId, registrationId, paymentId, message, type: 'event_cancelled', read: false, dateTime: now, createdAt: now });
+    };
+    const organizer = this.dataStore.organizers.find(item => item.organizerId === event.organizerId);
+    if (organizer) notify(organizer.userId, `The client cancelled "${event.name}": ${reason}`);
+    notify(userId!, `You cancelled "${event.name}". Cancellation fee: ₹${cancellation.cancellationFee.toFixed(2)}. Refund due: ₹${cancellation.refundAmount.toFixed(2)}${refundId ? ' (pending review)' : ''}.`);
+    for (const assignment of this.dataStore.staffAssignments.filter(item => item.eventId === eventId && ['pending', 'accepted'].includes(item.status))) {
+      assignment.status = 'cancelled';
+      assignment.updatedAt = now;
+      const staff = this.dataStore.staffProfiles.find(item => item.staffId === assignment.staffId);
+      if (staff) notify(staff.userId, `Your assignment for "${event.name}" was cancelled because the client cancelled the event.`);
+    }
+    for (const registration of this.dataStore.registrations.filter(item => item.eventId === eventId && ['registered', 'pending_payment', 'waitlisted'].includes(item.status))) {
+      registration.status = 'cancelled';
+      registration.cancellationReason = `Event cancelled by client: ${reason}`;
+      registration.cancelledAt = now;
+      registration.updatedAt = now;
+      registration.qrCode = undefined;
+      registration.verificationId = undefined;
+      registration.offerExpiresAt = undefined;
+      const payment = this.dataStore.payments.find(item => item.registrationId === registration.registrationId && item.status === 'completed');
+      const attendee = this.dataStore.attendees.find(item => item.attendeeId === registration.attendeeId);
+      if (payment && !this.dataStore.refunds.some(item => item.registrationId === registration.registrationId)) {
+        this.dataStore.refunds.push({ refundId: this.dataStore.generateId('ref'), paymentId: payment.paymentId, registrationId: registration.registrationId, amount: payment.amount, status: 'pending', reason: 'Event cancelled by client', requestedAt: now });
+      }
+      if (attendee) notify(attendee.userId, `"${event.name}" was cancelled by the client. Your ticket is invalid.${payment ? ' Your ticket refund is pending review.' : ''}`, registration.registrationId, payment?.paymentId);
+    }
+    return { success: true, message: 'Event cancelled. Any refund due is pending review.', data: { event: this.mapEventToFrontend(event), cancellation } };
   }
 
   completeClientEvent(eventId: string, role: UserRole, userId?: string): any {
@@ -301,6 +415,9 @@ export class EventsService {
     } else if (role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers and super admin can delete events');
     }
+    if (event.cancellation) {
+      throw new BadRequestException('A client-cancelled event cannot be deleted. Its cancellation and refund record must be preserved.');
+    }
 
     const index = this.dataStore.events.findIndex((e) => e.eventId === eventId);
     this.dataStore.events.splice(index, 1);
@@ -320,6 +437,9 @@ export class EventsService {
       }
     } else if (role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only organizers and super admin can publish events');
+    }
+    if (event.cancellation) {
+      throw new BadRequestException('A client-cancelled event cannot be published again.');
     }
 
     event.status = 'published';

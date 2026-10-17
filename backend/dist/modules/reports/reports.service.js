@@ -53,44 +53,95 @@ const EVENT_REPORT_UPLOAD_DIR = path.join(process.cwd(), 'uploads', 'event-repor
 let ReportsService = class ReportsService {
     constructor() { this.db = data_store_1.DataStore.getInstance(); }
     // EVENT REPORTS
-    createEventReport(dto, role) {
+    createEventReport(dto, role, userId, file) {
         if (role !== constants_1.UserRole.EVENT_ORGANIZER && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Only EVENT_ORGANIZER can create event reports');
         }
+        const event = this.db.events.find(item => item.eventId === dto.eventId);
+        if (!event)
+            throw new common_1.NotFoundException('Event not found');
+        const organizer = this.db.organizers.find(item => item.userId === userId);
+        if (role === constants_1.UserRole.EVENT_ORGANIZER && (!organizer || organizer.organizerId !== event.organizerId)) {
+            throw new common_1.ForbiddenException('You can only report on your own events');
+        }
+        if (event.status !== 'completed')
+            throw new common_1.BadRequestException('Reports can only be submitted for completed events');
+        const request = this.db.eventRequests.find(item => item.eventId === event.eventId);
+        const client = this.db.clients.find(item => item.clientId === (request?.clientId || event.clientId));
+        if (!client)
+            throw new common_1.BadRequestException('This event has no requesting client. A client report cannot be submitted.');
         const id = this.db.generateId('rpt-evt');
         const report = {
             eventReportId: id,
-            organizerId: dto.organizerId,
+            organizerId: event.organizerId,
             eventId: dto.eventId,
-            clientId: dto.clientId,
+            clientId: client.clientId,
             submittedByStaffId: dto.submittedByStaffId,
             reportTitle: dto.reportTitle,
             reportDetails: dto.reportDetails,
             submissionDate: dto.submissionDate,
+            documentName: file ? path.basename(file.originalname) : undefined,
+            documentFileName: file?.filename,
+            documentMimeType: file?.mimetype,
+            documentSize: file?.size,
             status: 'submitted',
             createdAt: new Date(),
             updatedAt: new Date(),
         };
         this.db.eventReports.push(report);
-        // Notify client if clientId provided
-        if (dto.clientId) {
-            const client = this.db.clients.find(c => c.clientId === dto.clientId);
-            if (client) {
-                this.db.notifications.push({
-                    notificationId: this.db.generateId('notif'),
-                    userId: client.userId,
-                    eventId: dto.eventId,
-                    registrationId: undefined,
-                    paymentId: undefined,
-                    message: `New event report: "${dto.reportTitle}" has been submitted`,
-                    type: 'event_report',
-                    read: false,
-                    dateTime: new Date(),
-                    createdAt: new Date(),
-                });
+        // The requesting client is derived from the event, never from a recipient supplied by the browser.
+        this.db.notifications.push({
+            notificationId: this.db.generateId('notif'),
+            userId: client.userId,
+            eventId: dto.eventId,
+            registrationId: undefined,
+            paymentId: undefined,
+            message: `New event report: "${dto.reportTitle}" has been submitted`,
+            type: 'event_report',
+            read: false,
+            dateTime: new Date(),
+            createdAt: new Date(),
+        });
+        return { success: true, message: 'Event report sent to the requesting client', data: this.mapEventReport(report) };
+    }
+    mapEventReport(report) {
+        const client = this.db.clients.find(item => item.clientId === report.clientId);
+        const user = this.db.users.find(item => item.userId === client?.userId);
+        return { ...report, clientUserId: client?.userId, clientName: user?.name, clientEmail: user?.email,
+            organizerUserId: this.db.organizers.find(item => item.organizerId === report.organizerId)?.userId };
+    }
+    uploadEventReport(eventId, file, role, userId) {
+        try {
+            const signature = (0, fs_1.readFileSync)(file.path).subarray(0, 5).toString('ascii');
+            if (path.extname(file.originalname).toLowerCase() === '.pdf' ? signature !== '%PDF-' : !signature.startsWith('PK')) {
+                throw new common_1.BadRequestException('The uploaded report does not match its file type');
             }
+            return this.createEventReport({ eventId, organizerId: '', reportTitle: path.basename(file.originalname),
+                reportDetails: 'Event report file submitted to the requesting client.', submissionDate: new Date().toISOString().slice(0, 10) }, role, userId, file);
         }
-        return { success: true, message: 'Event report created', data: report };
+        catch (error) {
+            if ((0, fs_1.existsSync)(file.path))
+                (0, fs_1.unlinkSync)(file.path);
+            throw error;
+        }
+    }
+    async getEventReportFile(reportId, role, userId) {
+        const report = this.db.eventReports.find(item => item.eventReportId === reportId);
+        if (!report)
+            throw new common_1.NotFoundException('Event report not found');
+        const client = this.db.clients.find(item => item.userId === userId);
+        const organizer = this.db.organizers.find(item => item.userId === userId);
+        if (role !== constants_1.UserRole.SUPER_ADMIN && !(role === constants_1.UserRole.CLIENT && client && client.clientId === report.clientId) &&
+            !(role === constants_1.UserRole.EVENT_ORGANIZER && organizer && organizer.organizerId === report.organizerId)) {
+            throw new common_1.ForbiddenException('You can only access reports for your own events');
+        }
+        if (!report.documentFileName)
+            throw new common_1.NotFoundException('No file was attached to this report');
+        const filePath = path.join(EVENT_REPORT_UPLOAD_DIR, path.basename(report.documentFileName));
+        if (!(0, fs_1.existsSync)(filePath))
+            throw new common_1.NotFoundException('Report file is unavailable');
+        await (0, promises_1.access)(filePath, fs_1.constants.R_OK);
+        return { stream: (0, fs_1.createReadStream)(filePath), fileName: report.documentName || 'event-report', mimeType: report.documentMimeType || 'application/octet-stream' };
     }
     findAllEventReports(role, userId) {
         let reports = [...this.db.eventReports];
@@ -111,7 +162,7 @@ let ReportsService = class ReportsService {
         else if (role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Access denied');
         }
-        return reports;
+        return reports.map(report => this.mapEventReport(report));
     }
     createCompletionReport(eventId, dto, files, role, userId) {
         const removeFiles = () => files.forEach(file => {
@@ -231,15 +282,26 @@ let ReportsService = class ReportsService {
         return report;
     }
     // STAFF REPORTS
-    createStaffReport(dto, role) {
+    createStaffReport(dto, role, userId) {
         if (role !== constants_1.UserRole.EVENT_STAFF && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('Only EVENT_STAFF can create staff reports');
         }
+        const staff = this.db.staffProfiles.find(profile => profile.staffId === dto.staffId);
+        const event = this.db.events.find(item => item.eventId === dto.eventId);
+        if (!staff || !event)
+            throw new common_1.NotFoundException('Staff or event not found');
+        if (role !== constants_1.UserRole.SUPER_ADMIN && staff.userId !== userId)
+            throw new common_1.ForbiddenException('You can only submit your own staff report');
+        if (event.organizerId !== dto.organizerId)
+            throw new common_1.BadRequestException('The report must go to the event organizer');
         // Staff should only report for assigned events
         const assignment = this.db.staffAssignments.find(a => a.staffId === dto.staffId && a.eventId === dto.eventId && a.status === 'accepted');
         if (!assignment && role !== constants_1.UserRole.SUPER_ADMIN) {
             throw new common_1.ForbiddenException('You can only report for events you are assigned to');
         }
+        const existing = this.db.staffReports.find(report => report.eventId === dto.eventId && report.staffId === dto.staffId);
+        if (existing)
+            return { success: true, message: 'Staff report already submitted', data: existing };
         const id = this.db.generateId('rpt-staff');
         const report = {
             staffReportId: id,

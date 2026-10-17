@@ -395,6 +395,100 @@
         ]
       }
     },
+    "/api/events/{id}/cancellation-preview": {
+      "get": {
+        "operationId": "EventsController_cancellationPreview",
+        "summary": "Preview the client cancellation deadline, fee, and refund due",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "events"
+        ]
+      }
+    },
+    "/api/events/{id}/cancel": {
+      "post": {
+        "operationId": "EventsController_cancelClientEvent",
+        "summary": "Client cancels their ongoing event at least 14 days before its start, with a 10% fee on the amount paid",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (super_admin, client, event_organizer, event_staff, attendee)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CancelClientEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "events"
+        ]
+      }
+    },
     "/api/public/events": {
       "get": {
         "operationId": "PublicEventsController_findAll",
@@ -1075,6 +1169,54 @@
         }
       }
     },
+    "/api/auth/register": {
+      "post": {
+        "operationId": "AuthController_register",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RegisterDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
+    "/api/auth/password": {
+      "post": {
+        "operationId": "AuthController_changePassword",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChangePasswordDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "auth"
+        ]
+      }
+    },
     "/api/auth/login": {
       "post": {
         "operationId": "AuthController_login",
@@ -1405,6 +1547,40 @@
         ]
       }
     },
+    "/api/event-requests/policies": {
+      "get": {
+        "operationId": "EventRequestsController_policies",
+        "summary": "Read the event rules, cancellation policy, and terms acknowledged by clients and organizers",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership checks",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role (client, event_organizer, super_admin)",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "event-requests"
+        ]
+      }
+    },
     "/api/event-requests/check-availability": {
       "get": {
         "operationId": "EventRequestsController_checkAvailability",
@@ -1695,6 +1871,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPolicyAcknowledgementDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": ""
@@ -1737,6 +1923,16 @@
             }
           }
         ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EventPolicyAcknowledgementDto"
+              }
+            }
+          }
+        },
         "responses": {
           "201": {
             "description": ""
@@ -3497,6 +3693,90 @@
         ]
       }
     },
+    "/api/reports/events/{eventId}/file": {
+      "post": {
+        "operationId": "ReportsController_uploadEventReport",
+        "summary": "Upload an event report for the requesting client (assigned organizer only)",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "eventId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/reports/events/{reportId}/file": {
+      "get": {
+        "operationId": "ReportsController_getEventReportFile",
+        "summary": "Download an event report file with ownership authorization",
+        "parameters": [
+          {
+            "name": "x-user-id",
+            "in": "header",
+            "description": "User ID for ownership",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-role",
+            "in": "header",
+            "description": "User role",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "reportId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
     "/api/reports/events/{eventId}/completion": {
       "post": {
         "operationId": "ReportsController_createCompletionReport",
@@ -3704,6 +3984,235 @@
         ],
         "responses": {
           "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/reports/support": {
+      "get": {
+        "operationId": "SupportReportsController_list",
+        "summary": "Admin report inbox; support executives see their own drafts and submissions",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "support-reports"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      },
+      "post": {
+        "operationId": "SupportReportsController_create",
+        "summary": "Save or submit a support report with an optional document",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateSupportReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "support-reports"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/reports/support/{reportId}": {
+      "get": {
+        "operationId": "SupportReportsController_get",
+        "parameters": [
+          {
+            "name": "reportId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "support-reports"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/reports/support/{reportId}/submit": {
+      "post": {
+        "operationId": "SupportReportsController_submit",
+        "parameters": [
+          {
+            "name": "reportId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "support-reports"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/reports/support/{reportId}/review": {
+      "patch": {
+        "operationId": "SupportReportsController_review",
+        "parameters": [
+          {
+            "name": "reportId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ReviewSupportReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "support-reports"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/reports/support/{reportId}/file": {
+      "get": {
+        "operationId": "SupportReportsController_download",
+        "parameters": [
+          {
+            "name": "reportId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "support-reports"
+        ],
+        "security": [
+          {
+            "bearer": []
+          }
+        ]
+      }
+    },
+    "/api/reports/operational": {
+      "get": {
+        "operationId": "OperationalReportsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      },
+      "post": {
+        "operationId": "OperationalReportsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOperationalReportDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/reports/operational/{id}/submit": {
+      "post": {
+        "operationId": "OperationalReportsController_submit",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "201": {
             "description": ""
           }
         },
@@ -4319,6 +4828,107 @@
         ]
       }
     },
+    "/api/workspace": {
+      "get": {
+        "operationId": "WorkspaceController_snapshot",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace/customers/{id}": {
+      "patch": {
+        "operationId": "WorkspaceController_updateCustomer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateUserDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspace"
+        ]
+      },
+      "delete": {
+        "operationId": "WorkspaceController_removeCustomer",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
+    "/api/workspace/events/{id}": {
+      "patch": {
+        "operationId": "WorkspaceController_updateEvent",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateEventDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "workspace"
+        ]
+      }
+    },
     "/api/uploads": {
       "post": {
         "operationId": "UploadsController_uploadFile",
@@ -4630,6 +5240,35 @@
           "ticketPrice"
         ]
       },
+      "CancelClientEventDto": {
+        "type": "object",
+        "properties": {
+          "policyAccepted": {
+            "type": "boolean",
+            "description": "Explicit acceptance of the displayed event rules, policies, and terms",
+            "example": true
+          },
+          "acceptedPolicyVersion": {
+            "type": "string",
+            "description": "Version of the displayed event policy",
+            "example": "2026-10-17.1"
+          },
+          "reason": {
+            "type": "string",
+            "description": "Reason for cancelling the event (10–1000 characters)"
+          },
+          "expectedPaidAmount": {
+            "type": "number",
+            "description": "Amount paid shown in the cancellation preview; prevents accepting a stale fee quote"
+          }
+        },
+        "required": [
+          "policyAccepted",
+          "acceptedPolicyVersion",
+          "reason",
+          "expectedPaidAmount"
+        ]
+      },
       "UpdateEventDto": {
         "type": "object",
         "properties": {
@@ -4803,6 +5442,58 @@
           }
         }
       },
+      "RegisterDto": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Full name",
+            "example": "John Doe"
+          },
+          "email": {
+            "type": "string",
+            "description": "Email address",
+            "example": "john@example.com"
+          },
+          "password": {
+            "type": "string",
+            "description": "Password (min 6 chars)",
+            "example": "Pass@123"
+          },
+          "userRole": {
+            "type": "string",
+            "description": "User role",
+            "enum": [
+              "super_admin",
+              "client",
+              "event_organizer",
+              "event_staff",
+              "attendee"
+            ],
+            "example": "attendee"
+          },
+          "address": {
+            "type": "string",
+            "description": "Address",
+            "example": "123 Main St"
+          },
+          "phoneNo": {
+            "type": "string",
+            "description": "Phone number (10 digits, starts with 6-9)",
+            "example": "9876543210"
+          }
+        },
+        "required": [
+          "name",
+          "email",
+          "password",
+          "userRole"
+        ]
+      },
+      "ChangePasswordDto": {
+        "type": "object",
+        "properties": {}
+      },
       "LoginDto": {
         "type": "object",
         "properties": {
@@ -4873,6 +5564,10 @@
       "UpdateUserDto": {
         "type": "object",
         "properties": {
+          "bio": {
+            "type": "string",
+            "description": "Profile biography"
+          },
           "name": {
             "type": "string",
             "description": "Full name"
@@ -4903,6 +5598,16 @@
       "CreateEventRequestDto": {
         "type": "object",
         "properties": {
+          "policyAccepted": {
+            "type": "boolean",
+            "description": "Explicit acceptance of the displayed event rules, policies, and terms",
+            "example": true
+          },
+          "acceptedPolicyVersion": {
+            "type": "string",
+            "description": "Version of the displayed event policy",
+            "example": "2026-10-17.1"
+          },
           "clientId": {
             "type": "string",
             "description": "Client ID",
@@ -4949,12 +5654,33 @@
           }
         },
         "required": [
+          "policyAccepted",
+          "acceptedPolicyVersion",
           "clientId",
           "organizerId",
           "eventName",
           "eventDate",
           "budget",
           "capacity"
+        ]
+      },
+      "EventPolicyAcknowledgementDto": {
+        "type": "object",
+        "properties": {
+          "policyAccepted": {
+            "type": "boolean",
+            "description": "Explicit acceptance of the displayed event rules, policies, and terms",
+            "example": true
+          },
+          "acceptedPolicyVersion": {
+            "type": "string",
+            "description": "Version of the displayed event policy",
+            "example": "2026-10-17.1"
+          }
+        },
+        "required": [
+          "policyAccepted",
+          "acceptedPolicyVersion"
         ]
       },
       "RequestMissingInfoDto": {
@@ -5636,6 +6362,92 @@
           "reportText"
         ]
       },
+      "CreateSupportReportDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string",
+            "enum": [
+              "Registration & User Management",
+              "Event Operations Report",
+              "Support & Issue Summary"
+            ]
+          },
+          "scope": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted"
+            ]
+          },
+          "sourceReference": {
+            "type": "string",
+            "description": "Stable reference used to retry a submission without duplicating it"
+          }
+        },
+        "required": [
+          "title",
+          "category",
+          "scope",
+          "period",
+          "summary"
+        ]
+      },
+      "ReviewSupportReportDto": {
+        "type": "object",
+        "properties": {
+          "feedback": {
+            "type": "string",
+            "maxLength": 2000
+          }
+        }
+      },
+      "CreateOperationalReportDto": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "period": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "draft",
+              "submitted"
+            ]
+          },
+          "sourceReference": {
+            "type": "string",
+            "description": "Stable reference used to retry a submission without duplicating it"
+          }
+        },
+        "required": [
+          "title",
+          "scope",
+          "period",
+          "summary"
+        ]
+      },
       "CreateEventReviewDto": {
         "type": "object",
         "properties": {
@@ -5748,7 +6560,6 @@
               "Notifications & Communication",
               "Website & Technical Problems",
               "Organizer & Client Support",
-              "Event Staff & Check-in Support",
               "Other Issues"
             ]
           },

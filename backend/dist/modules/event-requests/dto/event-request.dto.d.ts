@@ -1,4 +1,5 @@
-export declare class CreateEventRequestDto {
+import { EventPolicyAcknowledgementDto } from '../../../common/event-policy';
+export declare class CreateEventRequestDto extends EventPolicyAcknowledgementDto {
     clientId: string;
     organizerId: string;
     eventName: string;
@@ -30,6 +31,8 @@ export declare class ReviseProposalDto extends SendProposalDto {
     revisionReason?: string;
 }
 export declare class RejectRequestDto {
+    policyAccepted?: boolean;
+    acceptedPolicyVersion?: string;
     reason: string;
     reasonType?: 'budget' | 'date' | 'both' | 'other' | 'permanent';
     proposedBudget?: number;

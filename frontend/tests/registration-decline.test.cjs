@@ -38,7 +38,6 @@ function organizerHarness() {
     sessionStorage: { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, String(value)) },
     g: id => elements.get(id), v: id => elements.get(id)?.value || '', escapeHtml,
     apiGetEvents: async () => [event], apiGetAttendeeRegistrations: async () => [registration],
-    workflowPayload: response => response.data || response,
     apiReviewRegistration: async (...args) => { calls.push(args); return { data: { ...registration, status: 'rejected', reviewStatus: 'rejected', rejectionReason: args[2] } }; },
     openModal: (title, html) => { modal = { title, html }; }, closeModal: () => closes++, closeDrawer() {},
     saveDB: () => saves++, renderPage: async () => {}, toast() {},
@@ -97,13 +96,15 @@ function attendeeHarness() {
   const calls = [];
   let saves = 0;
   let modal;
+  const serverRegistration = { ...registration, status: 'rejected', reviewStatus: 'rejected', rejectionReason: reason, reviewedAt: new Date().toISOString() };
   const context = vm.createContext({
     CU: { id: 'usr-attendee-001', name: 'Test Attendee' },
     DB: { events: [], registrations: [] }, attendeeEventCatalog: [],
     sessionStorage: { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, String(value)) },
     escapeHtml, renderPage() {}, evStatBadge: () => 'blue',
     _currentPage: 'my-tickets', saveDB: () => saves++, toast() {},
-    apiMarkDeclineViewed: async id => { calls.push(id); return { declineViewedAt: new Date().toISOString() }; },
+    apiGetRegistration: async () => ({ ...serverRegistration }),
+    apiMarkDeclineViewed: async id => { calls.push(id); serverRegistration.declineViewedAt = new Date().toISOString(); return { ...serverRegistration }; },
     openModal: (title, html) => { modal = { title, html }; },
     renderTicketQRCode: () => { throw new Error('Declined tickets must not render a QR'); },
   });
@@ -140,6 +141,8 @@ test('declined tickets stay in Upcoming until their details are viewed, then mov
   assert.equal(h.calls.length, 1, 'Reopening a viewed decline must not save another view');
   const refreshed = context.normalizeAttendeeRegistration({ ...registration, status: 'rejected', rejectionReason: reason, declineViewedAt: normalized.declineViewedAt });
   assert.equal(refreshed.declineViewedAt, normalized.declineViewedAt);
+  assert.equal(refreshed.rejectionReason, reason);
+  assert.match(context.pageMyTickets(), /&lt;training&gt; certificate was not attached &amp; needs/);
   context.showTicketTab('upcoming');
   assert.match(context.pageMyTickets(), /Upcoming Tickets \(0\)/);
 });
@@ -152,4 +155,32 @@ test('a failed view update still shows the reason and keeps the declined ticket 
   assert.equal(h.normalized.declineViewedAt, undefined);
   assert.equal(h.saves, 0);
   assert.match(h.context.pageMyTickets(), /Upcoming Tickets \(1\)/);
+});
+
+test('opening an old confirmed ticket fetches the latest rejection and displays its reason', async () => {
+  const h = attendeeHarness();
+  h.normalized.status = 'confirmed';
+  h.normalized.rejectionReason = '';
+  await h.context.openViewTicketModal(h.normalized.registrationId);
+  assert.equal(h.normalized.status, 'rejected');
+  assert.equal(h.normalized.rejectionReason, reason);
+  assert.match(h.modal.html, /Reason from organizer/);
+  assert.match(h.modal.html, /&lt;training&gt; certificate/);
+  assert.equal(h.calls.length, 1);
+});
+
+test('organizer profiles show the event, review, reviewer name and rating', async () => {
+  const source = fs.readFileSync(path.join(frontend, 'src/apps/client/runtime.js'), 'utf8');
+  let html;
+  const context = vm.createContext({
+    DB: { users: [{ id: 'usr-org-001', name: 'Sarah Chen' }] },
+    apiGetOrganizerProfileReviews: async () => ({ data: { totalReviews: 1, averageRating: 5, reviews: [{ eventName: 'Global AI Summit 2024', reviewerName: 'Michael Torres', rating: 5, comment: 'Clear planning & great coordination.', createdAt: '2024-06-20T00:00:00Z' }] } }),
+    escapeHtml, toast() {}, openModal: (title, content) => { html = content; },
+  });
+  vm.runInContext(section(source, '    async function viewOrganizerProfile(', '    function contactOrganizer('), context);
+  await context.viewOrganizerProfile('usr-org-001');
+  assert.match(html, /Global AI Summit 2024/);
+  assert.match(html, /Given by.*Michael Torres/);
+  assert.match(html, /Clear planning &amp; great coordination\./);
+  assert.match(html, /5\/5/);
 });

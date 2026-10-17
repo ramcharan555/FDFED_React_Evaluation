@@ -3,6 +3,7 @@ const assert = require('node:assert/strict');
 const fs = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
+const vm = require('node:vm');
 require('ts-node').register({ project: path.join(__dirname, '../tsconfig.json'), transpileOnly: true });
 const { plainToInstance } = require('class-transformer');
 const { validateSync } = require('class-validator');
@@ -179,12 +180,75 @@ test('HTTP organizer decline validates the reason and delivers it to the attende
   assert.equal(own.status, 'rejected');
   assert.equal(own.rejectionReason, reason);
   assert.equal(own.declineViewedAt, undefined);
+  const attendeeSource = fs.readFileSync(path.join(__dirname, '../../frontend/src/apps/attendee/runtime.js'), 'utf8');
+  function sourceSection(start, end) {
+    const from = attendeeSource.indexOf(start);
+    const to = attendeeSource.indexOf(end, from);
+    assert.ok(from >= 0 && to > from);
+    return attendeeSource.slice(from, to);
+  }
+  const storage = new Map();
+  let ticketDetails;
+  const ui = vm.createContext({
+    CU: { id: 'usr-attendee-001', name: 'Test Attendee' }, DB: { registrations: [], events: [] }, attendeeEventCatalog: [], _currentPage: 'my-tickets',
+    sessionStorage: { getItem: key => storage.get(key), setItem: (key, value) => storage.set(key, String(value)) },
+    escapeHtml: text => String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'),
+    renderPage: async () => {}, saveDB() {}, evStatBadge: () => 'blue',
+    toast: message => assert.fail(message),
+    renderTicketQRCode: () => assert.fail('A rejected registration cannot have a usable QR'),
+    openModal: (title, content) => { ticketDetails = content; },
+    apiGetRegistration: async id => (await fetch(`${base}/registrations/${id}`, { headers })).json(),
+    apiMarkDeclineViewed: async id => {
+      const response = await fetch(`${base}/registrations/${id}/decline-viewed`, { method: 'PATCH', headers });
+      assert.equal(response.status, 200);
+      return (await response.json()).data;
+    },
+  });
+  ui.window = ui;
+  vm.runInContext(sourceSection('    function normalizeAttendeeEvent(', '    function getRegisteredEventIdSet(')
+    + sourceSection('    let attendeeRegistrationCatalog = [];', '    function completeDemoPayment(')
+    + sourceSection('    async function openViewTicketModal(', '    window.openViewTicketModal ='), ui);
+  ui.normalizeAttendeeRegistration(own);
+  vm.runInContext('attendeeRegistrationCatalog = DB.registrations;', ui);
+  assert.match(ui.pageMyTickets(), /Upcoming Tickets \(1\)/);
+  await ui.openViewTicketModal(registration.registrationId);
+  assert.ok(ticketDetails.includes(reason));
+  assert.match(ui.pageMyTickets(), /Upcoming Tickets \(0\)/);
+  ui.showTicketTab('other');
+  assert.ok(ui.pageMyTickets().includes(reason));
   const viewed = await fetch(`${base}/registrations/${registration.registrationId}/decline-viewed`, { method: 'PATCH', headers });
   assert.equal(viewed.status, 200);
   const viewedAt = (await viewed.json()).data.declineViewedAt;
   assert.ok(viewedAt);
   const refreshed = await (await fetch(`${base}/registrations/${registration.registrationId}`, { headers })).json();
   assert.equal(refreshed.declineViewedAt, viewedAt);
+  assert.equal(refreshed.rejectionReason, reason);
+  assert.equal(refreshed.status, 'rejected');
+  ui.normalizeAttendeeRegistration(refreshed);
+  assert.ok(ui.pageMyTickets().includes(reason), 'The reason must still be shown after reloading the viewed ticket');
   const notifications = await (await fetch(`${base}/notifications`, { headers })).json();
   assert.ok(notifications.some(notification => notification.registrationId === registration.registrationId && notification.type === 'registration_rejected' && notification.message.includes(reason)));
+});
+
+test('organizer sample reviews include event names and reviewer names and migrate without duplicates', t => {
+  let { db } = fixture(t);
+  const { ReviewsService } = require('../src/modules/reviews/reviews.service');
+  const dataFile = process.env.EVENTFLOW_DATA_FILE;
+  let profile = new ReviewsService().findPublicOrganizerReviews('org-001', UserRole.CLIENT).data;
+  assert.equal(profile.totalReviews, 2);
+  assert.equal(profile.averageRating, 5);
+  for (const review of profile.reviews) {
+    assert.equal(review.reviewerName, 'Michael Torres');
+    assert.notEqual(review.eventName, 'Past event');
+    assert.ok(review.comment);
+  }
+  const previousStore = JSON.parse(fs.readFileSync(dataFile, 'utf8'));
+  previousStore.clientOrganizerReviews = [];
+  delete previousStore.organizerReviewSeedVersion;
+  fs.writeFileSync(dataFile, JSON.stringify(previousStore));
+  DataStore.instance = undefined;
+  profile = new ReviewsService().findPublicOrganizerReviews('usr-org-001', UserRole.CLIENT).data;
+  assert.equal(profile.totalReviews, 2);
+  DataStore.instance = undefined;
+  assert.equal(new ReviewsService().findPublicOrganizerReviews('org-001', UserRole.CLIENT).data.totalReviews, 2);
 });

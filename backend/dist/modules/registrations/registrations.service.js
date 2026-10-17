@@ -11,6 +11,7 @@ const common_1 = require("@nestjs/common");
 const data_store_1 = require("../../common/data-store");
 const constants_1 = require("../../common/constants");
 const qr_code_service_1 = require("../../common/utils/qr-code.service");
+const account_access_1 = require("../../common/account-access");
 let RegistrationsService = class RegistrationsService {
     constructor() {
         this.db = data_store_1.DataStore.getInstance();
@@ -124,7 +125,7 @@ let RegistrationsService = class RegistrationsService {
             const ids = this.db.events.filter(e => e.clientId === client?.clientId).map(e => e.eventId);
             registrations = registrations.filter(r => ids.includes(r.eventId));
         }
-        else if (role !== constants_1.UserRole.SUPER_ADMIN)
+        else if (role !== constants_1.UserRole.SUPER_ADMIN && !(role === constants_1.UserRole.EVENT_STAFF && (0, account_access_1.isSupportExecutive)(this.db.findUserById(userId || ''))))
             throw new common_1.ForbiddenException('Access denied');
         return registrations.map(r => this.enrich(r));
     }
@@ -162,8 +163,9 @@ let RegistrationsService = class RegistrationsService {
         return { success: true, message: 'Registration details updated', data: this.enrich(registration) };
     }
     review(id, dto, role, userId) {
-        if (![constants_1.UserRole.EVENT_ORGANIZER, constants_1.UserRole.SUPER_ADMIN].includes(role))
-            throw new common_1.ForbiddenException('Only the event organizer can review registrations');
+        const support = role === constants_1.UserRole.EVENT_STAFF && (0, account_access_1.isSupportExecutive)(this.db.findUserById(userId || ''));
+        if (![constants_1.UserRole.EVENT_ORGANIZER, constants_1.UserRole.SUPER_ADMIN].includes(role) && !support)
+            throw new common_1.ForbiddenException('Only the event organizer or support executives can review registrations');
         const registration = this.db.registrations.find(r => r.registrationId === id);
         if (!registration)
             throw new common_1.NotFoundException('Registration not found');
@@ -171,7 +173,7 @@ let RegistrationsService = class RegistrationsService {
         if (!event)
             throw new common_1.NotFoundException('Event not found');
         const organizer = this.db.organizers.find(o => o.userId === userId);
-        if (role !== constants_1.UserRole.SUPER_ADMIN && (!organizer || organizer.organizerId !== event.organizerId))
+        if (role !== constants_1.UserRole.SUPER_ADMIN && !support && (!organizer || organizer.organizerId !== event.organizerId))
             throw new common_1.ForbiddenException('You can only review registrations for your own events');
         if (!['approved', 'rejected'].includes(dto.decision))
             throw new common_1.BadRequestException('Choose an approval or decline decision');

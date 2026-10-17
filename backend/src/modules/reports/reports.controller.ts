@@ -1,5 +1,5 @@
-import { BadRequestException, Controller, Get, Post, Body, Param, UseGuards, HttpCode, HttpStatus, StreamableFile, Res, UploadedFiles, UseInterceptors } from '@nestjs/common';
-import { FilesInterceptor } from '@nestjs/platform-express';
+import { BadRequestException, Controller, Get, Post, Body, Param, UseGuards, HttpCode, HttpStatus, StreamableFile, Res, UploadedFile, UploadedFiles, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor, FilesInterceptor } from '@nestjs/platform-express';
 import { ApiTags, ApiOperation, ApiResponse, ApiHeader } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { randomUUID } from 'crypto';
@@ -34,8 +34,40 @@ export class ReportsController {
   @ApiOperation({ summary: 'Create event report (EVENT_ORGANIZER sends final report to client)' })
   @ApiResponse({ status: 201, description: 'Event report created. Notifies client.' })
   @ApiResponse({ status: 403, description: 'Only EVENT_ORGANIZER can create event reports' })
-  createEventReport(@Body() dto: CreateEventReportDto, @UserRoleDecorator() role: UserRole) {
-    return this.service.createEventReport(dto, role);
+  createEventReport(@Body() dto: CreateEventReportDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.createEventReport(dto, role, userId);
+  }
+
+  @Post('events/:eventId/file')
+  @HttpCode(HttpStatus.CREATED)
+  @ApiOperation({ summary: 'Upload an event report for the requesting client (assigned organizer only)' })
+  @UseInterceptors(FileInterceptor('file', {
+    storage: diskStorage({
+      destination: (_request, _file, callback) => { ensureEventReportUploadDir(); callback(null, EVENT_REPORT_UPLOAD_DIR); },
+      filename: (_request, file, callback) => callback(null, `${randomUUID()}${path.extname(file.originalname).toLowerCase()}`),
+    }),
+    limits: { fileSize: 10 * 1024 * 1024 },
+    fileFilter: (_request, file, callback) => {
+      const mimeTypes: Record<string, string> = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+      if (mimeTypes[path.extname(file.originalname).toLowerCase()] !== file.mimetype) {
+        callback(new BadRequestException('Report files must be PDF, DOCX, or XLSX'), false); return;
+      }
+      callback(null, true);
+    },
+  }))
+  uploadEventReport(@Param('eventId') eventId: string, @UploadedFile() file: Express.Multer.File | undefined,
+    @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    if (!file) throw new BadRequestException('Select a report file to submit');
+    return this.service.uploadEventReport(eventId, file, role, userId);
+  }
+
+  @Get('events/:reportId/file')
+  @ApiOperation({ summary: 'Download an event report file with ownership authorization' })
+  async getEventReportFile(@Param('reportId') reportId: string, @UserRoleDecorator() role: UserRole,
+    @UserId() userId: string, @Res({ passthrough: true }) response: Response): Promise<StreamableFile> {
+    const file = await this.service.getEventReportFile(reportId, role, userId);
+    response.set({ 'Content-Type': file.mimeType, 'Content-Disposition': `attachment; filename="${file.fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}"` });
+    return new StreamableFile(file.stream);
   }
 
   @Get('events')
@@ -108,8 +140,8 @@ export class ReportsController {
   @ApiOperation({ summary: 'Create staff report (EVENT_STAFF only, must be assigned to event)' })
   @ApiResponse({ status: 201, description: 'Staff report created. Organizer notified.' })
   @ApiResponse({ status: 403, description: 'Staff can only report for assigned events' })
-  createStaffReport(@Body() dto: CreateStaffReportDto, @UserRoleDecorator() role: UserRole) {
-    return this.service.createStaffReport(dto, role);
+  createStaffReport(@Body() dto: CreateStaffReportDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.createStaffReport(dto, role, userId);
   }
 
   @Get('staff')

@@ -14,7 +14,8 @@ export class AnalyticsService {
 
     const totalRevenue = this.db.payments
       .filter(p => p.status === 'completed')
-      .reduce((sum, p) => sum + p.amount, 0);
+      .reduce((sum, p) => sum + p.amount, 0) + this.db.eventWorkflowPayments
+      .filter(payment => payment.status === 'completed').reduce((sum, payment) => sum + payment.amount, 0);
 
     return {
       success: true,
@@ -150,9 +151,29 @@ export class AnalyticsService {
   }
 
   // ✅ NEW: Event Staff Dashboard
-  getStaffDashboard(role: UserRole, userId: string, employeeType?: EmployeeType): any {
+  getStaffDashboard(role: UserRole, userId: string): any {
     if (role !== UserRole.EVENT_STAFF && role !== UserRole.SUPER_ADMIN) {
       throw new ForbiddenException('Only EVENT_STAFF can view this dashboard');
+    }
+    const employeeType = this.db.findUserById(userId)?.employeeType;
+    const isSupportExec = role === UserRole.EVENT_STAFF && [
+      EmployeeType.SUPPORT_EXECUTIVE, EmployeeType.REGISTRATION_VERIFICATION, EmployeeType.EVENT_OPERATIONS,
+    ].includes(employeeType as EmployeeType);
+    if (isSupportExec) {
+      return {
+        success: true,
+        data: {
+          totalUsers: this.db.users.filter(user => user.userRole !== UserRole.EVENT_STAFF && !user.employeeType).length,
+          totalEvents: this.db.events.length,
+          totalRegistrations: this.db.registrations.length,
+          registrationsAwaitingReview: this.db.registrations.filter(registration =>
+            !registration.reviewStatus && ['registered', 'pending_payment', 'waitlisted'].includes(registration.status)).length,
+          openSupportTickets: this.db.supportTickets.filter(ticket => ticket.status !== 'resolved').length,
+          operationalIssues: this.db.supportTickets.filter(ticket => ticket.requestType === 'Event Related Issues' && ticket.status !== 'resolved').length,
+          activeEvents: this.db.events.filter(event => ['published', 'ongoing'].includes(event.status)).length,
+          upcomingEvents: this.db.events.filter(event => new Date(event.date) >= new Date()).length,
+        },
+      };
     }
     const staffUser = this.db.staffProfiles.find(s => s.userId === userId);
     if (!staffUser) {
@@ -164,22 +185,7 @@ export class AnalyticsService {
     const myEventIds = myAssignments.map(a => a.eventId);
     const myReports = this.db.staffReports.filter(r => r.staffId === staffUser.staffId);
 
-    const isSupportExec = employeeType === EmployeeType.SUPPORT_EXECUTIVE ||
-      employeeType === EmployeeType.REGISTRATION_VERIFICATION ||
-      employeeType === EmployeeType.EVENT_OPERATIONS;
-
-    const departmentStats = isSupportExec
-      ? {
-          totalUsers: this.db.users.length,
-          totalEvents: this.db.events.length,
-          totalRegistrations: this.db.registrations.length,
-          registrationsAwaitingReview: this.db.registrations.filter(r => (r.status as string) === 'registered' || (r.status as string) === 'pending' || (r.status as string) === 'pending_review').length,
-          openSupportTickets: this.db.eventRequests.filter(r => r.status === 'pending').length,
-          operationalIssues: this.db.eventRequests.filter(r => (r.status as string) === 'in_review').length,
-          activeEvents: this.db.events.filter(e => e.status === 'published' || e.status === 'ongoing').length,
-          upcomingEvents: this.db.events.filter(e => new Date(e.date) >= new Date()).length,
-        }
-      : (employeeType === EmployeeType.SUPPORT_FINANCE || employeeType === EmployeeType.FINANCE_EXECUTIVE)
+    const departmentStats = (employeeType === EmployeeType.SUPPORT_FINANCE || employeeType === EmployeeType.FINANCE_EXECUTIVE)
         ? {
             pendingSupportRequests: this.db.eventRequests.filter(r => r.status === 'pending').length,
             openIssues: this.db.eventRequests.filter(r => (r.status as string) === 'in_review').length,

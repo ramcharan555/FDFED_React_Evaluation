@@ -93,37 +93,26 @@ export class ReviewsService {
   }
 
   findPublicOrganizerReviews(organizerId: string, role: UserRole): any {
-    if (role !== UserRole.CLIENT && role !== UserRole.SUPER_ADMIN) {
-      throw new ForbiddenException('Only clients can view published organizer reviews');
-    }
-    const organizer = this.db.organizers.find(item =>
-      item.organizerId === organizerId || item.userId === organizerId,
-    );
-    if (!organizer || !this.db.findUserById(organizer.userId)) {
-      throw new NotFoundException('Organizer not found');
-    }
-
-    const reviews = this.db.clientOrganizerReviews
-      .filter(review => review.organizerId === organizer.organizerId)
+    if (role !== UserRole.CLIENT && role !== UserRole.SUPER_ADMIN) throw new ForbiddenException('Only clients can view published organizer reviews');
+    const organizer = this.db.organizers.find(item => item.organizerId === organizerId || item.userId === organizerId);
+    if (!organizer || !this.db.findUserById(organizer.userId)) throw new NotFoundException('Organizer not found');
+    const reviews = this.db.clientOrganizerReviews.filter(review => review.organizerId === organizer.organizerId)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-    const averageRating = reviews.length
-      ? Number((reviews.reduce((total, review) => total + review.rating, 0) / reviews.length).toFixed(1))
-      : organizer.rating || null;
     return {
       success: true,
       data: {
         organizerId: organizer.organizerId,
-        averageRating,
+        averageRating: reviews.length ? Number((reviews.reduce((total, review) => total + review.rating, 0) / reviews.length).toFixed(1)) : organizer.rating || null,
         totalReviews: reviews.length,
-        reviews: reviews.map(({ eventId, clientId, rating, comment, createdAt }) => {
-          const client = this.db.clients.find(item => item.clientId === clientId);
+        reviews: reviews.map(review => {
+          const client = this.db.clients.find(item => item.clientId === review.clientId);
           return {
-            eventId,
-            eventName: this.db.events.find(event => event.eventId === eventId)?.name || 'Past event',
+            eventId: review.eventId,
+            eventName: this.db.events.find(event => event.eventId === review.eventId)?.name || 'Past event',
             reviewerName: client ? this.db.findUserById(client.userId)?.name || 'Client' : 'Client',
-            rating,
-            comment,
-            createdAt,
+            rating: review.rating,
+            comment: review.comment,
+            createdAt: review.createdAt,
           };
         }),
       },

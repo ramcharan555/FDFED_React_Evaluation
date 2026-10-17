@@ -1,7 +1,30 @@
-import { IsBoolean, IsString, IsNotEmpty, IsOptional, IsNumber } from 'class-validator';
+import { IsBoolean, IsString, IsNotEmpty, IsOptional, IsNumber, IsIn, Min, MinLength, MaxLength } from 'class-validator';
 import { ApiProperty } from '@nestjs/swagger';
+import { Transform } from 'class-transformer';
+import { EventPolicyAcknowledgementDto } from '../../../common/event-policy';
+
+export class CancelClientEventDto extends EventPolicyAcknowledgementDto {
+  @ApiProperty({ description: 'Reason for cancelling the event (10–1000 characters)' })
+  @Transform(({ value }) => typeof value === 'string' ? value.trim() : value)
+  @IsString()
+  @MinLength(10)
+  @MaxLength(1000)
+  reason!: string;
+
+  @ApiProperty({ description: 'Amount paid shown in the cancellation preview; prevents accepting a stale fee quote' })
+  @IsNumber()
+  @Min(0)
+  expectedPaidAmount!: number;
+}
 
 export class CreateEventDto {
+  @IsIn(['draft', 'published', 'ongoing', 'completed', 'cancelled'])
+  @IsOptional()
+  status?: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
+
+  @IsString() @IsOptional() description?: string;
+  @IsString() @IsOptional() city?: string;
+
   @ApiProperty({
     description: 'Event name/title',
     example: 'Tech Conference 2024',
@@ -83,6 +106,9 @@ export class CreateEventDto {
 }
 
 export class UpdateEventDto {
+  @IsString() @IsOptional() description?: string;
+  @IsString() @IsOptional() city?: string;
+
   @ApiProperty({
     description: 'Event name',
     required: false,
@@ -146,6 +172,7 @@ export class UpdateEventDto {
   })
   @IsString()
   @IsOptional()
+  @IsIn(['draft', 'published', 'ongoing', 'completed', 'cancelled'])
   status?: 'draft' | 'published' | 'ongoing' | 'completed' | 'cancelled';
 
   @IsString() @IsOptional() registrationDeadline?: string;

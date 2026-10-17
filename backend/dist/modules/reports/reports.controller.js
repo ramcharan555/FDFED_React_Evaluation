@@ -69,8 +69,18 @@ let ReportsController = class ReportsController {
     constructor(service) {
         this.service = service;
     }
-    createEventReport(dto, role) {
-        return this.service.createEventReport(dto, role);
+    createEventReport(dto, role, userId) {
+        return this.service.createEventReport(dto, role, userId);
+    }
+    uploadEventReport(eventId, file, role, userId) {
+        if (!file)
+            throw new common_1.BadRequestException('Select a report file to submit');
+        return this.service.uploadEventReport(eventId, file, role, userId);
+    }
+    async getEventReportFile(reportId, role, userId, response) {
+        const file = await this.service.getEventReportFile(reportId, role, userId);
+        response.set({ 'Content-Type': file.mimeType, 'Content-Disposition': `attachment; filename="${file.fileName.replace(/[^a-zA-Z0-9._-]/g, '_')}"` });
+        return new common_1.StreamableFile(file.stream);
     }
     findAllEventReports(role, userId) {
         return this.service.findAllEventReports(role, userId);
@@ -89,8 +99,8 @@ let ReportsController = class ReportsController {
         });
         return new common_1.StreamableFile(photo.stream);
     }
-    createStaffReport(dto, role) {
-        return this.service.createStaffReport(dto, role);
+    createStaffReport(dto, role, userId) {
+        return this.service.createStaffReport(dto, role, userId);
     }
     findAllStaffReports(role, userId) {
         return this.service.findAllStaffReports(role, userId);
@@ -105,10 +115,49 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Only EVENT_ORGANIZER can create event reports' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [report_dto_1.CreateEventReportDto, String]),
+    __metadata("design:paramtypes", [report_dto_1.CreateEventReportDto, String, String]),
     __metadata("design:returntype", void 0)
 ], ReportsController.prototype, "createEventReport", null);
+__decorate([
+    (0, common_1.Post)('events/:eventId/file'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.CREATED),
+    (0, swagger_1.ApiOperation)({ summary: 'Upload an event report for the requesting client (assigned organizer only)' }),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
+        storage: (0, multer_1.diskStorage)({
+            destination: (_request, _file, callback) => { ensureEventReportUploadDir(); callback(null, EVENT_REPORT_UPLOAD_DIR); },
+            filename: (_request, file, callback) => callback(null, `${(0, crypto_1.randomUUID)()}${path.extname(file.originalname).toLowerCase()}`),
+        }),
+        limits: { fileSize: 10 * 1024 * 1024 },
+        fileFilter: (_request, file, callback) => {
+            const mimeTypes = { '.pdf': 'application/pdf', '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', '.xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' };
+            if (mimeTypes[path.extname(file.originalname).toLowerCase()] !== file.mimetype) {
+                callback(new common_1.BadRequestException('Report files must be PDF, DOCX, or XLSX'), false);
+                return;
+            }
+            callback(null, true);
+        },
+    })),
+    __param(0, (0, common_1.Param)('eventId')),
+    __param(1, (0, common_1.UploadedFile)()),
+    __param(2, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(3, (0, user_id_decorator_1.UserId)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object, String, String]),
+    __metadata("design:returntype", void 0)
+], ReportsController.prototype, "uploadEventReport", null);
+__decorate([
+    (0, common_1.Get)('events/:reportId/file'),
+    (0, swagger_1.ApiOperation)({ summary: 'Download an event report file with ownership authorization' }),
+    __param(0, (0, common_1.Param)('reportId')),
+    __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
+    __param(3, (0, common_1.Res)({ passthrough: true })),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, String, Object]),
+    __metadata("design:returntype", Promise)
+], ReportsController.prototype, "getEventReportFile", null);
 __decorate([
     (0, common_1.Get)('events'),
     (0, swagger_1.ApiOperation)({ summary: 'List event reports (role-filtered)' }),
@@ -181,8 +230,9 @@ __decorate([
     (0, swagger_1.ApiResponse)({ status: 403, description: 'Staff can only report for assigned events' }),
     __param(0, (0, common_1.Body)()),
     __param(1, (0, user_role_decorator_1.UserRoleDecorator)()),
+    __param(2, (0, user_id_decorator_1.UserId)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [report_dto_1.CreateStaffReportDto, String]),
+    __metadata("design:paramtypes", [report_dto_1.CreateStaffReportDto, String, String]),
     __metadata("design:returntype", void 0)
 ], ReportsController.prototype, "createStaffReport", null);
 __decorate([

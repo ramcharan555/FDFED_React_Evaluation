@@ -12,7 +12,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ConfirmBookingDto = exports.UpdatePaymentStatusDto = exports.UpdateAgreementStatusDto = exports.ClientResponseDto = exports.RejectRequestDto = exports.ReviseProposalDto = exports.SendProposalDto = exports.ProvideMissingInfoDto = exports.RequestMissingInfoDto = exports.UpdateEventRequestStatusDto = exports.CreateEventRequestDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
-class CreateEventRequestDto {
+const event_policy_1 = require("../../../common/event-policy");
+class CreateEventRequestDto extends event_policy_1.EventPolicyAcknowledgementDto {
 }
 exports.CreateEventRequestDto = CreateEventRequestDto;
 __decorate([
@@ -152,6 +153,16 @@ __decorate([
 class RejectRequestDto {
 }
 exports.RejectRequestDto = RejectRequestDto;
+__decorate([
+    (0, class_validator_1.IsBoolean)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", Boolean)
+], RejectRequestDto.prototype, "policyAccepted", void 0);
+__decorate([
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    __metadata("design:type", String)
+], RejectRequestDto.prototype, "acceptedPolicyVersion", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ description: 'Reason for a permanent rejection or requested change', example: 'The requested date is unavailable.' }),
     (0, class_validator_1.IsString)(),

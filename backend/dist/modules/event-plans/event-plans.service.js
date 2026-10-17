@@ -290,7 +290,7 @@ let EventPlansService = class EventPlansService {
         plan.updatedAt = new Date();
         request.updatedAt = new Date();
         request.auditHistory = request.auditHistory || [];
-        if (dto.approvalStatus === 'revision_requested') {
+        if (dto.approvalStatus === 'revision_requested' || dto.approvalStatus === 'rejected') {
             if (!dto.reason?.trim())
                 throw new common_1.BadRequestException('A reason is required when requesting a new plan');
             plan.approvalStatus = 'revision_requested';
@@ -310,6 +310,11 @@ let EventPlansService = class EventPlansService {
                 this.notify(organizer.userId, request.eventId, `The client requested a new plan for "${request.eventName}": ${dto.reason.trim()}`, 'plan_revision_requested');
             return { success: true, message: 'Plan revision requested', data: plan };
         }
+        if (this.db.events.some(event => event.organizerId === request.organizerId &&
+            event.date === request.eventDate &&
+            event.status !== 'cancelled')) {
+            throw new common_1.BadRequestException('The organizer already has an event on this date. Request a revised plan.');
+        }
         plan.approvalStatus = 'approved';
         plan.status = 'approved';
         const eventId = this.db.generateId('evt');
@@ -326,6 +331,7 @@ let EventPlansService = class EventPlansService {
             ticketPrice: 0,
             status: 'ongoing',
             description: request.requirements || plan.description,
+            policySnapshot: request.policySnapshot,
             createdAt: new Date(),
             updatedAt: new Date(),
         };
