@@ -110,3 +110,38 @@ export class CreateStaffReviewDto {
   @IsNotEmpty()
   comment!: string;
 }
+
+export class CreateEventCompletionReportDto {
+  @ApiProperty({ description: 'Services provided during the event' })
+  @IsString()
+  @IsNotEmpty()
+  servicesProvided!: string;
+
+  @ApiProperty({ description: 'Expenses and budget reconciliation' })
+  @IsString()
+  @IsNotEmpty()
+  expenses!: string;
+
+  @ApiProperty({ description: 'Event completion notes' })
+  @IsString()
+  @IsNotEmpty()
+  completionNotes!: string;
+}
+
+export class CreateClientOrganizerReviewDto {
+  @ApiProperty({ description: 'Event ID', example: 'evt-001' })
+  @IsString()
+  @IsNotEmpty()
+  eventId!: string;
+
+  @ApiProperty({ description: 'Rating (1–5)', minimum: 1, maximum: 5, example: 5 })
+  @IsInt()
+  @Min(1)
+  @Max(5)
+  rating!: number;
+
+  @ApiProperty({ description: 'Written review' })
+  @IsString()
+  @IsNotEmpty()
+  comment!: string;
+}

@@ -1,15 +1,12 @@
 import { UserRole } from '../../common/constants';
+import { EventPolicyAcknowledgementDto } from '../../common/event-policy';
 import { CreateEventRequestDto, UpdateEventRequestStatusDto, RequestMissingInfoDto, ProvideMissingInfoDto, SendProposalDto, ReviseProposalDto, RejectRequestDto, ClientResponseDto, UpdateAgreementStatusDto, UpdatePaymentStatusDto, ConfirmBookingDto } from './dto/event-request.dto';
 export declare class EventRequestsService {
     private db;
     constructor();
-    /**
-     * Helper: Check if date is in the past
-     */
+    /** Reject invalid dates and dates that are not strictly in the future. */
     private isPastDate;
-    /**
-     * Check date availability for an organizer
-     */
+    /** Keep the legacy availability endpoint, but only validate future dates. */
     checkDateAvailability(organizerId: string, dateStr: string): {
         available: boolean;
         reason?: string;
@@ -20,13 +17,19 @@ export declare class EventRequestsService {
      * Auto-expire proposals that have passed their validUntil date
      */
     private checkAndExpireProposals;
+    private addAudit;
+    private notifyRequestClient;
+    private notifyRequestOrganizer;
+    findOrganizers(role: UserRole): any[];
     create(dto: CreateEventRequestDto, role: UserRole, userId?: string): any;
     findAll(role: UserRole, userId?: string): any[];
     findOne(requestId: string, role: UserRole, userId?: string): any;
+    private findMutableRequest;
     /**
      * Organizer starts review of a submitted request
      */
     startReview(requestId: string, role: UserRole, userId?: string): any;
+    acceptRequest(requestId: string, role: UserRole, userId?: string, acknowledgement?: EventPolicyAcknowledgementDto): any;
     /**
      * Organizer requests missing info from client
      */
@@ -51,6 +54,7 @@ export declare class EventRequestsService {
      * Client responds to proposal (accept, request_revision, reject, withdraw)
      */
     clientResponse(requestId: string, dto: ClientResponseDto, role: UserRole, userId?: string): any;
+    acceptCounteroffer(requestId: string, role: UserRole, userId?: string, acknowledgement?: EventPolicyAcknowledgementDto): any;
     /**
      * Update Agreement Status (agreed, pending_signature, declined)
      */

@@ -26,7 +26,16 @@ let SupportService = class SupportService {
     isSupportAgent(userId, role) {
         const user = this.db.findUserById(userId);
         return role === constants_1.UserRole.SUPER_ADMIN
-            || (role === constants_1.UserRole.EVENT_STAFF && String(user?.employeeType || '').toUpperCase() === 'SUPPORT_EXECUTIVE');
+            || (role === constants_1.UserRole.EVENT_STAFF && ['SUPPORT_EXECUTIVE', 'REGISTRATION_VERIFICATION', 'EVENT_OPERATIONS']
+                .includes(String(user?.employeeType || '').trim().toUpperCase().replace(/[\s-]+/g, '_')));
+    }
+    notifySupportAgents(ticket, message) {
+        this.db.users.filter(user => user.userRole === constants_1.UserRole.EVENT_STAFF && user.status === 'active' &&
+            this.isSupportAgent(user.userId, user.userRole) && user.userId !== ticket.userId).forEach(user => {
+            this.db.notifications.push({ notificationId: this.db.generateId('notif'), userId: user.userId,
+                supportTicketId: ticket.ticketId, message, type: 'support_ticket_received', read: false,
+                dateTime: new Date(), createdAt: new Date() });
+        });
     }
     listTickets(userId, role) {
         const canViewAll = this.isSupportAgent(userId, role);
@@ -39,6 +48,7 @@ let SupportService = class SupportService {
                 ? {
                     requesterName: this.db.findUserById(ticket.userId)?.name || 'Unknown user',
                     requesterEmail: this.db.findUserById(ticket.userId)?.email || '',
+                    requesterRole: this.db.findUserById(ticket.userId)?.userRole,
                 }
                 : {}),
         }));
@@ -84,6 +94,7 @@ let SupportService = class SupportService {
             updatedAt: now,
         };
         this.db.supportTickets.push(ticket);
+        this.notifySupportAgents(ticket, `New Customer Support request ${ticket.ticketId}: ${ticket.concern}`);
         this.db.persist();
         return ticket;
     }
@@ -95,9 +106,10 @@ let SupportService = class SupportService {
         if (!message)
             throw new common_1.BadRequestException('Follow-up message is required');
         ticket.messages ||= [];
-        ticket.messages.push({ sender: 'requester', message, createdAt: new Date() });
+        ticket.messages.push({ sender: 'requester', message, createdAt: new Date(), senderId: userId });
         ticket.status = 'open';
         ticket.updatedAt = new Date();
+        this.notifySupportAgents(ticket, `A user replied to support request ${ticket.ticketId}: ${ticket.concern}`);
         this.db.persist();
         return ticket;
     }
@@ -144,39 +156,47 @@ let SupportService = class SupportService {
         const ticket = this.db.supportTickets.find(item => item.ticketId === ticketId);
         if (!ticket)
             throw new common_1.NotFoundException('Support ticket not found');
-        const response = dto.response?.trim();
-        let emailNotificationSent = false;
-        if (dto.response !== undefined && response)
-            ticket.response = response;
+        if (!['open', 'in_progress', 'resolved'].includes(dto.status))
+            throw new common_1.BadRequestException('Select a valid ticket status');
+        const response = typeof dto.response === 'string' ? dto.response.trim() : '';
+        if (response.length > 2000)
+            throw new common_1.BadRequestException('A support reply cannot exceed 2000 characters');
+        if (dto.status === 'resolved' && !response)
+            throw new common_1.BadRequestException('Add a reply explaining the resolution before resolving this ticket');
+        const previousStatus = ticket.status;
         const lastMessage = ticket.messages?.[ticket.messages.length - 1];
-        if (dto.response !== undefined && response && lastMessage?.sender !== 'support') {
+        const newReply = Boolean(response && (lastMessage?.sender !== 'support' || lastMessage.message !== response || previousStatus !== dto.status));
+        const statusChanged = previousStatus !== dto.status;
+        let emailNotificationSent = false;
+        if (!newReply && !statusChanged)
+            return { ...ticket, emailNotificationSent };
+        const now = new Date();
+        if (newReply) {
+            const agent = this.db.findUserById(userId);
+            ticket.response = response;
             ticket.messages ||= [];
-            ticket.messages.push({ sender: 'support', message: response, createdAt: new Date() });
+            ticket.messages.push({ sender: 'support', message: response, createdAt: now, senderId: userId, senderName: agent?.name || 'Support' });
         }
-        else if (dto.response !== undefined && response && lastMessage?.message !== response) {
-            ticket.messages ||= [];
-            ticket.messages.push({ sender: 'support', message: response, createdAt: new Date() });
-        }
-        if (dto.status === 'resolved' && ticket.status !== 'resolved') {
+        ticket.status = dto.status;
+        ticket.updatedAt = now;
+        const label = { open: 'Open', in_progress: 'In progress', resolved: 'Resolved' }[dto.status];
+        this.db.notifications.push({ notificationId: this.db.generateId('notif'), userId: ticket.userId,
+            supportTicketId: ticket.ticketId, message: `Support request ${ticket.ticketId} - ${label}.${newReply ? ' ' + response : ''}`,
+            type: 'support_ticket_updated', read: false, dateTime: now, createdAt: now });
+        this.db.persist();
+        if (dto.status === 'resolved' && previousStatus !== 'resolved') {
             const requester = this.db.findUserById(ticket.userId);
-            if (!ticket.response)
-                throw new common_1.BadRequestException('Add a reply before resolving this ticket');
-            ticket.status = dto.status;
-            ticket.updatedAt = new Date();
             try {
-                emailNotificationSent = requester?.email
-                    ? await this.mailService.sendResolvedEmail(ticket, requester)
-                    : false;
+                emailNotificationSent = requester?.email ? await this.mailService.sendResolvedEmail(ticket, requester) : false;
             }
             catch (_error) {
                 emailNotificationSent = false;
             }
-            if (emailNotificationSent)
+            if (emailNotificationSent) {
                 ticket.resolutionEmailSentAt = new Date();
+                this.db.persist();
+            }
         }
-        ticket.status = dto.status;
-        ticket.updatedAt = new Date();
-        this.db.persist();
         return { ...ticket, emailNotificationSent };
     }
 };

@@ -1,4 +1,5 @@
 import React from 'react';
+import PublicEventCatalog from '../../components/PublicEventCatalog.jsx';
 import LegacyRuntime from '../../components/LegacyRuntime.jsx';
 import { legacyEvent } from '../../services/legacyEvents.js';
 import source from './runtime.js?raw';
@@ -391,117 +392,7 @@ export default function Landing() {
           margin-top: auto;
         {'}'}
       </style>
-      <div className="fe-grid">
-        
-        <div className="fe-card">
-          <div className="fe-card-img">
-            <img alt="Tech Innovation Summit 2026" onError={event => legacyEvent("this.style.display='none';this.nextElementSibling.style.display='flex'", event)} src="/images/events/event-tech-summit.jpg" />
-            <div className="fe-card-img-fallback" style={{"display": "none"}}>💻</div>
-            <div className="fe-card-img-overlay"></div>
-            <span className="fe-card-price">₹150</span>
-          </div>
-          <div className="fe-card-body">
-            <div className="fe-card-title">Tech Innovation Summit 2026</div>
-            <div className="fe-card-meta"><span>📅 2026-04-15</span><span>📍 Bangalore</span></div>
-            <p className="fe-card-desc">Annual technology conference featuring keynotes from industry leaders and live
-              demos.</p>
-            <div className="fe-card-actions">
-              <button className="btn btn-ghost btn-xs w-full" onClick={event => legacyEvent("viewPublicEventDetails(1)", event)}>👁️ Details</button>
-              <button className="btn btn-primary btn-xs w-full" onClick={event => legacyEvent("gotoLogin('attendee')", event)}>Register</button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="fe-card">
-          <div className="fe-card-img">
-            <img alt="Corporate Annual Gala 2026" onError={event => legacyEvent("this.style.display='none';this.nextElementSibling.style.display='flex'", event)} src="/images/events/event-annual-gala.jpg" />
-            <div className="fe-card-img-fallback" style={{"display": "none"}}>🥂</div>
-            <div className="fe-card-img-overlay"></div>
-            <span className="fe-card-price">₹250</span>
-          </div>
-          <div className="fe-card-body">
-            <div className="fe-card-title">Corporate Annual Gala 2026</div>
-            <div className="fe-card-meta"><span>📅 2026-04-22</span><span>📍 Delhi</span></div>
-            <p className="fe-card-desc">Exclusive annual corporate dinner and awards ceremony for top performers.</p>
-            <div className="fe-card-actions">
-              <button className="btn btn-ghost btn-xs w-full" onClick={event => legacyEvent("viewPublicEventDetails(2)", event)}>👁️ Details</button>
-              <button className="btn btn-primary btn-xs w-full" onClick={event => legacyEvent("gotoLogin('attendee')", event)}>Register</button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="fe-card">
-          <div className="fe-card-img">
-            <img alt="Spring Music Festival" onError={event => legacyEvent("this.style.display='none';this.nextElementSibling.style.display='flex'", event)} src="/images/events/event-music-fest.jpg" />
-            <div className="fe-card-img-fallback" style={{"display": "none"}}>🎵</div>
-            <div className="fe-card-img-overlay"></div>
-            <span className="fe-card-price">₹75</span>
-          </div>
-          <div className="fe-card-body">
-            <div className="fe-card-title">Spring Music Festival</div>
-            <div className="fe-card-meta"><span>📅 2026-05-01</span><span>📍 Pune</span></div>
-            <p className="fe-card-desc">Outdoor music festival featuring 15+ artists across multiple genres.</p>
-            <div className="fe-card-actions">
-              <button className="btn btn-ghost btn-xs w-full" onClick={event => legacyEvent("viewPublicEventDetails(3)", event)}>👁️ Details</button>
-              <button className="btn btn-primary btn-xs w-full" onClick={event => legacyEvent("gotoLogin('attendee')", event)}>Register</button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="fe-card">
-          <div className="fe-card-img">
-            <img alt="Digital Marketing Workshop" onError={event => legacyEvent("this.style.display='none';this.nextElementSibling.style.display='flex'", event)} src="/images/events/event-marketing-workshop.jpg" />
-            <div className="fe-card-img-fallback" style={{"display": "none"}}>📱</div>
-            <div className="fe-card-img-overlay"></div>
-            <span className="fe-card-price">₹80</span>
-          </div>
-          <div className="fe-card-body">
-            <div className="fe-card-title">Digital Marketing Workshop</div>
-            <div className="fe-card-meta"><span>📅 2026-05-10</span><span>📍 Hyderabad</span></div>
-            <p className="fe-card-desc">Hands-on full-day workshop on modern digital marketing strategies and tools.</p>
-            <div className="fe-card-actions">
-              <button className="btn btn-ghost btn-xs w-full" onClick={event => legacyEvent("viewPublicEventDetails(4)", event)}>👁️ Details</button>
-              <button className="btn btn-primary btn-xs w-full" onClick={event => legacyEvent("gotoLogin('attendee')", event)}>Register</button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="fe-card">
-          <div className="fe-card-img">
-            <img alt="Startup Pitch Night" onError={event => legacyEvent("this.style.display='none';this.nextElementSibling.style.display='flex'", event)} src="/images/events/event-pitch-night.jpg" />
-            <div className="fe-card-img-fallback" style={{"display": "none"}}>🚀</div>
-            <div className="fe-card-img-overlay"></div>
-            <span className="fe-card-price">FREE</span>
-          </div>
-          <div className="fe-card-body">
-            <div className="fe-card-title">Startup Pitch Night</div>
-            <div className="fe-card-meta"><span>📅 2026-05-15</span><span>📍 Chennai</span></div>
-            <p className="fe-card-desc">Monthly startup pitch competition with VC judges and networking opportunities.</p>
-            <div className="fe-card-actions">
-              <button className="btn btn-ghost btn-xs w-full" onClick={event => legacyEvent("viewPublicEventDetails(5)", event)}>👁️ Details</button>
-              <button className="btn btn-primary btn-xs w-full" onClick={event => legacyEvent("gotoLogin('attendee')", event)}>Register</button>
-            </div>
-          </div>
-        </div>
-        
-        <div className="fe-card">
-          <div className="fe-card-img">
-            <img alt="Photography Masterclass" onError={event => legacyEvent("this.style.display='none';this.nextElementSibling.style.display='flex'", event)} src="/images/events/event-photography.jpg" />
-            <div className="fe-card-img-fallback" style={{"display": "none"}}>📷</div>
-            <div className="fe-card-img-overlay"></div>
-            <span className="fe-card-price">₹120</span>
-          </div>
-          <div className="fe-card-body">
-            <div className="fe-card-title">Photography Masterclass</div>
-            <div className="fe-card-meta"><span>📅 2026-06-01</span><span>📍 Pune</span><span className="badge badge-green" style={{"fontSize": "10px"}}>12/30 spots</span></div>
-            <p className="fe-card-desc">Hands-on photography workshop for intermediate photographers with pro mentors.</p>
-            <div className="fe-card-actions">
-              <button className="btn btn-ghost btn-xs w-full" onClick={event => legacyEvent("viewPublicEventDetails(7)", event)}>👁️ Details</button>
-              <button className="btn btn-primary btn-xs w-full" onClick={event => legacyEvent("gotoLogin('attendee')", event)}>Register</button>
-            </div>
-          </div>
-        </div>
-      </div>
+      <PublicEventCatalog />
     </div>
   </div>
 

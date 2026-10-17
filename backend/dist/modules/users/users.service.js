@@ -38,7 +38,7 @@ let UsersService = class UsersService {
             throw new common_1.ConflictException('Email already registered');
         const userId = this.db.generateId('usr');
         const user = {
-            userId, name: dto.name, email: dto.email, password: (0, password_1.hashPassword)(dto.password),
+            userId, name: dto.name, email: dto.email.trim().toLowerCase(), password: (0, password_1.hashPassword)(dto.password),
             userRole: dto.userRole, status: 'active',
             address: dto.address, phoneNo: dto.phoneNo,
             createdAt: new Date(), updatedAt: new Date(),
@@ -58,7 +58,7 @@ let UsersService = class UsersService {
             this.db.attendees.push({ attendeeId: this.db.generateId('att'), userId, createdAt: new Date() });
         }
         else if (dto.userRole === constants_1.UserRole.SUPER_ADMIN) {
-            this.db.superAdmins.push({ superAdminId: this.db.generateId('sa'), userId, email: dto.email, createdAt: new Date() });
+            this.db.superAdmins.push({ superAdminId: this.db.generateId('sa'), userId, email: user.email, createdAt: new Date() });
         }
         const { password, ...safe } = user;
         return { success: true, message: 'User created', data: safe };
@@ -70,14 +70,25 @@ let UsersService = class UsersService {
         const user = this.db.findUserById(userId);
         if (!user)
             throw new common_1.NotFoundException(`User ${userId} not found`);
+        if (dto.email) {
+            const existing = this.db.findUserByEmail(dto.email);
+            if (existing && existing.userId !== userId)
+                throw new common_1.ConflictException('Email already registered');
+        }
         if (dto.name)
             user.name = dto.name;
-        if (dto.email)
-            user.email = dto.email;
+        if (dto.email) {
+            user.email = dto.email.trim().toLowerCase();
+            const admin = this.db.superAdmins.find(item => item.userId === userId);
+            if (admin)
+                admin.email = user.email;
+        }
         if (dto.address)
             user.address = dto.address;
         if (dto.phoneNo !== undefined)
             user.phoneNo = dto.phoneNo;
+        if (dto.bio !== undefined)
+            user.bio = dto.bio;
         if (dto.status && role === constants_1.UserRole.SUPER_ADMIN)
             user.status = dto.status;
         user.updatedAt = new Date();

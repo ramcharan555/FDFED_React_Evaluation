@@ -13,7 +13,7 @@ import {
 } from '@nestjs/common';
 import { ApiOperation, ApiResponse, ApiHeader, ApiQuery, ApiTags } from '@nestjs/swagger';
 import { EventsService } from './events.service';
-import { CreateEventDto, UpdateEventDto } from './dtos/event.dto';
+import { CancelClientEventDto, CreateEventDto, UpdateEventDto } from './dtos/event.dto';
 import { RoleGuard } from '../../common/guards/role.guard';
 import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
 import { UserId } from '../../common/decorators/user-id.decorator';
@@ -87,6 +87,30 @@ export class EventsController {
   @ApiResponse({ status: 404, description: 'Event not found' })
   findOne(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
     return this.eventsService.findOne(id, role, userId);
+  }
+
+  @Post(':id/complete')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Mark a fully paid client event completed after its event date (assigned organizer only)' })
+  completeClientEvent(
+    @Param('id') id: string,
+    @UserRoleDecorator() role: UserRole,
+    @UserId() userId: string,
+  ) {
+    return this.eventsService.completeClientEvent(id, role, userId);
+  }
+
+  @Get(':id/cancellation-preview')
+  @ApiOperation({ summary: 'Preview the client cancellation deadline, fee, and refund due' })
+  cancellationPreview(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return { success: true, data: this.eventsService.clientCancellationPreview(id, role, userId) };
+  }
+
+  @Post(':id/cancel')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Client cancels their ongoing event at least 14 days before its start, with a 10% fee on the amount paid' })
+  cancelClientEvent(@Param('id') id: string, @Body() dto: CancelClientEventDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.eventsService.cancelClientEvent(id, dto, role, userId);
   }
 
   @Put(':id')

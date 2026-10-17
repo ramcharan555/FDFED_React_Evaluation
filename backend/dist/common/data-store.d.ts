@@ -4,6 +4,7 @@
  * Includes all entities from the ER diagram
  */
 import { UserRole, EmployeeType } from './constants';
+import type { EventPolicy } from './event-policy';
 export interface User {
     userId: string;
     name: string;
@@ -11,13 +12,14 @@ export interface User {
     password: string;
     userRole: UserRole;
     employeeType?: EmployeeType | string;
-    status: 'active' | 'inactive' | 'suspended';
+    status: 'active' | 'inactive' | 'suspended' | 'pending';
     address?: string;
     phoneNo?: string;
     bio?: string;
     preferences?: {
         emailNotifications: boolean;
     };
+    profile?: Record<string, unknown>;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -73,6 +75,8 @@ export interface Event {
     cancellationDeadline?: string;
     eligibility?: string;
     waitlistEnabled?: boolean;
+    policySnapshot?: EventPolicy;
+    cancellation?: EventCancellation;
     createdAt: Date;
     updatedAt: Date;
 }
@@ -119,13 +123,42 @@ export interface EventRequest {
     capacity: number;
     requirements: string;
     notes?: string;
-    status: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'confirmed' | 'approved' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';
+    status: 'submitted' | 'pending' | 'under_review' | 'info_requested' | 'proposal_sent' | 'awaiting_client' | 'changes_requested' | 'counteroffer_received' | 'planning' | 'plan_submitted' | 'plan_revision_requested' | 'confirmed' | 'approved' | 'completed' | 'rejected' | 'cancelled' | 'withdrawn' | 'expired';
     agreementStatus: 'not_sent' | 'pending_signature' | 'agreed' | 'declined';
     paymentStatus: 'unpaid' | 'deposit_pending' | 'deposit_paid' | 'fully_paid' | 'refunded';
     rejectionReason?: string;
     withdrawalReason?: string;
+    policySnapshot?: EventPolicy;
+    clientPolicyAcceptedAt?: Date;
+    clientPolicyAcceptedBy?: string;
+    organizerPolicyAcceptedAt?: Date;
+    organizerPolicyAcceptedBy?: string;
+    cancellation?: EventCancellation;
     currentProposalVersion?: number;
     proposals?: ProposalVersion[];
+    negotiations?: Array<{
+        id: string;
+        action: string;
+        performedBy: string;
+        role: string;
+        reason?: string;
+        budget?: number;
+        eventDate?: string;
+        eventName?: string;
+        eventType?: string;
+        capacity?: number;
+        venue?: string;
+        requirements?: string;
+        timestamp: Date;
+    }>;
+    activeEventPlanId?: string;
+    planRevisionReason?: string;
+    pendingPlanDocument?: {
+        originalName: string;
+        fileName: string;
+        size: number;
+    };
+    venue?: string;
     clarifications?: RequestClarification[];
     auditHistory?: RequestAuditEntry[];
     eventId?: string;
@@ -135,6 +168,7 @@ export interface EventRequest {
 }
 export interface EventPlan {
     eventPlanId: string;
+    requestId?: string;
     eventId?: string;
     clientId: string;
     organizerId: string;
@@ -142,10 +176,89 @@ export interface EventPlan {
     description: string;
     budget: number;
     capacity: number;
+    schedule?: string;
+    services?: string;
+    arrangements?: string;
+    budgetBreakdown?: string;
+    documentName?: string;
+    documentFileName?: string;
+    documentSize?: number;
+    revision?: number;
+    revisionReason?: string;
     status: 'draft' | 'submitted' | 'revised' | 'approved' | 'rejected';
-    approvalStatus: 'pending' | 'approved' | 'rejected';
+    approvalStatus: 'pending' | 'approved' | 'revision_requested' | 'rejected';
     createdAt: Date;
     updatedAt: Date;
+}
+export interface EventWorkflowPayment {
+    paymentId: string;
+    eventId: string;
+    requestId: string;
+    clientId: string;
+    organizerId: string;
+    amount: number;
+    status: 'completed';
+    paymentDate: string;
+    paymentMethod: 'DEMO_PROVIDER';
+    createdAt: Date;
+    updatedAt: Date;
+}
+export interface EventCancellation {
+    reason: string;
+    cancelledBy: string;
+    cancelledAt: Date;
+    policyVersion: string;
+    paidAmount: number;
+    cancellationFeePercent: number;
+    cancellationFee: number;
+    refundAmount: number;
+    refundStatus: 'pending' | 'not_applicable';
+    refundId?: string;
+    cancellationDeadline: string;
+}
+export interface EventWorkflowRefund {
+    refundId: string;
+    paymentId: string;
+    eventId: string;
+    requestId?: string;
+    clientId: string;
+    organizerId: string;
+    paidAmount: number;
+    cancellationFee: number;
+    amount: number;
+    reason: string;
+    status: 'pending';
+    requestedAt: Date;
+}
+export interface EventCompletionReport {
+    reportId: string;
+    eventId: string;
+    requestId: string;
+    clientId: string;
+    organizerId: string;
+    eventName: string;
+    eventDate: string;
+    venue: string;
+    servicesProvided: string;
+    expenses: string;
+    completionNotes: string;
+    photos: Array<{
+        originalName: string;
+        fileName: string;
+        mimeType: string;
+        size: number;
+    }>;
+    submittedAt: Date;
+}
+export interface ClientOrganizerReview {
+    reviewId: string;
+    eventId: string;
+    requestId?: string;
+    clientId: string;
+    organizerId: string;
+    rating: number;
+    comment: string;
+    createdAt: Date;
 }
 export interface Registration {
     registrationId: string;
@@ -219,6 +332,9 @@ export interface StaffAssignment {
     eventId: string;
     organizerId: string;
     staffId: string;
+    role?: string;
+    fee?: number;
+    notes?: string;
     status: 'pending' | 'accepted' | 'declined' | 'completed' | 'cancelled';
     assignedAt: Date;
     updatedAt: Date;
@@ -232,6 +348,10 @@ export interface EventReport {
     reportTitle: string;
     reportDetails: string;
     submissionDate: string;
+    documentName?: string;
+    documentFileName?: string;
+    documentMimeType?: string;
+    documentSize?: number;
     status: 'draft' | 'submitted' | 'reviewed';
     createdAt: Date;
     updatedAt: Date;
@@ -246,6 +366,27 @@ export interface StaffReport {
     createdAt: Date;
     updatedAt: Date;
 }
+export interface SupportExecutiveReport {
+    reportId: string;
+    submittedBy: string;
+    sourceReference?: string;
+    title: string;
+    category: string;
+    scope: string;
+    period: string;
+    summary: string;
+    status: 'draft' | 'submitted' | 'reviewed';
+    documentName?: string;
+    documentFileName?: string;
+    documentMimeType?: string;
+    documentSize?: number;
+    reviewFeedback?: string;
+    reviewedBy?: string;
+    submittedAt?: Date;
+    reviewedAt?: Date;
+    createdAt: Date;
+    updatedAt: Date;
+}
 export interface EventReview {
     reviewId: string;
     reviewerId: string;
@@ -253,15 +394,6 @@ export interface EventReview {
     rating: number;
     comment: string;
     date: string;
-    createdAt: Date;
-}
-export interface ClientOrganizerReview {
-    reviewId: string;
-    eventId: string;
-    clientId: string;
-    organizerId: string;
-    rating: number;
-    comment: string;
     createdAt: Date;
 }
 export interface StaffReview {
@@ -277,6 +409,8 @@ export interface StaffReview {
 export interface Notification {
     notificationId: string;
     userId: string;
+    supportTicketId?: string;
+    supportReportId?: string;
     eventId?: string;
     registrationId?: string;
     paymentId?: string;
@@ -317,6 +451,8 @@ export interface SupportTicket {
         sender: 'requester' | 'support';
         message: string;
         createdAt: Date;
+        senderId?: string;
+        senderName?: string;
     }>;
     attachments: Omit<SupportAttachment, 'userId' | 'filePath' | 'createdAt'>[];
     status: 'open' | 'in_progress' | 'resolved';
@@ -335,6 +471,10 @@ export declare class DataStore {
     events: Event[];
     eventRequests: EventRequest[];
     eventPlans: EventPlan[];
+    eventWorkflowPayments: EventWorkflowPayment[];
+    eventWorkflowRefunds: EventWorkflowRefund[];
+    eventCompletionReports: EventCompletionReport[];
+    clientOrganizerReviews: ClientOrganizerReview[];
     registrations: Registration[];
     payments: Payment[];
     refunds: Refund[];
@@ -358,8 +498,8 @@ export declare class DataStore {
         createdAt: Date;
         reviewedAt?: Date;
     }>;
+    supportExecutiveReports: SupportExecutiveReport[];
     eventReviews: EventReview[];
-    clientOrganizerReviews: ClientOrganizerReview[];
     staffReviews: StaffReview[];
     notifications: Notification[];
     activityLogs: ActivityLog[];

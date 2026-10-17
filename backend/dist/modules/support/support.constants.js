@@ -88,18 +88,7 @@ exports.SUPPORT_CONCERNS = {
         'Event capacity not updating',
         'Unable to view analytics',
         'Unable to download event reports',
-        'Unable to assign staff',
         'Event revenue not showing correctly',
-    ],
-    'Event Staff & Check-in Support': [
-        'Unable to scan attendee QR code',
-        'Valid ticket showing invalid',
-        'Attendee already checked in incorrectly',
-        'Check-in not updating',
-        'Assigned event not showing',
-        'Unable to access staff dashboard',
-        'Scanner or camera not working',
-        'Attendance report not generating',
     ],
     'Other Issues': [
         'My issue is not listed',
@@ -121,15 +110,12 @@ const GENERAL_CATEGORIES = [
     'Other Issues',
 ];
 function canSubmitSupportCategory(role, requestType) {
+    if (![constants_1.UserRole.ATTENDEE, constants_1.UserRole.CLIENT, constants_1.UserRole.EVENT_ORGANIZER].includes(role))
+        return false;
     if (!exports.SUPPORT_CONCERNS[requestType])
         return false;
-    if (role === constants_1.UserRole.SUPER_ADMIN)
-        return true;
     if (requestType === 'Organizer & Client Support') {
         return role === constants_1.UserRole.EVENT_ORGANIZER || role === constants_1.UserRole.CLIENT;
-    }
-    if (requestType === 'Event Staff & Check-in Support') {
-        return role === constants_1.UserRole.EVENT_STAFF;
     }
     return GENERAL_CATEGORIES.includes(requestType);
 }

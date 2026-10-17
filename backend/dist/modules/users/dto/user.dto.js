@@ -68,6 +68,13 @@ class UpdateUserDto {
 }
 exports.UpdateUserDto = UpdateUserDto;
 __decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Profile biography' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.MaxLength)(2000),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "bio", void 0);
+__decorate([
     (0, swagger_1.ApiPropertyOptional)({ description: 'Full name' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.IsOptional)(),

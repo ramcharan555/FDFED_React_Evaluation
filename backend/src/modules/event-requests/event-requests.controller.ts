@@ -29,6 +29,7 @@ import { RoleGuard } from '../../common/guards/role.guard';
 import { UserRoleDecorator } from '../../common/decorators/user-role.decorator';
 import { UserId } from '../../common/decorators/user-id.decorator';
 import { UserRole } from '../../common/constants';
+import { EventPolicyAcknowledgementDto, getEventPolicy } from '../../common/event-policy';
 
 @ApiTags('event-requests')
 @Controller('api/event-requests')
@@ -37,6 +38,12 @@ import { UserRole } from '../../common/constants';
 @ApiHeader({ name: 'x-user-id', description: 'User ID for ownership checks', required: false })
 export class EventRequestsController {
   constructor(private readonly service: EventRequestsService) {}
+
+  @Get('policies')
+  @ApiOperation({ summary: 'Read the event rules, cancellation policy, and terms acknowledged by clients and organizers' })
+  policies() {
+    return { success: true, data: getEventPolicy() };
+  }
 
   @Get('check-availability')
   @ApiOperation({ summary: 'Check date availability for an organizer' })
@@ -48,6 +55,12 @@ export class EventRequestsController {
     @Query('date') date: string,
   ) {
     return this.service.checkDateAvailability(organizerId, date);
+  }
+
+  @Get('organizers')
+  @ApiOperation({ summary: 'List public organizer profiles for event requests' })
+  findOrganizers(@UserRoleDecorator() role: UserRole) {
+    return this.service.findOrganizers(role);
   }
 
   @Post()
@@ -85,6 +98,18 @@ export class EventRequestsController {
   @ApiResponse({ status: 200, description: 'Status moved to under_review' })
   startReview(@Param('id') id: string, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
     return this.service.startReview(id, role, userId);
+  }
+
+  @Post(':id/accept')
+  @ApiOperation({ summary: 'Organizer accepts an event request and starts planning' })
+  acceptRequest(@Param('id') id: string, @Body() acknowledgement: EventPolicyAcknowledgementDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.acceptRequest(id, role, userId, acknowledgement);
+  }
+
+  @Post(':id/accept-counteroffer')
+  @ApiOperation({ summary: 'Organizer accepts the client counteroffer and starts planning' })
+  acceptCounteroffer(@Param('id') id: string, @Body() acknowledgement: EventPolicyAcknowledgementDto, @UserRoleDecorator() role: UserRole, @UserId() userId: string) {
+    return this.service.acceptCounteroffer(id, role, userId, acknowledgement);
   }
 
   @Post(':id/request-info')

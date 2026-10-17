@@ -85,18 +85,7 @@
       'Event capacity not updating',
       'Unable to view analytics',
       'Unable to download event reports',
-      'Unable to assign staff',
       'Event revenue not showing correctly',
-    ],
-    'Event Staff & Check-in Support': [
-      'Unable to scan attendee QR code',
-      'Valid ticket showing invalid',
-      'Attendee already checked in incorrectly',
-      'Check-in not updating',
-      'Assigned event not showing',
-      'Unable to access staff dashboard',
-      'Scanner or camera not working',
-      'Attendance report not generating',
     ],
     'Other Issues': [
       'My issue is not listed',
@@ -137,9 +126,6 @@
     if (['organizer', 'event_organizer', 'client'].includes(role)) {
       return [...GENERAL_CATEGORIES.slice(0, -1), 'Organizer & Client Support', 'Other Issues'];
     }
-    if (['staff', 'event_staff'].includes(role)) {
-      return [...GENERAL_CATEGORIES.slice(0, -1), 'Event Staff & Check-in Support', 'Other Issues'];
-    }
     return GENERAL_CATEGORIES;
   }
 
@@ -150,6 +136,7 @@
       ...(options.headers || {}),
     };
     const response = await fetch(`${API_BASE_URL}${endpoint}`, { ...options, headers });
+    if (response.ok && options.method && options.method !== 'GET') window.EventFlowData?.invalidate();
 
     const contentType = response.headers.get('content-type') || '';
     const data = contentType.includes('application/json')
@@ -162,6 +149,15 @@
       throw new Error(message);
     }
     return data;
+  }
+
+  function canManageSupport(user) {
+    const normalize = value => String(value || '').trim().toLowerCase().replace(/[\s-]+/g, '_');
+    const role = normalize(user?.role || user?.userRole);
+    const type = normalize(user?.employeeType);
+    // Existing executive accounts still use the legacy staff role in saved sessions.
+    return ['superuser', 'super_admin', 'admin'].includes(role) ||
+      (['staff', 'event_staff', 'employee'].includes(role) && ['support_executive', 'registration_verification', 'event_operations'].includes(type));
   }
 
   function statusLabel(status) {
@@ -183,11 +179,11 @@
   function ticketTable(title, tickets, isSupportAgent) {
     const rows = tickets.length ? tickets.map(ticket => `
       <tr>
-        <td><strong>${escapeHtml(ticket.concern)}</strong><small>${escapeHtml(ticket.ticketId)}</small>${isSupportAgent ? `<small>${escapeHtml(ticket.requesterName)} · ${escapeHtml(ticket.requesterEmail)}</small>` : ''}</td>
+        <td><strong>${escapeHtml(ticket.concern)}</strong><small>${escapeHtml(ticket.ticketId)}</small>${ticket.eventTitle ? `<small>Event: ${escapeHtml(ticket.eventTitle)}</small>` : ''}${isSupportAgent ? `<small>${escapeHtml(ticket.requesterName)} · ${escapeHtml(ticket.requesterEmail || '')}</small>` : ''}</td>
         <td>${escapeHtml(ticket.requestType)}</td>
         <td><span class="support-status support-status-${escapeHtml(ticket.status)}">${escapeHtml(statusLabel(ticket.status))}</span></td>
-        <td>${escapeHtml(ticketDate(ticket.updatedAt || ticket.createdAt, true))}</td>
-        <td><button class="btn btn-ghost btn-sm" type="button" data-ticket-view="${escapeHtml(ticket.ticketId)}">View</button></td>
+        <td>${escapeHtml(ticket.updatedLabel || ticketDate(ticket.updatedAt || ticket.createdAt, true))}</td>
+        <td><button class="btn btn-ghost btn-sm" type="button" data-ticket-view="${escapeHtml(ticket.ticketId)}">${isSupportAgent ? 'Review &amp; Respond' : 'View'}</button></td>
       </tr>`).join('') : '<tr><td class="support-table-empty" colspan="5">No support requests yet.</td></tr>';
 
     return `
@@ -213,7 +209,7 @@
     ];
     const conversation = messages.map(message => {
       const fromSupport = message.sender === 'support';
-      const name = fromSupport ? 'Support' : (isSupportAgent ? (ticket.requesterName || 'Requester') : (user?.name || 'You'));
+      const name = fromSupport ? (message.senderName ? 'Support - ' + message.senderName : 'Support') : (isSupportAgent ? (ticket.requesterName || 'Requester') : (user?.name || 'You'));
       return `
         <article class="support-message ${fromSupport ? 'support-message-agent' : 'support-message-requester'}">
           <div class="support-message-meta"><span class="support-message-avatar">${escapeHtml(name.slice(0, 1).toUpperCase())}</span><strong>${escapeHtml(name)}</strong><time>${escapeHtml(ticketDate(message.createdAt, true))}</time></div>
@@ -222,7 +218,7 @@
         </article>`;
     }).join('');
     const actions = isSupportAgent ? `
-      <label class="support-reply-editor"><span>Reply to requester</span><textarea class="form-control" rows="3" maxlength="2000" data-support-response="${escapeHtml(ticket.ticketId)}" placeholder="Write an update the requester can see">${escapeHtml(ticket.response || '')}</textarea></label>
+      <label class="support-reply-editor"><span>Reply to requester</span><textarea class="form-control" rows="3" maxlength="2000" data-support-response="${escapeHtml(ticket.ticketId)}" placeholder="e.g. Your issue has been resolved. Please try again and let us know if you still need help."></textarea></label>
       <label class="support-status-editor" for="support-ticket-status"><span>Update status</span>
         <select class="form-control" id="support-ticket-status" data-support-status-select>
           <option value="open" ${ticket.status === 'open' ? 'selected' : ''}>Open</option>
@@ -231,7 +227,7 @@
         </select>
       </label>
       <p class="support-feedback" data-status-feedback role="status" aria-live="polite"></p>
-      <div class="support-ticket-actions"><button class="btn btn-primary" type="button" data-support-status-update data-ticket-id="${escapeHtml(ticket.ticketId)}">Update Status</button></div>` : `
+      <div class="support-ticket-actions"><button class="btn btn-primary" type="button" data-support-status-update data-ticket-id="${escapeHtml(ticket.ticketId)}">Send Reply &amp; Update Status</button></div>` : `
       <form class="support-follow-up" data-follow-up-form="${escapeHtml(ticket.ticketId)}">
         <label for="support-follow-up-message">Follow-up message</label>
         <textarea class="form-control" id="support-follow-up-message" name="message" rows="4" maxlength="2000" required></textarea>
@@ -242,18 +238,18 @@
     return `
       <div class="support-modal-heading"><h2 id="support-modal-title">Support Request ${escapeHtml(ticket.ticketId)}</h2><button class="support-modal-x" type="button" aria-label="Close" data-modal-close>×</button></div>
       <div class="support-modal-body">
+        ${isSupportAgent ? `<div class="support-modal-summary"><span>Requested by</span><strong>${escapeHtml(ticket.requesterName || 'Requester')}<small style="display:block;font-weight:400">${escapeHtml(ticket.requesterEmail || '')}</small></strong></div>` : ''}
         <div class="support-modal-summary"><span>Subject</span><strong>${escapeHtml(ticket.concern)}</strong></div>
+        ${ticket.eventTitle ? `<div class="support-modal-summary"><span>Event</span><strong>${escapeHtml(ticket.eventTitle)}</strong></div>` : ''}
         <div class="support-modal-summary"><span>Status</span><strong><span class="support-status support-status-${escapeHtml(ticket.status)}">${escapeHtml(statusLabel(ticket.status))}</span></strong></div>
         <div class="support-conversation">${conversation}</div>
         ${actions}
       </div>`;
   }
 
-  async function render(user, backLabel = 'Back to Settings') {
+  async function render(user, backLabel = 'Back to Settings', options = {}) {
     const categories = allowedCategories(user);
-    const isSupportAgent = ['superuser', 'super_admin', 'admin'].includes(
-      String(user?.role || user?.userRole || '').toLowerCase().replace(/-/g, '_'),
-    ) || String(user?.employeeType || '').toUpperCase() === 'SUPPORT_EXECUTIVE';
+    const isSupportAgent = options.management === true || canManageSupport(user);
     let tickets = [];
     let ticketLoadError = '';
     try {
@@ -262,14 +258,24 @@
       ticketLoadError = error.message || 'Unable to load support tickets.';
       console.error('Failed to load Customer Support tickets.', error);
     }
+    if (isSupportAgent && options.getAdditionalTickets) {
+      const existingIds = new Set(tickets.map(ticket => String(ticket.ticketId)));
+      tickets = [...tickets, ...options.getAdditionalTickets().filter(ticket => !existingIds.has(String(ticket.ticketId)))];
+    }
 
     return `
       <div class="page-hd support-page-heading">
         <div class="page-hd-left">
-          <div class="page-title">Customer Support</div>
+          <div class="page-title">${isSupportAgent ? 'Support &amp; Issue Management' : 'Customer Support'}</div>
           <div class="page-sub">${isSupportAgent ? 'Review requester tickets, update their status, and send replies visible in My Tickets.' : 'Tell us what you need help with. Your ticket number, status, and support replies will be available here.'}</div>
         </div>
       </div>
+      ${isSupportAgent ? `<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:18px">
+        <button type="button" class="btn btn-ghost" data-support-refresh>Refresh Requests</button>
+        <span class="support-status support-status-open">Open: ${tickets.filter(ticket => ticket.status === 'open').length}</span>
+        <span class="support-status support-status-in_progress">In progress: ${tickets.filter(ticket => ticket.status === 'in_progress').length}</span>
+        <span class="support-status support-status-resolved">Resolved: ${tickets.filter(ticket => ticket.status === 'resolved').length}</span>
+      </div>` : ''}
       <div class="support-layout" style="${isSupportAgent ? 'grid-template-columns:minmax(0,1fr)' : ''}">
         ${ticketLoadError ? `<p class="support-feedback support-feedback-error" role="alert">Could not load support tickets: ${escapeHtml(ticketLoadError)}</p>` : ''}
         <section class="card card-lg" style="${isSupportAgent ? 'display:none' : ''}">
@@ -302,7 +308,7 @@
             <button class="btn btn-primary" id="support-submit" type="submit">Submit Request</button>
           </form>
         </section>
-        <div class="support-history" data-support-tickets="${escapeHtml(JSON.stringify(tickets))}">${ticketTable(isSupportAgent ? 'All Support Tickets' : 'My Support Requests', tickets, isSupportAgent)}</div>
+        <div class="support-history" data-support-tickets="${escapeHtml(JSON.stringify(tickets))}">${ticketTable(isSupportAgent ? (options.queueTitle || 'Received Support Requests') : 'My Support Requests', tickets, isSupportAgent)}</div>
       </div>
       <div class="support-modal-overlay" id="support-ticket-modal" hidden>
         <section class="support-modal" role="dialog" aria-modal="true" aria-labelledby="support-modal-title">
@@ -311,14 +317,12 @@
       </div>`;
   }
 
-  function bind(container, user, onBack, backLabel = 'Back to Settings') {
+  function bind(container, user, onBack, backLabel = 'Back to Settings', options = {}) {
     const history = container.querySelector('.support-history');
     const tickets = JSON.parse(history?.dataset.supportTickets || '[]');
     const modal = container.querySelector('#support-ticket-modal');
     const modalContent = container.querySelector('#support-modal-content');
-    const isSupportAgent = ['superuser', 'super_admin', 'admin'].includes(
-      String(user?.role || user?.userRole || '').toLowerCase().replace(/-/g, '_'),
-    ) || String(user?.employeeType || '').toUpperCase() === 'SUPPORT_EXECUTIVE';
+    const isSupportAgent = options.management === true || canManageSupport(user);
     const closeModal = () => { if (modal) modal.hidden = true; };
     const openTicket = ticket => {
       if (!modal || !ticket) return;
@@ -363,13 +367,15 @@
           }
           button.disabled = true;
           try {
-            const updated = await request(`/support/tickets/${encodeURIComponent(ticket.ticketId)}/status`, user, {
-              method: 'PATCH', body: JSON.stringify({ status, response }),
-            });
-            const notice = status === 'resolved'
-              ? (updated.emailNotificationSent
-                ? 'Ticket resolved and the reply was saved. The requester was emailed.'
-                : 'Ticket resolved and the reply was saved. Email notification is unavailable until SMTP is configured.')
+            const updated = ticket.localEventRequest
+              ? await options.updateAdditionalTicket(ticket.ticketId, { status, response })
+              : await request(`/support/tickets/${encodeURIComponent(ticket.ticketId)}/status`, user, {
+                  method: 'PATCH', body: JSON.stringify({ status, response }),
+                });
+            const notice = response
+              ? (ticket.localEventRequest
+                ? `Reply saved. Status: ${statusLabel(status)}.`
+                : `Reply sent to the requester. Status: ${statusLabel(status)}.${updated.emailNotificationSent ? ' An email notification was also sent.' : ''}`)
               : `Ticket status updated to ${statusLabel(status)}.`;
             await refreshTicketView(ticket.ticketId, notice);
           } catch (error) {
@@ -388,8 +394,8 @@
 
     const refreshTicketView = async (ticketId, notice = '') => {
       const page = container.querySelector('#page-content') || container;
-      page.innerHTML = await render(user);
-      bind(page, user);
+      page.innerHTML = await render(user, backLabel, options);
+      bind(page, user, onBack, backLabel, options);
       const refreshedButton = Array.from(page.querySelectorAll('[data-ticket-view]'))
         .find(button => button.dataset.ticketView === ticketId);
       refreshedButton?.click();
@@ -401,6 +407,13 @@
         }
       }
     };
+
+    container.querySelector('[data-support-refresh]')?.addEventListener('click', async event => {
+      const button = event.currentTarget;
+      button.disabled = true;
+      try { await refreshTicketView(null); }
+      finally { button.disabled = false; }
+    });
 
     const category = container.querySelector('#support-request-type');
     const concernGroup = container.querySelector('#support-concern-group');
@@ -481,8 +494,8 @@
         concern.replaceChildren(new Option('Select a concern', ''));
         container.querySelector('#support-selected-files').textContent = '';
         const page = container.querySelector('#page-content') || container;
-        page.innerHTML = await render(user, backLabel);
-        bind(page, user, onBack, backLabel);
+        page.innerHTML = await render(user, backLabel, options);
+        bind(page, user, onBack, backLabel, options);
         const refreshedFeedback = page.querySelector('#support-feedback');
         refreshedFeedback.classList.add('is-success');
         refreshedFeedback.textContent = `Request submitted. Your ticket number is ${created.ticketId}.`;
@@ -537,8 +550,20 @@
     });
   }
 
-  function addSettingsEntry(container, onOpen) {
-    if (container.querySelector('.support-settings-entry')) return;
+  function canRequestSupport(user) {
+    if (!user) return false;
+    const normalize = value => String(value || '').trim().toUpperCase().replace(/[\s-]+/g, '_');
+    const role = normalize(user.role || user.userRole);
+    return ['ATTENDEE', 'CLIENT', 'ORGANIZER', 'EVENT_ORGANIZER'].includes(role);
+  }
+
+  function addSettingsEntry(container, onOpen, user) {
+    const existing = container.querySelector('.support-settings-entry');
+    if (!canRequestSupport(user)) {
+      existing?.remove();
+      return;
+    }
+    if (existing) return;
     const entry = document.createElement('div');
     entry.className = 'card support-settings-entry';
     const button = document.createElement('button');
@@ -550,5 +575,5 @@
     container.appendChild(entry);
   }
 
-  window.EventFlowSupport = { render, bind, addSettingsEntry };
+  window.EventFlowSupport = { render, bind, addSettingsEntry, canRequestSupport, canManageSupport };
 })();

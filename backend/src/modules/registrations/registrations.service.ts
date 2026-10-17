@@ -3,6 +3,7 @@ import { DataStore, Registration } from '../../common/data-store';
 import { UserRole } from '../../common/constants';
 import { CreateRegistrationDto, ReviewRegistrationDto, UpdateRegistrationDetailsDto } from './dto/registration.dto';
 import { QrCodeService } from '../../common/utils/qr-code.service';
+import { isSupportExecutive } from '../../common/account-access';
 
 @Injectable()
 export class RegistrationsService {
@@ -91,7 +92,7 @@ export class RegistrationsService {
     if (role === UserRole.ATTENDEE) { const attendee = this.attendeeForUser(userId); registrations = attendee ? registrations.filter(r => r.attendeeId === attendee.attendeeId) : []; }
     else if (role === UserRole.EVENT_ORGANIZER) { const organizer = this.db.organizers.find(o => o.userId === userId); const ids = this.db.events.filter(e => e.organizerId === organizer?.organizerId).map(e => e.eventId); registrations = registrations.filter(r => ids.includes(r.eventId)); }
     else if (role === UserRole.CLIENT) { const client = this.db.clients.find(c => c.userId === userId); const ids = this.db.events.filter(e => e.clientId === client?.clientId).map(e => e.eventId); registrations = registrations.filter(r => ids.includes(r.eventId)); }
-    else if (role !== UserRole.SUPER_ADMIN) throw new ForbiddenException('Access denied');
+    else if (role !== UserRole.SUPER_ADMIN && !(role === UserRole.EVENT_STAFF && isSupportExecutive(this.db.findUserById(userId || '')))) throw new ForbiddenException('Access denied');
     return registrations.map(r => this.enrich(r));
   }
 
@@ -124,13 +125,14 @@ export class RegistrationsService {
   }
 
   review(id: string, dto: ReviewRegistrationDto, role: UserRole, userId?: string): any {
-    if (![UserRole.EVENT_ORGANIZER, UserRole.SUPER_ADMIN].includes(role)) throw new ForbiddenException('Only the event organizer can review registrations');
+    const support = role === UserRole.EVENT_STAFF && isSupportExecutive(this.db.findUserById(userId || ''));
+    if (![UserRole.EVENT_ORGANIZER, UserRole.SUPER_ADMIN].includes(role) && !support) throw new ForbiddenException('Only the event organizer or support executives can review registrations');
     const registration = this.db.registrations.find(r => r.registrationId === id);
     if (!registration) throw new NotFoundException('Registration not found');
     const event = this.db.events.find(e => e.eventId === registration.eventId);
     if (!event) throw new NotFoundException('Event not found');
     const organizer = this.db.organizers.find(o => o.userId === userId);
-    if (role !== UserRole.SUPER_ADMIN && (!organizer || organizer.organizerId !== event.organizerId)) throw new ForbiddenException('You can only review registrations for your own events');
+    if (role !== UserRole.SUPER_ADMIN && !support && (!organizer || organizer.organizerId !== event.organizerId)) throw new ForbiddenException('You can only review registrations for your own events');
     if (!['approved', 'rejected'].includes(dto.decision)) throw new BadRequestException('Choose an approval or decline decision');
     const reason = typeof dto.reason === 'string' ? dto.reason.trim() : '';
     if (dto.decision === 'rejected' && (reason.length < 10 || reason.length > 1000)) throw new BadRequestException('Please explain the decline in 10 to 1000 characters');

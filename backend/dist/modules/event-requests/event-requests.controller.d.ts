@@ -1,19 +1,27 @@
 import { EventRequestsService } from './event-requests.service';
 import { CreateEventRequestDto, UpdateEventRequestStatusDto, RequestMissingInfoDto, ProvideMissingInfoDto, SendProposalDto, ReviseProposalDto, RejectRequestDto, ClientResponseDto, UpdateAgreementStatusDto, UpdatePaymentStatusDto, ConfirmBookingDto } from './dto/event-request.dto';
 import { UserRole } from '../../common/constants';
+import { EventPolicyAcknowledgementDto } from '../../common/event-policy';
 export declare class EventRequestsController {
     private readonly service;
     constructor(service: EventRequestsService);
+    policies(): {
+        success: boolean;
+        data: import("../../common/event-policy").EventPolicy;
+    };
     checkAvailability(organizerId: string, date: string): {
         available: boolean;
         reason?: string;
         pastDate?: boolean;
         conflictEvent?: any;
     };
+    findOrganizers(role: UserRole): any[];
     create(dto: CreateEventRequestDto, role: UserRole, userId: string): any;
     findAll(role: UserRole, userId: string): any[];
     findOne(id: string, role: UserRole, userId: string): any;
     startReview(id: string, role: UserRole, userId: string): any;
+    acceptRequest(id: string, acknowledgement: EventPolicyAcknowledgementDto, role: UserRole, userId: string): any;
+    acceptCounteroffer(id: string, acknowledgement: EventPolicyAcknowledgementDto, role: UserRole, userId: string): any;
     requestMissingInfo(id: string, dto: RequestMissingInfoDto, role: UserRole, userId: string): any;
     provideMissingInfo(id: string, dto: ProvideMissingInfoDto, role: UserRole, userId: string): any;
     sendProposal(id: string, dto: SendProposalDto, role: UserRole, userId: string): any;

@@ -24,7 +24,7 @@ let StaffService = class StaffService {
             throw new common_1.ForbiddenException('Only super admin and staff can create staff profiles');
         }
         // Check if user already exists
-        const existingUser = this.dataStore.users.find((u) => u.email.toLowerCase() === createStaffDto.email.toLowerCase());
+        const existingUser = this.dataStore.findUserByEmail(createStaffDto.email);
         if (existingUser) {
             throw new common_1.BadRequestException('Email already registered');
         }
@@ -34,7 +34,7 @@ let StaffService = class StaffService {
         const user = {
             userId,
             name: createStaffDto.name,
-            email: createStaffDto.email,
+            email: createStaffDto.email.trim().toLowerCase(),
             password: createStaffDto.password || '',
             userRole: constants_1.UserRole.EVENT_STAFF,
             status: 'active',
@@ -98,6 +98,11 @@ let StaffService = class StaffService {
         if (!user) {
             throw new common_1.NotFoundException('Associated user not found');
         }
+        if (updateStaffDto.email) {
+            const existing = this.dataStore.findUserByEmail(updateStaffDto.email);
+            if (existing && existing.userId !== user.userId)
+                throw new common_1.BadRequestException('Email already registered');
+        }
         // Update staff profile
         if (updateStaffDto.availableDates)
             staff.availableDates = updateStaffDto.availableDates;
@@ -107,7 +112,7 @@ let StaffService = class StaffService {
         if (updateStaffDto.name)
             user.name = updateStaffDto.name;
         if (updateStaffDto.email)
-            user.email = updateStaffDto.email;
+            user.email = updateStaffDto.email.trim().toLowerCase();
         if (updateStaffDto.phone)
             user.phoneNo = updateStaffDto.phone;
         user.updatedAt = new Date();

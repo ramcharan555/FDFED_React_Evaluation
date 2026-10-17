@@ -1,9 +1,10 @@
 import {
-  IsString, IsNotEmpty, IsOptional, IsNumber, IsPositive, IsEnum, IsInt, Min, IsBoolean, IsIn,
+  IsString, IsNotEmpty, IsOptional, IsNumber, IsPositive, IsEnum, IsInt, Min, IsBoolean, IsIn, IsDateString,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import { EventPolicyAcknowledgementDto } from '../../../common/event-policy';
 
-export class CreateEventRequestDto {
+export class CreateEventRequestDto extends EventPolicyAcknowledgementDto {
   @ApiProperty({ description: 'Client ID', example: 'cli-001' })
   @IsString()
   @IsNotEmpty()
@@ -27,12 +28,13 @@ export class CreateEventRequestDto {
   @ApiProperty({ description: 'Desired event date (YYYY-MM-DD)', example: '2026-09-01' })
   @IsString()
   @IsNotEmpty()
+  @IsDateString()
   eventDate!: string;
 
-  @ApiProperty({ description: 'Preferred event start time', example: '18:00' })
+  @ApiPropertyOptional({ description: 'Preferred event start time', example: '18:00' })
   @IsString()
-  @IsNotEmpty()
-  eventTime!: string;
+  @IsOptional()
+  eventTime?: string;
 
   @ApiProperty({ description: 'Budget in INR', example: 50000 })
   @IsNumber()
@@ -44,10 +46,10 @@ export class CreateEventRequestDto {
   @Min(1)
   capacity!: number;
 
-  @ApiProperty({ description: 'Preferred event city', example: 'Bangalore' })
+  @ApiPropertyOptional({ description: 'Preferred event city', example: 'Bangalore' })
   @IsString()
-  @IsNotEmpty()
-  city!: string;
+  @IsOptional()
+  city?: string;
 
   @ApiPropertyOptional({ description: 'Whether the requested date is flexible', enum: ['exact', 'flexible'] })
   @IsString()
@@ -64,6 +66,11 @@ export class CreateEventRequestDto {
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Preferred venue' })
+  @IsString()
+  @IsOptional()
+  venue?: string;
 }
 
 export class UpdateEventRequestStatusDto {
@@ -131,26 +138,91 @@ export class ReviseProposalDto extends SendProposalDto {
 }
 
 export class RejectRequestDto {
-  @ApiProperty({ description: 'Mandatory reason for rejection', example: 'Venue is booked for maintenance on requested dates.' })
+  @IsBoolean()
+  @IsOptional()
+  policyAccepted?: boolean;
+
+  @IsString()
+  @IsOptional()
+  acceptedPolicyVersion?: string;
+
+  @ApiProperty({ description: 'Reason for a permanent rejection or requested change', example: 'The requested date is unavailable.' })
   @IsString()
   @IsNotEmpty()
   reason!: string;
+
+  @ApiPropertyOptional({ enum: ['budget', 'date', 'both', 'other', 'permanent'] })
+  @IsEnum(['budget', 'date', 'both', 'other', 'permanent'])
+  @IsOptional()
+  reasonType?: 'budget' | 'date' | 'both' | 'other' | 'permanent';
+
+  @ApiPropertyOptional({ description: 'Proposed budget when requesting a budget change' })
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  proposedBudget?: number;
+
+  @ApiPropertyOptional({ description: 'Proposed date when requesting a date change' })
+  @IsString()
+  @IsOptional()
+  @IsDateString()
+  proposedDate?: string;
 }
 
 export class ClientResponseDto {
   @ApiProperty({
     description: 'Client decision on the proposal or request',
-    enum: ['accept', 'request_revision', 'reject', 'withdraw'],
+    enum: ['accept', 'request_revision', 'reject', 'withdraw', 'accept_changes', 'reject_changes', 'counteroffer'],
     example: 'accept',
   })
-  @IsEnum(['accept', 'request_revision', 'reject', 'withdraw'])
+  @IsEnum(['accept', 'request_revision', 'reject', 'withdraw', 'accept_changes', 'reject_changes', 'counteroffer'])
   @IsNotEmpty()
-  decision!: 'accept' | 'request_revision' | 'reject' | 'withdraw';
+  decision!: 'accept' | 'request_revision' | 'reject' | 'withdraw' | 'accept_changes' | 'reject_changes' | 'counteroffer';
 
   @ApiPropertyOptional({ description: 'Feedback or notes from the client', example: 'We accept the proposal terms and are ready to sign agreement.' })
   @IsString()
   @IsOptional()
   notes?: string;
+
+  @ApiPropertyOptional({ description: 'Client counteroffer budget' })
+  @IsNumber()
+  @IsPositive()
+  @IsOptional()
+  counterofferBudget?: number;
+
+  @ApiPropertyOptional({ description: 'Client counteroffer date' })
+  @IsString()
+  @IsOptional()
+  @IsDateString()
+  counterofferDate?: string;
+
+  @ApiPropertyOptional({ description: 'Counteroffer event title' })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  counterofferEventName?: string;
+
+  @ApiPropertyOptional({ description: 'Counteroffer event type' })
+  @IsString()
+  @IsNotEmpty()
+  @IsOptional()
+  counterofferEventType?: string;
+
+  @ApiPropertyOptional({ description: 'Counteroffer guest capacity' })
+  @IsInt()
+  @Min(1)
+  @IsOptional()
+  counterofferCapacity?: number;
+
+  @ApiPropertyOptional({ description: 'Counteroffer preferred venue' })
+  @IsString()
+  @IsOptional()
+  counterofferVenue?: string;
+
+  @ApiPropertyOptional({ description: 'Counteroffer event requirements' })
+  @IsString()
+  @IsOptional()
+  counterofferRequirements?: string;
 }
 
 export class UpdateAgreementStatusDto {

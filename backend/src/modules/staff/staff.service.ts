@@ -19,9 +19,7 @@ export class StaffService {
     }
 
     // Check if user already exists
-    const existingUser = this.dataStore.users.find(
-      (u) => u.email.toLowerCase() === createStaffDto.email.toLowerCase(),
-    );
+    const existingUser = this.dataStore.findUserByEmail(createStaffDto.email);
 
     if (existingUser) {
       throw new BadRequestException('Email already registered');
@@ -34,7 +32,7 @@ export class StaffService {
     const user = {
       userId,
       name: createStaffDto.name,
-      email: createStaffDto.email,
+      email: createStaffDto.email.trim().toLowerCase(),
       password: createStaffDto.password || '',
       userRole: UserRole.EVENT_STAFF,
       status: 'active' as const,
@@ -116,13 +114,18 @@ export class StaffService {
       throw new NotFoundException('Associated user not found');
     }
 
+    if (updateStaffDto.email) {
+      const existing = this.dataStore.findUserByEmail(updateStaffDto.email);
+      if (existing && existing.userId !== user.userId) throw new BadRequestException('Email already registered');
+    }
+
     // Update staff profile
     if (updateStaffDto.availableDates) staff.availableDates = updateStaffDto.availableDates;
     if (updateStaffDto.status) staff.status = updateStaffDto.status;
 
     // Update user info
     if (updateStaffDto.name) user.name = updateStaffDto.name;
-    if (updateStaffDto.email) user.email = updateStaffDto.email;
+    if (updateStaffDto.email) user.email = updateStaffDto.email.trim().toLowerCase();
     if (updateStaffDto.phone) user.phoneNo = updateStaffDto.phone;
 
     user.updatedAt = new Date();

@@ -1,0 +1,77 @@
+import { UserRole } from '../../common/constants';
+import { CreateOperationalReportDto } from './dto/support-report.dto';
+import { SupportReportsService } from './support-reports.service';
+export declare class OperationalReportsController {
+    private readonly reports;
+    constructor(reports: SupportReportsService);
+    list(userId: string, role: UserRole): {
+        author: string;
+        authorEmail: string;
+        hasDocument: boolean;
+        reportId: string;
+        submittedBy: string;
+        sourceReference?: string;
+        title: string;
+        category: string;
+        scope: string;
+        period: string;
+        summary: string;
+        status: "draft" | "submitted" | "reviewed";
+        documentName?: string;
+        documentMimeType?: string;
+        documentSize?: number;
+        reviewFeedback?: string;
+        reviewedBy?: string;
+        submittedAt?: Date;
+        reviewedAt?: Date;
+        createdAt: Date;
+        updatedAt: Date;
+    }[];
+    create(dto: CreateOperationalReportDto, userId: string, role: UserRole): {
+        author: string;
+        authorEmail: string;
+        hasDocument: boolean;
+        reportId: string;
+        submittedBy: string;
+        sourceReference?: string;
+        title: string;
+        category: string;
+        scope: string;
+        period: string;
+        summary: string;
+        status: "draft" | "submitted" | "reviewed";
+        documentName?: string;
+        documentMimeType?: string;
+        documentSize?: number;
+        reviewFeedback?: string;
+        reviewedBy?: string;
+        submittedAt?: Date;
+        reviewedAt?: Date;
+        createdAt: Date;
+        updatedAt: Date;
+    };
+    submit(id: string, userId: string, role: UserRole): {
+        author: string;
+        authorEmail: string;
+        hasDocument: boolean;
+        reportId: string;
+        submittedBy: string;
+        sourceReference?: string;
+        title: string;
+        category: string;
+        scope: string;
+        period: string;
+        summary: string;
+        status: "draft" | "submitted" | "reviewed";
+        documentName?: string;
+        documentMimeType?: string;
+        documentSize?: number;
+        reviewFeedback?: string;
+        reviewedBy?: string;
+        submittedAt?: Date;
+        reviewedAt?: Date;
+        createdAt: Date;
+        updatedAt: Date;
+    };
+}
+//# sourceMappingURL=operational-reports.controller.d.ts.map

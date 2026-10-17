@@ -1,4 +1,7 @@
 export declare class CreateStaffAssignmentDto {
+    role?: string;
+    fee?: number;
+    notes?: string;
     eventId: string;
     organizerId: string;
     staffId: string;

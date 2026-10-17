@@ -94,6 +94,7 @@ async function apiRequest(endpoint, options = {}) {
       throw new ApiError(msg, res.status, data);
     }
 
+    if (options.method && options.method.toUpperCase() !== 'GET') window.EventFlowData?.invalidate();
     return data;
   } catch (e) {
     if (e instanceof ApiError) throw e;
@@ -461,11 +462,18 @@ document.addEventListener("DOMContentLoaded", () => {
 // ═══════════════════ CRUD: USERS ═══════════════════
 
 function createUser(userData) {
+  if (!window.EventFlowAccountPolicy.canManageAccount(CU, userData)) { addNotification(null, 'Only an admin can manage employee or admin accounts.', 'warning'); return null; }
+  const email = window.EventFlowAccountPolicy.normalizeEmail(userData.email);
+  if (window.EventFlowAccountPolicy.isEmailInUse(AppState.users, email)) {
+    addNotification(null, 'Email already registered', 'warning');
+    return null;
+  }
   const newUser = {
     id: "u" + Date.now(),
     joinedAt: new Date().toISOString().split("T")[0],
     status: "active",
-    ...userData
+    ...userData,
+    email
   };
   AppState.users.push(newUser);
   saveState();
@@ -476,7 +484,13 @@ function createUser(userData) {
 function updateUser(userId, updates) {
   const user = AppState.users.find(u => u.id === userId);
   if (user) {
+    if (!window.EventFlowAccountPolicy.canApplyAccountUpdate(CU, user, updates)) { addNotification(null, 'This account change requires an admin.', 'warning'); return null; }
+    if (updates.email && window.EventFlowAccountPolicy.isEmailInUse(AppState.users, updates.email, userId)) {
+      addNotification(null, 'Email already registered', 'warning');
+      return null;
+    }
     Object.assign(user, updates);
+    if (updates.email) user.email = window.EventFlowAccountPolicy.normalizeEmail(updates.email);
     saveState();
     addNotification(null, `User "${user.name}" updated`, "success");
     return user;
@@ -485,6 +499,8 @@ function updateUser(userId, updates) {
 }
 
 function deleteUser(userId) {
+  const target = AppState.users.find(user => String(user.id) === String(userId));
+  if (!window.EventFlowAccountPolicy.canManageAccount(CU, target)) { addNotification(null, 'Only an admin can manage employee or admin accounts.', 'warning'); return false; }
   const index = AppState.users.findIndex(u => u.id === userId);
   if (index > -1) {
     const name = AppState.users[index].name;
@@ -1091,7 +1107,7 @@ function submitAddUser(e) {
     phone: document.getElementById("newUserPhone").value
   };
   
-  createUser(user);
+  if (!createUser(user)) return;
   closeModal();
   updateAllTables();
 }
@@ -1534,7 +1550,6 @@ window.EventFlowModules['shared'] = true;
         { id: 'usr-client-001', name: 'Michael Torres', email: 'client@example.com', password: 'Client@123', role: 'client', phone: '+91 9876543203', avatar: 'MT', avatarImage: '/images/avatars/user-michael-torres.jpg', status: 'active', joined: '2024-03-10', bio: 'Head of Events at TechCorp Ltd.', company: 'TechCorp Ltd' },
         { id: 'usr-staff-001', name: 'James Wilson', email: 'staff@example.com', password: 'Staff@123', role: 'staff', phone: '+91 9876543204', avatar: 'JW', avatarImage: '/images/avatars/staff-james-wilson.jpg', status: 'active', joined: '2024-02-15', bio: 'Professional photographer and event videographer.', service: 'Photography & Videography', rate: 800 },
         { id: 'usr-attendee-001', name: 'Priya Patel', email: 'attendee@example.com', password: 'Attendee@123', role: 'attendee', phone: '+91 9876543205', avatar: 'PP', avatarImage: '/images/avatars/user-priya-patel.jpg', status: 'active', joined: '2024-04-01', bio: 'Tech enthusiast and frequent conference attendee.' },
-        { id: 'usr-dup-001', name: 'Priya Patel (Secondary)', email: 'attendee@example.com', password: 'Attendee@123', role: 'attendee', phone: '+91 9876543205', avatar: 'PP', avatarImage: '/images/avatars/user-priya-patel.jpg', status: 'active', joined: '2024-04-12', bio: 'Secondary registration under same email.' },
         { id: 6, name: 'Emma Brown', email: 'emma@eventflow.com', password: 'org123', role: 'organizer', phone: '+91 9876543206', avatar: 'EB', avatarImage: '/images/avatars/organizer-emma-brown.jpg', status: 'active', joined: '2024-02-20', service: 'Weddings & Social Events', city: 'Pune', rating: 4.7, color: '#f56565', bio: 'Expert in creating memorable wedding and social event experiences with meticulous attention to detail.' },
         { id: 7, name: 'David Kim', email: 'david@eventflow.com', password: 'staff123', role: 'staff', phone: '+91 9876543207', avatar: 'DK', avatarImage: '/images/avatars/staff-david-kim.jpg', status: 'inactive', joined: '2024-03-01', service: 'Catering & Hospitality', rate: 1200 },
         { id: 8, name: 'Lisa Zhang', email: 'lisa@eventflow.com', password: 'att123', role: 'attendee', phone: '+91 9876543208', avatar: 'LZ', avatarImage: '/images/avatars/user-lisa-zhang.jpg', status: 'active', joined: '2024-04-15' },
@@ -1592,11 +1607,11 @@ window.EventFlowModules['shared'] = true;
         { id: 8, attendeeId: 3, eventId: 1, date: '2026-03-15', ticketId: 'TKT-2026-008', status: 'confirmed', payment: 'paid', amount: 150, checkedIn: false, seat: 'A-046', verificationStatus: 'Verified', verified: true, docType: 'Client Pass', docRef: 'CLT-PASS-104', notes: 'Client registration verified.' },
       ],
       userQueries: [
-        { id: 'UQR-501', userId: 'usr-attendee-001', userName: 'Priya Patel', userEmail: 'attendee@example.com', type: 'Account Deletion', subject: 'Request to delete duplicate attendee account', detail: 'User requested deletion of duplicate account created during Summit registration.', source: 'User Request', status: 'Pending', date: 'Today, 10:30 AM' },
+        { id: 'UQR-501', userId: 'usr-attendee-001', userName: 'Priya Patel', userEmail: 'attendee@example.com', type: 'Account Deletion', subject: 'Request permanent account deletion', detail: 'User requested permanent deletion of their attendee account and associated personal data.', source: 'User Request', status: 'Pending', date: 'Today, 10:30 AM' },
         { id: 'UQR-502', userId: 'usr-client-001', userName: 'Michael Torres', userEmail: 'client@example.com', type: 'Email Change', subject: 'Update profile email address to corporate domain', detail: 'Requested email update from client@example.com to m.torres@techcorp.com.', source: 'User Request', status: 'In Progress', date: 'Yesterday, 4:15 PM' },
         { id: 'UQR-503', userId: 8, userName: 'Lisa Zhang', userEmail: 'lisa@eventflow.com', type: 'Escalated Support', subject: 'Verification failed for Hackathon registration badge', detail: 'Escalated by Customer Support (Employee 3): Student ID upload unreadable, needs re-verification.', source: 'Employee 3 Escalation', status: 'Pending', date: '2 days ago' },
         { id: 'UQR-504', userId: 9, userName: 'Robert Singh', userEmail: 'robert@eventflow.com', type: 'Profile Update', subject: 'Contact phone number correction & name spelling', detail: 'Requested phone update to +91 9876543209 and correction on badge name.', source: 'User Request', status: 'Resolved', date: '2026-08-26' },
-        { id: 'UQR-505', userId: 5, userName: 'Priya Patel (Secondary)', userEmail: 'attendee@example.com', type: 'Escalated Support', subject: 'Duplicate ticket registration merge inquiry', detail: 'Escalated by Employee 3: User registered twice for Tech Summit under different tickets.', source: 'Employee 3 Escalation', status: 'Pending', date: 'Today, 8:45 AM' }
+        { id: 'UQR-505', userId: 'usr-attendee-001', userName: 'Priya Patel', userEmail: 'attendee@example.com', type: 'Escalated Support', subject: 'Ticket details correction request', detail: 'User requested a correction to the attendee name on their Tech Summit ticket.', source: 'Employee 3 Escalation', status: 'Pending', date: 'Today, 8:45 AM' }
       ],
       staffAssignments: [
         { id: 101, staffId: 'usr-staff-001', eventId: 101, role: 'Lead Event Photographer', status: 'accepted', fee: 1200, notes: 'Full photo coverage for keynote hall and exhibition pavilion.' },
@@ -1704,7 +1719,7 @@ window.EventFlowModules['shared'] = true;
       ],
       regReports: [
         { id: 'RVR-001', type: 'Registration Report', title: 'Monthly Online Registration & Conversion Audit — August 2026', owner: 'Arjun Kapoor', status: 'Reviewed', period: 'August 2026', fileName: 'Monthly_Registration_Audit_Aug2026.pdf', updated: '2026-08-25' },
-        { id: 'RVR-002', type: 'User Management Report', title: 'Duplicate Account Detection & Resolution Summary — Q2 2026', owner: 'Arjun Kapoor', status: 'Submitted', period: 'Q2 2026 (Apr–Jun)', fileName: 'Duplicate_Account_Resolution_Q2_2026.docx', updated: 'Yesterday' },
+        { id: 'RVR-002', type: 'User Management Report', title: 'Account Access & Verification Summary — Q2 2026', owner: 'Arjun Kapoor', status: 'Submitted', period: 'Q2 2026 (Apr–Jun)', fileName: 'Account_Access_Verification_Q2_2026.docx', updated: 'Yesterday' },
         { id: 'RVR-003', type: 'Registration Activity Report', title: 'Q2 Attendee Registration Activity & Demographics Analysis', owner: 'Arjun Kapoor', status: 'Reviewed', period: 'Q2 2026 (Apr–Jun)', fileName: 'Q2_Registration_Activity_Demographics.xlsx', updated: '2026-08-20' },
         { id: 'RVR-004', type: 'Registration Report', title: 'Tech Summit 2026 — Online Registration Status & Completion Report', owner: 'Arjun Kapoor', status: 'Submitted', period: 'July 2026', fileName: 'TechSummit_Registration_Report.pdf', updated: '2 days ago' },
         { id: 'RVR-005', type: 'User Management Report', title: 'User Account Deactivation & Access Audit — July 2026', owner: 'Arjun Kapoor', status: 'Draft', period: 'July 2026', fileName: null, updated: 'Today' },
@@ -1746,6 +1761,7 @@ window.EventFlowModules['shared'] = true;
           const initialUserQueries = [...(DB.userQueries || [])];
 
           Object.assign(DB, parsed);
+      window.EventFlowAccountPolicy.migrateLegacyDemoData(DB);
 
           // Ensure optional arrays exist
           if (!DB.staffRequests) DB.staffRequests = [];
@@ -2136,7 +2152,7 @@ window.EventFlowModules['shared'] = true;
       if (!name) { toast('Name is required', 'error'); return; }
       if (!email || !email.includes('@')) { toast('Valid email is required', 'error'); return; }
       if (!pass || pass.length < 6) { toast('Password must be at least 6 characters', 'error'); return; }
-      if (DB.users.find(u => u.email === email)) { toast('Email already registered', 'error'); return; }
+      if (window.EventFlowAccountPolicy.isEmailInUse(DB.users, email)) { toast('Email already registered', 'error'); return; }
       const initials = (name.split(' ').map(n => n[0]).join('')).toUpperCase().slice(0, 2);
       DB.users.push({ id: DB._nextId.users++, name, email, password: pass, role, phone, avatar: initials, status: 'active', joined: today(), service });
       closeModal();
@@ -2262,7 +2278,7 @@ window.EventFlowModules['shared'] = true;
       const totalEmployees = employees.length;
       const activeEmployees = employees.filter(e => e.status === 'active').length;
       const inactiveEmployees = Math.max(totalEmployees - activeEmployees, 0);
-      const revenue = DB.registrations.reduce((s, r) => s + (r.amount || 0), 0);
+      const revenue = (DB.financeTransactions || []).filter(payment => payment.status === 'Successful').reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
       const assignmentStats = {
         accepted: (DB.staffAssignments || []).filter(a => a.status === 'accepted').length,
         pending: (DB.staffAssignments || []).filter(a => a.status === 'pending').length,
@@ -2353,6 +2369,9 @@ window.EventFlowModules['shared'] = true;
       buildNav(navRole);
       if (isDepartmentEmployee()) buildEmployeeNav(CU.employeeType);
       goNav('dashboard');
+      if (isSupportExecutive() && CU.token) {
+        syncSupportExecutiveReports().catch(error => console.error('Could not sync submitted reports.', error));
+      }
     }
 
     function buildEmployeeNav(employeeType) {
@@ -2500,18 +2519,21 @@ window.EventFlowModules['shared'] = true;
       const r = CU.role;
 
       if (pg === 'customer-support') {
+        if (!window.EventFlowSupport.canRequestSupport(CU)) { el.innerHTML = pageSettings(); return; }
         el.innerHTML = await window.EventFlowSupport.render(CU);
         window.EventFlowSupport.bind(el, CU, () => goNav('settings'));
         return;
       }
 
-      // The Support Executive's customer ticket tab must use the shared API
-      // queue. The legacy page below only reads browser-local demo data.
-      if (pg === 'support-issue-mgmt'
-        && isSupportExecutive()
-        && (sessionStorage.getItem('sim_active_tab') || 'support') !== 'operations') {
-        el.innerHTML = await window.EventFlowSupport.render(CU);
-        window.EventFlowSupport.bind(el, CU, () => goNav('dashboard'));
+      // Customer support and event issues share one request queue, including old bookmarks.
+      if (['support-issue-mgmt', 'event-requests', 'staff-event-requests', 'support-center'].includes(pg)
+        && isSupportExecutive()) {
+        await renderCustomerRequests(el);
+        return;
+      }
+
+      if (['reports-analytics', 'reports'].includes(pg) && isSupportExecutive()) {
+        await renderSupportExecutiveReports(el);
         return;
       }
 
@@ -2558,7 +2580,7 @@ window.EventFlowModules['shared'] = true;
           el.innerHTML = pageUserAndEventManagement();
           break;
         case 'support-issue-mgmt':
-          el.innerHTML = pageSupportAndIssueManagement();
+          await renderCustomerRequests(el);
           break;
         case 'reports-analytics':
           el.innerHTML = pageReportsAndAnalytics();
@@ -2589,14 +2611,13 @@ window.EventFlowModules['shared'] = true;
           break;
         case 'event-requests':
           if (isSupportExecutive()) {
-            sessionStorage.setItem('sim_active_tab', 'operations');
-            el.innerHTML = pageSupportAndIssueManagement();
+            await renderCustomerRequests(el);
           } else {
             el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'EVENT_OPERATIONS' ? pageEventOperationsWorkspace() : pageEventRequests();
           }
           break;
         case 'support-center':
-          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageSupportCenter() : (isSupportExecutive() ? pageSupportAndIssueManagement() : pageEventRequests());
+          el.innerHTML = isDepartmentEmployee() && CU.employeeType === 'SUPPORT_FINANCE' ? pageSupportCenter() : pageEventRequests();
           break;
         case 'finance':
           el.innerHTML = isDepartmentEmployee() && ['SUPPORT_FINANCE', 'FINANCE_EXECUTIVE'].includes(CU.employeeType) ? await pageFinanceCenter() : pageRevenueReports();
@@ -2661,7 +2682,7 @@ window.EventFlowModules['shared'] = true;
           break;
         case 'settings':
           el.innerHTML = pageSettings();
-          window.EventFlowSupport.addSettingsEntry(el, () => goNav('customer-support'));
+          window.EventFlowSupport.addSettingsEntry(el, () => goNav('customer-support'), CU);
           break;
         case 'users':
           el.innerHTML = pageUsers();
@@ -2679,8 +2700,8 @@ window.EventFlowModules['shared'] = true;
     // ════════════════════════════════════════════════
     function dashAdmin() {
       const totalUsers = DB.users.length, totalEvents = DB.events.length, totalRegs = DB.registrations.length;
-      const revenue = DB.registrations.reduce((s, r) => s + (r.amount || 0), 0);
-      const pendingReqs = DB.eventRequests.filter(r => r.status === 'pending').length;
+      const revenue = (DB.financeTransactions || []).filter(payment => payment.status === 'Successful').reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      const pendingReqs = DB.eventRequests.filter(r => ['pending', 'submitted', 'planning', 'changes_requested', 'counteroffered', 'plan_submitted', 'plan_revision_requested'].includes(r.status)).length;
       const roleCounts = {
         superuser: DB.users.filter(u => u.role === 'superuser').length,
         organizer: DB.users.filter(u => u.role === 'organizer').length,
@@ -2695,8 +2716,8 @@ window.EventFlowModules['shared'] = true;
         draft: DB.events.filter(e => e.status === 'draft').length,
       };
       const requestStatusCounts = {
-        pending: DB.eventRequests.filter(r => r.status === 'pending').length,
-        approved: DB.eventRequests.filter(r => r.status === 'approved').length,
+        pending: DB.eventRequests.filter(r => ['pending', 'submitted', 'planning', 'changes_requested', 'counteroffered', 'plan_submitted', 'plan_revision_requested'].includes(r.status)).length,
+        approved: DB.eventRequests.filter(r => ['approved', 'confirmed', 'completed'].includes(r.status)).length,
         rejected: DB.eventRequests.filter(r => r.status === 'rejected').length,
       };
       const employeeAssignmentCounts = {
@@ -2874,7 +2895,6 @@ window.EventFlowModules['shared'] = true;
     function refreshSimSupport() {
       sessionStorage.setItem('sim_sup_q', v('sim-sup-q'));
       sessionStorage.setItem('sim_sup_st', v('sim-sup-st'));
-      sessionStorage.setItem('sim_sup_pr', v('sim-sup-pr'));
       renderPage('support-issue-mgmt');
     }
     window.refreshSimSupport = refreshSimSupport;
@@ -2882,7 +2902,6 @@ window.EventFlowModules['shared'] = true;
     function refreshSimOperations() {
       sessionStorage.setItem('sim_ops_q', v('sim-ops-q'));
       sessionStorage.setItem('sim_ops_st', v('sim-ops-st'));
-      sessionStorage.setItem('sim_ops_pr', v('sim-ops-pr'));
       renderPage('support-issue-mgmt');
     }
     window.refreshSimOperations = refreshSimOperations;
@@ -2897,7 +2916,7 @@ window.EventFlowModules['shared'] = true;
 
     // ─── PAGE 1: DASHBOARD ──────────────────────────────────────────
     function dashSupportExecutive() {
-      const users = DB.users || [];
+      const users = window.EventFlowAccountPolicy.visibleAccounts(CU, DB.users || []);
       const events = DB.events || [];
       const regs = DB.registrations || [];
       const tasks = DB.eventOperationsTasks || [];
@@ -2910,7 +2929,8 @@ window.EventFlowModules['shared'] = true;
       const pendingRegs = regs.filter(r => {
         const st = (r.status || '').toLowerCase();
         const vst = (r.verificationStatus || '').toLowerCase();
-        return st === 'pending' || st === 'registered' || vst === 'pending review' || vst === 'pending' || !r.verified;
+        return !r.reviewStatus && !r.verified && !['rejected', 'cancelled', 'attended', 'no-show'].includes(st)
+          && (st === 'pending' || st === 'registered' || vst === 'pending review' || vst === 'pending');
       }).length;
 
       const openTickets = supportReqs.filter(s => s.status !== 'Resolved' && s.status !== 'Closed').length +
@@ -2919,18 +2939,13 @@ window.EventFlowModules['shared'] = true;
       const operationalIssues = tasks.filter(t => t.status !== 'Resolved').length;
       const activeEventsCount = events.filter(e => ['published', 'active', 'ongoing', 'upcoming'].includes((e.status || '').toLowerCase())).length;
 
-      // Upcoming events list sorted by date
-      const upcomingEventsList = events.filter(e => {
-        const st = (e.status || '').toLowerCase();
-        return ['upcoming', 'published', 'active', 'ongoing'].includes(st);
-      }).sort((a, b) => new Date(a.date || 0) - new Date(b.date || 0));
-
       // Pending actions list
       const pendingActionsList = [];
       regs.filter(r => {
         const st = (r.status || '').toLowerCase();
         const vst = (r.verificationStatus || '').toLowerCase();
-        return st === 'pending' || vst === 'pending review' || vst === 'pending' || !r.verified;
+        return !r.reviewStatus && !r.verified && !['rejected', 'cancelled', 'attended', 'no-show'].includes(st)
+          && (st === 'pending' || st === 'registered' || vst === 'pending review' || vst === 'pending');
       }).slice(0, 3).forEach(r => {
         const u = users.find(user => String(user.id) === String(r.attendeeId)) || { name: 'Attendee' };
         const e = events.find(ev => String(ev.id) === String(r.eventId)) || { title: 'Event' };
@@ -2949,8 +2964,8 @@ window.EventFlowModules['shared'] = true;
         pendingActionsList.push({
           type: 'Customer Support',
           title: `${s.subject}`,
-          badge: s.priority || 'Medium',
-          badgeCls: s.priority === 'High' ? 'red' : 'yellow',
+          badge: s.status || 'Pending',
+          badgeCls: s.status === 'In Progress' ? 'purple' : 'yellow',
           actionLbl: 'Manage',
           actionFn: `openSupportTicketModal('${s.id}')`,
           icon: '🎧'
@@ -2961,10 +2976,10 @@ window.EventFlowModules['shared'] = true;
         pendingActionsList.push({
           type: 'Operational Issue',
           title: `${t.eventTitle} · ${t.type}`,
-          badge: t.priority || 'Medium',
-          badgeCls: t.priority === 'High' ? 'red' : 'yellow',
+          badge: t.status || 'Pending',
+          badgeCls: t.status === 'In Progress' ? 'purple' : 'yellow',
           actionLbl: 'Update',
-          actionFn: `openEventOpTaskModal('${t.id}')`,
+          actionFn: `openSupportExecutiveRequest('${t.id}')`,
           icon: '⚙️'
         });
       });
@@ -2984,7 +2999,7 @@ window.EventFlowModules['shared'] = true;
         ...tasks.slice(0, 2).map(t => ({
           icon: '⚙️',
           title: `Operational Task: ${t.type}`,
-          detail: `${t.eventTitle} · Status: ${t.status} · Priority: ${t.priority}`,
+          detail: `${t.eventTitle} · Status: ${t.status}`,
           time: t.updated || 'Recently'
         })),
         ...queries.slice(0, 2).map(q => ({
@@ -3065,32 +3080,7 @@ window.EventFlowModules['shared'] = true;
           </div>
         </div>
 
-        <div class="grid-2 gap-20 mb-20">
-          <div class="card">
-            <div class="flex justify-between items-center mb-14">
-              <div class="h4">Upcoming Events (${upcomingEventsList.length})</div>
-              <button class="btn btn-ghost btn-xs" onclick="switchTabAndNav('user-event-mgmt', 'events')">View All Events →</button>
-            </div>
-            <div style="display:flex;flex-direction:column;gap:12px;max-height:380px;overflow-y:auto;padding-right:4px">
-              ${upcomingEventsList.slice(0, 5).map(e => {
-                const isFull = (e.registered || 0) >= (e.capacity || 100);
-                return `
-                  <div style="padding:12px;border:1px solid var(--border);border-radius:10px;background:var(--surface2)">
-                    <div class="flex justify-between items-start mb-6">
-                      <div style="font-weight:700;font-size:14px;color:var(--text)">${e.title || e.name}</div>
-                      <span class="badge badge-${eventOpsStatusBadge(e.status)}">${formatEventStatus(e.status)}</span>
-                    </div>
-                    <div class="small muted mb-8">📍 ${e.venue || e.location || 'TBD'} (${e.city || 'India'}) · 📅 ${e.date} · 🏷️ ${e.category || 'General'}</div>
-                    <div class="flex justify-between items-center">
-                      <div class="small">Capacity: <strong>${e.registered || 0}/${e.capacity || 100}</strong> ${isFull ? '<span class="badge badge-yellow" style="font-size:10px;padding:2px 6px;margin-left:4px">Full</span>' : ''}</div>
-                      <button class="btn btn-ghost btn-xs" onclick="openViewEventDrawer('${e.id}')">View Details</button>
-                    </div>
-                  </div>
-                `;
-              }).join('') || '<div class="empty">No upcoming events found</div>'}
-            </div>
-          </div>
-
+        <div class="mb-20">
           <div class="card">
             <div class="h4 mb-14">Pending Actions &amp; Urgent Items</div>
             <div style="display:flex;flex-direction:column;gap:10px;max-height:380px;overflow-y:auto;padding-right:4px">
@@ -3134,7 +3124,7 @@ window.EventFlowModules['shared'] = true;
     // ─── PAGE 2: USER & EVENT MANAGEMENT ───────────────────────────
     function pageUserAndEventManagement() {
       const activeTab = sessionStorage.getItem('uem_active_tab') || 'users';
-      const users = DB.users || [];
+      const users = window.EventFlowAccountPolicy.visibleAccounts(CU, DB.users || []);
       const events = DB.events || [];
       const regs = DB.registrations || [];
 
@@ -3143,22 +3133,6 @@ window.EventFlowModules['shared'] = true;
       const userRole = sessionStorage.getItem('uem_user_role') || '';
       const userSt = sessionStorage.getItem('uem_user_st') || '';
 
-      const emailCounts = {};
-      const phoneCounts = {};
-      users.forEach(u => {
-        if (u.email) {
-          const em = u.email.toLowerCase();
-          emailCounts[em] = (emailCounts[em] || 0) + 1;
-        }
-        if (u.phone && u.phone !== '—') {
-          phoneCounts[u.phone] = (phoneCounts[u.phone] || 0) + 1;
-        }
-      });
-      const duplicateUsers = users.filter(u => {
-        const em = (u.email || '').toLowerCase();
-        const ph = u.phone || '';
-        return (emailCounts[em] > 1) || (ph !== '—' && phoneCounts[ph] > 1);
-      });
 
       const filteredUsers = users.filter(u => {
         const matchesQuery = !userQ || `${u.name} ${u.email} ${u.phone} ${u.role} ${u.id}`.toLowerCase().includes(userQ);
@@ -3194,9 +3168,9 @@ window.EventFlowModules['shared'] = true;
         let matchesStatus = true;
         if (regSt) {
           if (regSt === 'Pending Review') {
-            matchesStatus = currentRegSt === 'Pending Review' || currentRegSt === 'Pending' || r.status === 'pending' || !r.verified;
+            matchesStatus = currentRegSt === 'Pending Review' || currentRegSt === 'Pending';
           } else if (regSt === 'Verified' || regSt === 'Confirmed') {
-            matchesStatus = currentRegSt === 'Verified' || r.status === 'confirmed';
+            matchesStatus = currentRegSt === 'Verified';
           } else if (regSt === 'Flagged') {
             matchesStatus = currentRegSt === 'Flagged';
           } else if (regSt === 'Rejected') {
@@ -3223,18 +3197,6 @@ window.EventFlowModules['shared'] = true;
 
         ${activeTab === 'users' ? `
           <!-- TAB 1: USERS -->
-          ${duplicateUsers.length > 0 ? `
-            <div style="padding:14px 18px;background:rgba(234,179,8,0.12);border:1px solid var(--yellow);border-radius:10px;margin-bottom:20px" class="flex justify-between items-center">
-              <div class="flex items-center gap-10">
-                <span style="font-size:22px">⚠️</span>
-                <div>
-                  <div style="font-weight:700;color:var(--yellow);font-size:14px">Duplicate Accounts Detected</div>
-                  <div class="small muted">${duplicateUsers.length} user records share matching email addresses or contact numbers.</div>
-                </div>
-              </div>
-              <button class="btn btn-warning btn-sm" onclick="openDuplicateUsersModal()">🔍 Review &amp; Resolve Duplicates</button>
-            </div>
-          ` : ''}
 
           <div class="filter-row">
             <div class="search-box input-group">
@@ -3246,7 +3208,7 @@ window.EventFlowModules['shared'] = true;
               <option value="attendee" ${userRole === 'attendee' ? 'selected' : ''}>Attendee</option>
               <option value="client" ${userRole === 'client' ? 'selected' : ''}>Client</option>
               <option value="organizer" ${userRole === 'organizer' ? 'selected' : ''}>Organizer</option>
-              <option value="staff" ${userRole === 'staff' ? 'selected' : ''}>Staff</option>
+              ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<option value="staff" ${userRole === 'staff' ? 'selected' : ''}>Staff</option>`}
             </select>
             <select class="form-control filter-select" id="uem-user-st" onchange="refreshUemUsers()">
               <option value="">All Account Statuses</option>
@@ -3269,16 +3231,14 @@ window.EventFlowModules['shared'] = true;
                 </thead>
                 <tbody>
                   ${filteredUsers.map(u => {
-                    const em = (u.email || '').toLowerCase();
-                    const isDup = emailCounts[em] > 1 || (u.phone && phoneCounts[u.phone] > 1);
                     const isDeactivated = u.status === 'deactivated' || u.status === 'inactive';
                     return `
-                      <tr style="${isDup ? 'background:rgba(234,179,8,0.04)' : ''}">
+                      <tr>
                         <td>
                           <div class="flex items-center gap-10">
                             <div class="av av-xs">${u.avatar || u.name[0]}</div>
                             <div>
-                              <div style="font-weight:700;font-size:14px;color:var(--text)">${u.name} ${isDup ? '<span class="badge badge-yellow" style="font-size:10px;padding:1px 5px">Duplicate</span>' : ''}</div>
+                              <div style="font-weight:700;font-size:14px;color:var(--text)">${u.name}</div>
                               <div class="small muted">ID: ${u.id}</div>
                             </div>
                           </div>
@@ -3292,12 +3252,12 @@ window.EventFlowModules['shared'] = true;
                           <span class="badge badge-${isDeactivated ? 'red' : 'green'}">${isDeactivated ? 'Deactivated' : 'Active'}</span>
                         </td>
                         <td>
-                          <div class="flex items-center gap-6">
+                          ${window.EventFlowAccountPolicy.canManageAccount(CU, u) ? `<div class="flex items-center gap-6">
                             <button class="btn btn-ghost btn-xs" onclick="openEditUserModal('${u.id}')" title="Edit User">✏️ Edit</button>
                             <button class="btn btn-xs ${isDeactivated ? 'btn-success' : 'btn-danger'}" onclick="toggleUserStatus('${u.id}')" title="Toggle Account Status">
                               ${isDeactivated ? 'Activate' : 'Deactivate'}
                             </button>
-                          </div>
+                          </div>` : '<span class="small muted">Admin managed</span>'}
                         </td>
                       </tr>
                     `;
@@ -3441,7 +3401,8 @@ window.EventFlowModules['shared'] = true;
                     ${filteredRegs.map(reg => {
                       const attendee = users.find(u => String(u.id) === String(reg.attendeeId)) || { name: 'Attendee', email: '—' };
                       const event = events.find(e => String(e.id) === String(reg.eventId)) || { title: 'Event' };
-                      const isPending = reg.status === 'pending' || reg.verificationStatus === 'Pending Review' || !reg.verified;
+                      const isPending = !reg.reviewStatus && !['rejected', 'cancelled', 'attended', 'no-show'].includes(reg.status)
+                        && (reg.status === 'pending' || reg.verificationStatus === 'Pending Review');
                       const paymentStatus = reg.payment === 'paid' ? 'Paid' : (reg.amount === 0 ? 'Free' : (reg.payment || 'Pending Payment'));
                       const regStatus = reg.verificationStatus || (reg.status === 'confirmed' ? 'Verified' : 'Pending Review');
 
@@ -3492,233 +3453,93 @@ window.EventFlowModules['shared'] = true;
     }
 
     // ─── PAGE 3: SUPPORT & ISSUE MANAGEMENT ────────────────────────
-    function pageSupportAndIssueManagement() {
-      const activeTab = sessionStorage.getItem('sim_active_tab') || 'support';
-      const supportReqs = DB.supportRequests || [];
-      const userQueries = DB.userQueries || [];
-      const tasks = DB.eventOperationsTasks || [];
-
-      // Combine support requests and user queries into unified customer tickets list
-      const combinedTickets = [
-        ...supportReqs.map(s => ({
-          id: s.id,
-          source: 'Support Center',
-          userName: supportUser ? supportUser(s).name : 'User',
-          userEmail: supportUser ? supportUser(s).email : '—',
-          subject: s.subject || 'Support Request',
-          message: s.message || '',
-          eventTitle: supportEvent ? supportEvent(s).title : '',
-          priority: s.priority || 'Medium',
-          status: s.status || 'Pending',
-          assignedTo: s.assignedTo || 'Support Executive',
-          updated: s.updated || s.created || 'Today',
-          internalNotes: s.internalNotes || [],
-          history: s.history || []
-        })),
-        ...userQueries.map(q => ({
-          id: q.id,
-          source: q.source || 'Account Query',
-          userName: q.userName || 'User',
-          userEmail: q.userEmail || '—',
-          subject: `${q.type}: ${q.subject}`,
-          message: q.detail || '',
-          eventTitle: 'Account Management',
-          priority: q.type === 'Account Deletion' ? 'High' : 'Medium',
-          status: q.status || 'Pending',
-          assignedTo: q.assignedTo || 'Support Executive',
-          updated: q.date || 'Today',
-          internalNotes: q.internalNotes || [],
-          history: q.history || []
-        }))
-      ];
-
-      // Tab 1: Customer Support Filtering
-      const supQ = (sessionStorage.getItem('sim_sup_q') || '').toLowerCase();
-      const supSt = sessionStorage.getItem('sim_sup_st') || '';
-      const supPr = sessionStorage.getItem('sim_sup_pr') || '';
-
-      const filteredTickets = combinedTickets.filter(t => {
-        const matchesQuery = !supQ || `${t.id} ${t.userName} ${t.userEmail} ${t.subject} ${t.message} ${t.eventTitle}`.toLowerCase().includes(supQ);
-        const matchesStatus = !supSt || t.status === supSt;
-        const matchesPriority = !supPr || t.priority === supPr;
-        return matchesQuery && matchesStatus && matchesPriority;
-      });
-
-      // Tab 2: Event Operations Filtering
-      const opsQ = (sessionStorage.getItem('sim_ops_q') || '').toLowerCase();
-      const opsSt = sessionStorage.getItem('sim_ops_st') || '';
-      const opsPr = sessionStorage.getItem('sim_ops_pr') || '';
-
-      const filteredTasks = tasks.filter(t => {
-        const matchesQuery = !opsQ || `${t.id} ${t.eventTitle} ${t.type} ${t.description}`.toLowerCase().includes(opsQ);
-        const matchesStatus = !opsSt || t.status === opsSt;
-        const matchesPriority = !opsPr || t.priority === opsPr;
-        return matchesQuery && matchesStatus && matchesPriority;
-      });
-
-      return `
-        <div class="page-hd">
-          <div class="page-hd-left">
-            <div class="page-title">Support &amp; Issue Management</div>
-            <div class="page-sub">Central ticket assignment, escalation, customer inquiries, and event operations issue tracking.</div>
-          </div>
-        </div>
-
-        <div class="tabs-nav flex gap-8 mb-20" style="border-bottom:1px solid var(--border);padding-bottom:12px">
-          <button class="btn ${activeTab === 'support' ? 'btn-primary' : 'btn-ghost'}" onclick="setSimTab('support')">🎧 Customer Support (${combinedTickets.length})</button>
-          <button class="btn ${activeTab === 'operations' ? 'btn-primary' : 'btn-ghost'}" onclick="setSimTab('operations')">⚙️ Event Operations (${tasks.length})</button>
-        </div>
-
-        ${activeTab === 'support' ? `
-          <!-- TAB 1: CUSTOMER SUPPORT -->
-          <div class="filter-row">
-            <div class="search-box input-group">
-              <span class="input-icon">🔍</span>
-              <input class="form-control" id="sim-sup-q" placeholder="Search support tickets, users, issues..." value="${supQ}" oninput="refreshSimSupport()">
-            </div>
-            <select class="form-control filter-select" id="sim-sup-st" onchange="refreshSimSupport()">
-              <option value="">All Statuses</option>
-              <option value="Pending" ${supSt === 'Pending' ? 'selected' : ''}>Pending</option>
-              <option value="In Progress" ${supSt === 'In Progress' ? 'selected' : ''}>In Progress</option>
-              <option value="Resolved" ${supSt === 'Resolved' ? 'selected' : ''}>Resolved</option>
-              <option value="Closed" ${supSt === 'Closed' ? 'selected' : ''}>Closed</option>
-            </select>
-            <select class="form-control filter-select" id="sim-sup-pr" onchange="refreshSimSupport()">
-              <option value="">All Priorities</option>
-              <option value="High" ${supPr === 'High' ? 'selected' : ''}>High Priority</option>
-              <option value="Medium" ${supPr === 'Medium' ? 'selected' : ''}>Medium Priority</option>
-              <option value="Low" ${supPr === 'Low' ? 'selected' : ''}>Low Priority</option>
-            </select>
-          </div>
-
-          <div class="card">
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Ticket</th>
-                    <th>User</th>
-                    <th>Context / Event</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Assignee</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${filteredTickets.map(t => {
-                    const prBadge = t.priority === 'High' ? 'red' : t.priority === 'Medium' ? 'yellow' : 'blue';
-                    const stBadge = t.status === 'Resolved' ? 'green' : t.status === 'In Progress' ? 'purple' : t.status === 'Closed' ? 'gray' : 'yellow';
-                    return `
-                      <tr>
-                        <td>
-                          <div style="font-weight:700;font-size:13.5px;color:var(--text)">${t.subject}</div>
-                          <div class="small muted truncate" style="max-width:280px">${t.message}</div>
-                          <div class="small mono muted">ID: ${t.id} · ${t.source}</div>
-                        </td>
-                        <td>
-                          <div style="font-weight:600">${t.userName}</div>
-                          <div class="small muted">${t.userEmail}</div>
-                        </td>
-                        <td>
-                          <div class="small">${t.eventTitle || 'Platform Inquiry'}</div>
-                          <div class="small muted">${t.updated}</div>
-                        </td>
-                        <td><span class="badge badge-${prBadge}">${t.priority}</span></td>
-                        <td><span class="badge badge-${stBadge}">${t.status}</span></td>
-                        <td><div class="small">${t.assignedTo}</div></td>
-                        <td>
-                          <div class="flex items-center gap-6">
-                            <button class="btn btn-ghost btn-xs" onclick="openSupportTicketModal('${t.id}')">Manage</button>
-                            ${t.status !== 'Resolved' ? `
-                              <button class="btn btn-success btn-xs" onclick="resolveQueryDirect('${t.id}')" title="Resolve">✓</button>
-                              <button class="btn btn-danger btn-xs" onclick="rejectQueryDirect('${t.id}')" title="Reject / Close">✕</button>
-                            ` : ''}
-                          </div>
-                        </td>
-                      </tr>
-                    `;
-                  }).join('') || '<tr><td colspan="7" class="text-center py-20">No matching customer support tickets found.</td></tr>'}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        ` : `
-          <!-- TAB 2: EVENT OPERATIONS -->
-          <div class="flex justify-between items-center mb-14">
-            <div>
-              <div class="h4">Operational Issue Tracking</div>
-              <div class="small muted">Track logistical, technical, schedule, and safety issues across events.</div>
-            </div>
-            <button class="btn btn-primary" onclick="openCreateEventOpTaskModal()">➕ Add Operational Issue</button>
-          </div>
-
-          <div class="filter-row">
-            <div class="search-box input-group">
-              <span class="input-icon">🔍</span>
-              <input class="form-control" id="sim-ops-q" placeholder="Search operational issues by title, type, details..." value="${opsQ}" oninput="refreshSimOperations()">
-            </div>
-            <select class="form-control filter-select" id="sim-ops-st" onchange="refreshSimOperations()">
-              <option value="">All Statuses</option>
-              <option value="Pending" ${opsSt === 'Pending' ? 'selected' : ''}>Pending</option>
-              <option value="In Progress" ${opsSt === 'In Progress' ? 'selected' : ''}>In Progress</option>
-              <option value="Resolved" ${opsSt === 'Resolved' ? 'selected' : ''}>Resolved</option>
-            </select>
-            <select class="form-control filter-select" id="sim-ops-pr" onchange="refreshSimOperations()">
-              <option value="">All Priorities</option>
-              <option value="High" ${opsPr === 'High' ? 'selected' : ''}>High Priority</option>
-              <option value="Medium" ${opsPr === 'Medium' ? 'selected' : ''}>Medium Priority</option>
-              <option value="Low" ${opsPr === 'Low' ? 'selected' : ''}>Low Priority</option>
-            </select>
-          </div>
-
-          <div class="card">
-            <div class="table-wrap">
-              <table>
-                <thead>
-                  <tr>
-                    <th>Issue ID &amp; Event</th>
-                    <th>Issue Type</th>
-                    <th>Description</th>
-                    <th>Priority</th>
-                    <th>Status</th>
-                    <th>Last Updated</th>
-                    <th>Actions</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  ${filteredTasks.map(t => {
-                    const prBadge = t.priority === 'High' ? 'red' : t.priority === 'Medium' ? 'yellow' : 'blue';
-                    const stBadge = t.status === 'Resolved' ? 'green' : t.status === 'In Progress' ? 'purple' : 'yellow';
-                    return `
-                      <tr>
-                        <td>
-                          <div style="font-weight:700;font-size:14px;color:var(--text)">${t.eventTitle}</div>
-                          <div class="small mono muted">ID: ${t.id}</div>
-                        </td>
-                        <td><span class="badge badge-purple">${t.type}</span></td>
-                        <td><div class="small truncate" style="max-width:280px">${t.description}</div></td>
-                        <td><span class="badge badge-${prBadge}">${t.priority}</span></td>
-                        <td><span class="badge badge-${stBadge}">${t.status}</span></td>
-                        <td class="small muted">${t.updated}</td>
-                        <td>
-                          <div class="flex items-center gap-6">
-                            <button class="btn btn-ghost btn-xs" onclick="openEventOpTaskModal('${t.id}')">Manage</button>
-                            ${t.status !== 'Resolved' ? `
-                              <button class="btn btn-success btn-xs" onclick="resolveEventOpTaskDirect('${t.id}')" title="Mark Resolved">✓</button>
-                            ` : ''}
-                          </div>
-                        </td>
-                      </tr>
-                    `;
-                  }).join('') || '<tr><td colspan="7" class="text-center py-20">No matching operational issues found.</td></tr>'}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        `}
-      `;
+    function supportExecutiveEventRequests() {
+      const requests = new Map();
+      for (const collection of ['eventOpsRequests', 'eventOperationsTasks']) {
+        for (const item of DB[collection] || []) {
+          if (item.backendTicket) continue;
+          const ticketId = String(item.id);
+          if (requests.has(ticketId)) continue;
+          const requester = (DB.users || []).find(user =>
+            (item.userId != null && String(user.id || user.userId) === String(item.userId)) ||
+            (item.raisedBy && user.name === item.raisedBy));
+          const event = (DB.events || []).find(event => String(event.id) === String(item.eventId));
+          const status = String(item.status || 'Pending').toLowerCase().replace(/\s+/g, '_');
+          requests.set(ticketId, {
+            ticketId,
+            localEventRequest: true,
+            concern: item.subject || item.type || 'Event request',
+            requestType: 'Event Related Issues',
+            description: item.issue || item.description || '',
+            eventTitle: item.eventTitle || event?.title || event?.name || '',
+            requesterName: item.userName || requester?.name || item.raisedBy || 'Operations Team',
+            requesterEmail: item.userEmail || requester?.email || '',
+            status: ['resolved', 'closed', 'completed'].includes(status) ? 'resolved'
+              : status === 'in_progress' ? 'in_progress' : 'open',
+            createdAt: item.createdAt || String(item.date || '').split(' · ')[0],
+            updatedAt: item.updatedAt,
+            updatedLabel: item.updatedAt ? '' : (item.updated || item.date || 'Recently'),
+            response: item.response || '',
+            messages: item.messages || [],
+          });
+        }
+      }
+      return Array.from(requests.values());
     }
+
+    function updateSupportExecutiveEventRequest(ticketId, update) {
+      if (!isSupportExecutive()) throw new Error('Only support executives can update event requests.');
+      const status = { open: 'Pending', in_progress: 'In Progress', resolved: 'Resolved' }[update.status];
+      const response = String(update.response || '').trim();
+      if (!status) throw new Error('Choose a valid request status.');
+      if (update.status === 'resolved' && !response) throw new Error('Add a reply before resolving this request.');
+      const records = ['eventOpsRequests', 'eventOperationsTasks'].flatMap(collection =>
+        (DB[collection] || []).filter(item => String(item.id) === String(ticketId)));
+      if (!records.length) throw new Error('This event request could not be found. Refresh Customer Requests.');
+      const updatedAt = new Date().toISOString();
+      for (const item of records) {
+        if (response) {
+          if (!item.messages?.length && item.response) {
+            item.messages = [{ sender: 'support', message: item.response, createdAt: item.updatedAt || item.createdAt }];
+          }
+          item.messages = [...(item.messages || []), {
+            sender: 'support', senderName: CU.name || 'Support Executive', message: response, createdAt: updatedAt,
+          }];
+          item.response = response;
+        }
+        item.status = status;
+        item.updated = 'Just now';
+        item.updatedAt = updatedAt;
+      }
+      saveDB();
+      return { emailNotificationSent: false };
+    }
+
+    function supportExecutiveRequestOptions() {
+      return {
+        management: true, queueTitle: 'Customer Requests',
+        getAdditionalTickets: () => supportExecutiveEventRequests(),
+        updateAdditionalTicket: (ticketId, update) => updateSupportExecutiveEventRequest(ticketId, update),
+      };
+    }
+
+    async function renderCustomerRequests(el) {
+      const options = supportExecutiveRequestOptions();
+      el.innerHTML = await window.EventFlowSupport.render(CU, 'Back to Dashboard', options);
+      window.EventFlowSupport.bind(el, CU, () => goNav('dashboard'), 'Back to Dashboard', options);
+      const ticketId = sessionStorage.getItem('support_request_id');
+      sessionStorage.removeItem('support_request_id');
+      if (ticketId) {
+        Array.from(el.querySelectorAll('[data-ticket-view]'))
+          .find(button => button.dataset.ticketView === ticketId)?.click();
+      }
+    }
+
+    function openSupportExecutiveRequest(ticketId) {
+      sessionStorage.setItem('support_request_id', String(ticketId));
+      goNav('support-issue-mgmt');
+    }
+    window.openSupportExecutiveRequest = openSupportExecutiveRequest;
 
     // ─── PAGE 4: REPORTS & ANALYTICS ────────────────────────────────
     function getAllReportsList() {
@@ -3736,7 +3557,8 @@ window.EventFlowModules['shared'] = true;
         author: r.author || 'Support Executive',
         fileName: r.fileName || 'Event_Operations_Report.pdf'
       }));
-      const customReports = (DB.supportExecReports || []).map(r => ({
+      const customReports = (DB.supportExecReports || []).filter(r =>
+        r.authorUserId ? r.authorUserId === (CU.userId || CU.id) : r.author === CU.name).map(r => ({
         ...r,
         category: r.category || 'Support & Issue Summary',
         scope: r.scope || 'Platform Wide',
@@ -3744,7 +3566,67 @@ window.EventFlowModules['shared'] = true;
         fileName: r.fileName || 'Support_Executive_Report.pdf'
       }));
 
-      return [...customReports, ...regReports, ...eventReports];
+      const unique = new Map();
+      [...customReports, ...regReports, ...eventReports].forEach(report => {
+        const key = report.backendReportId || report.id;
+        if (!unique.has(key)) unique.set(key, report);
+      });
+      return Array.from(unique.values());
+    }
+
+    function cacheSupportExecutiveReport(report, legacyId) {
+      const mapped = window.EventFlowSupportReports.toWorkspaceReport(report);
+      let found = false;
+      for (const key of ['supportExecReports', 'regReports', 'eventOpsReports']) {
+        const item = (DB[key] || []).find(item => item.backendReportId === report.reportId || (legacyId && item.id === legacyId));
+        if (item) { Object.assign(item, mapped); found = true; }
+      }
+      if (!found) {
+        if (!DB.supportExecReports) DB.supportExecReports = [];
+        DB.supportExecReports.unshift(mapped);
+      }
+      saveDB();
+      return mapped;
+    }
+
+    function supportReportPayload(report, status) {
+      return { title: report.title, category: report.category, scope: report.scope || 'Platform Wide',
+        period: report.period || 'Not specified', summary: report.summary || report.type || report.title,
+        status, sourceReference: report.sourceReference || `legacy:${report.id}` };
+    }
+
+    let _supportReportsSync = null;
+    function syncSupportExecutiveReports() {
+      if (_supportReportsSync) return _supportReportsSync;
+      _supportReportsSync = (async () => {
+        const user = CU;
+        const service = window.EventFlowSupportReports;
+        const remote = await service.list(user);
+        const legacy = (DB.supportExecReports || []).filter(report => !report.backendReportId && report.status !== 'Draft' &&
+          (report.authorUserId ? report.authorUserId === (user.userId || user.id) : report.author === user.name));
+        for (const report of legacy) {
+          const saved = await service.create(user, supportReportPayload(report, 'submitted'));
+          cacheSupportExecutiveReport(saved, report.id);
+          const index = remote.findIndex(item => item.reportId === saved.reportId);
+          if (index >= 0) remote[index] = saved; else remote.unshift(saved);
+        }
+        if (CU !== user) return;
+        const localDrafts = (DB.supportExecReports || []).filter(report => !report.backendReportId);
+        DB.supportExecReports = [...remote.map(service.toWorkspaceReport), ...localDrafts];
+        saveDB();
+      })().finally(() => { _supportReportsSync = null; });
+      return _supportReportsSync;
+    }
+
+    async function renderSupportExecutiveReports(el) {
+      try {
+        await syncSupportExecutiveReports();
+        if (['reports-analytics', 'reports'].includes(_currentPage)) el.innerHTML = pageReportsAndAnalytics();
+      } catch (error) {
+        if (['reports-analytics', 'reports'].includes(_currentPage)) {
+          el.innerHTML = `<p class="small" role="alert">Reports could not be synced: ${escapeHtml(error.message)}. <button class="btn btn-ghost btn-xs" onclick="goNav('reports-analytics')">Retry</button></p>` + pageReportsAndAnalytics();
+        }
+      }
     }
 
     function pageReportsAndAnalytics() {
@@ -3777,7 +3659,7 @@ window.EventFlowModules['shared'] = true;
             <div class="page-sub">Consolidated operational, registration, and support performance reports for Super Admin review.</div>
           </div>
           <div class="page-hd-right">
-            <button class="btn btn-primary" onclick="openCreateSupportExecutiveReportModal()">📤 Create Report</button>
+            <button class="btn btn-primary" onclick="openCreateSupportExecutiveReportModal()">📤 Submit Report</button>
           </div>
         </div>
 
@@ -3823,57 +3705,30 @@ window.EventFlowModules['shared'] = true;
           </select>
         </div>
 
-        <div class="card">
-          <div class="table-wrap">
-            <table>
-              <thead>
-                <tr>
-                  <th>Report Title &amp; ID</th>
-                  <th>Category</th>
-                  <th>Scope</th>
-                  <th>Attached File</th>
-                  <th>Status</th>
-                  <th>Review Feedback</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                ${filtered.map(r => {
-                  const isDraft = r.status === 'Draft';
-                  const isReviewed = r.status === 'Reviewed' || r.status === 'Approved';
-                  const stBadge = isReviewed ? 'green' : isDraft ? 'yellow' : 'purple';
-                  return `
-                    <tr>
-                      <td>
-                        <div style="font-weight:700;font-size:14px;color:var(--text)">${r.title}</div>
-                        <div class="small mono muted">ID: ${r.id} · By ${r.author || 'Support Executive'}</div>
-                      </td>
-                      <td><span class="badge badge-purple">${r.category}</span></td>
-                      <td><div class="small">${r.scope}</div><div class="small muted">${r.period || 'Q3 2026'}</div></td>
-                      <td>
-                        <div class="flex items-center gap-6">
-                          <span>📄</span>
-                          <span class="small mono text-accent" style="cursor:pointer" onclick="previewReportDocument('${r.id}')">${r.fileName}</span>
-                        </div>
-                      </td>
-                      <td><span class="badge badge-${stBadge}">${r.status}</span></td>
-                      <td>
-                        <div class="small muted">${r.reviewFeedback || r.adminNotes || (isReviewed ? 'Approved without remarks' : 'Awaiting admin review')}</div>
-                      </td>
-                      <td>
-                        <div class="flex items-center gap-6">
-                          <button class="btn btn-ghost btn-xs" onclick="previewReportDocument('${r.id}')" title="Preview Document">👁️ View</button>
-                          ${isDraft ? `
-                            <button class="btn btn-primary btn-xs" onclick="submitReportToAdminDirect('${r.id}')" title="Submit to Super Admin">📤 Submit</button>
-                          ` : ''}
-                        </div>
-                      </td>
-                    </tr>
-                  `;
-                }).join('') || '<tr><td colspan="7" class="text-center py-20">No matching reports found.</td></tr>'}
-              </tbody>
-            </table>
-          </div>
+        <div class="report-cards" aria-label="Reports">
+          ${filtered.map(r => {
+            const isDraft = r.status === 'Draft';
+            const isReviewed = r.status === 'Reviewed' || r.status === 'Approved';
+            const stBadge = isReviewed ? 'green' : isDraft ? 'yellow' : 'purple';
+            return `
+              <article class="report-card">
+                <div class="report-card-heading">
+                  <span class="report-card-category">${escapeHtml(r.category)}</span>
+                  <span class="badge badge-${stBadge}">${escapeHtml(r.status)}</span>
+                </div>
+                <h3 class="report-card-title">${escapeHtml(r.title)}</h3>
+                <div class="report-card-byline"><span class="mono">${escapeHtml(r.id)}</span><span>By ${escapeHtml(r.author || 'Support Executive')}</span></div>
+                <div class="report-card-context"><span>${escapeHtml(r.scope)}</span><span>${escapeHtml(r.period || 'Q3 2026')}</span></div>
+                <button class="report-card-file" type="button" onclick="previewReportDocument('${r.id}')" title="${escapeHtml(r.fileName).replace(/"/g, '&quot;')}"><span aria-hidden="true">📄</span><span>${escapeHtml(r.fileName)}</span></button>
+                <div class="report-card-footer">
+                  <p class="report-card-feedback">${escapeHtml(r.reviewFeedback || r.adminNotes || (isReviewed ? 'Approved without remarks' : 'Awaiting admin review'))}</p>
+                  <div class="report-card-actions">
+                    <button class="btn btn-ghost btn-xs" type="button" onclick="previewReportDocument('${r.id}')">View</button>
+                    ${isDraft ? `<button class="btn btn-primary btn-xs" type="button" onclick="submitReportToAdminDirect('${r.id}')">Submit</button>` : ''}
+                  </div>
+                </div>
+              </article>`;
+          }).join('') || '<div class="card report-cards-empty">No matching reports found.</div>'}
         </div>
       `;
     }
@@ -3886,7 +3741,8 @@ window.EventFlowModules['shared'] = true;
       const attendee = (DB.users || []).find(u => String(u.id) === String(r.attendeeId)) || { name: 'Attendee', email: '—', phone: '—' };
       const event = (DB.events || []).find(e => String(e.id) === String(r.eventId)) || { title: 'Event', date: '—', venue: '—' };
 
-      const isPending = (r.status === 'pending' || r.verificationStatus === 'Pending Review' || !r.verified);
+      const isPending = !r.reviewStatus && !['rejected', 'cancelled', 'attended', 'no-show'].includes(r.status)
+        && (r.status === 'pending' || r.verificationStatus === 'Pending Review');
       const paymentStatus = r.payment === 'paid' ? 'Paid' : (r.amount === 0 ? 'Free' : (r.payment || 'Pending Payment'));
       const regStatus = r.verificationStatus || (r.status === 'confirmed' ? 'Verified' : 'Pending Review');
 
@@ -3978,7 +3834,6 @@ window.EventFlowModules['shared'] = true;
       const requesterEmail = req.userEmail || (supportUser ? supportUser(req).email : '—');
       const subject = req.subject || req.type || 'Support Request';
       const message = req.message || req.detail || '—';
-      const priority = req.priority || 'Medium';
       const status = req.status || 'Pending';
       const assignedTo = req.assignedTo || 'Arjun Verma (Support Executive)';
       const notes = req.internalNotes || [];
@@ -4000,14 +3855,6 @@ window.EventFlowModules['shared'] = true;
         </div>
 
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px">
-          <div class="form-group" style="margin-bottom:0">
-            <label class="form-label">Priority</label>
-            <select class="form-control" id="ticket-edit-priority">
-              <option ${priority === 'High' ? 'selected' : ''}>High</option>
-              <option ${priority === 'Medium' ? 'selected' : ''}>Medium</option>
-              <option ${priority === 'Low' ? 'selected' : ''}>Low</option>
-            </select>
-          </div>
           <div class="form-group" style="margin-bottom:0">
             <label class="form-label">Status</label>
             <select class="form-control" id="ticket-edit-status">
@@ -4072,7 +3919,6 @@ window.EventFlowModules['shared'] = true;
       if (!req) req = (DB.userQueries || []).find(q => String(q.id) === String(ticketId));
       if (!req) return;
 
-      const newPriority = v('ticket-edit-priority');
       const newStatus = v('ticket-edit-status');
       const newAssignee = v('ticket-edit-assignee');
 
@@ -4080,11 +3926,7 @@ window.EventFlowModules['shared'] = true;
       if (req.status !== newStatus) {
         req.history.push({ action: `Status changed to ${newStatus}`, by: CU.name || 'Support Executive', timestamp: new Date().toLocaleTimeString() });
       }
-      if (req.priority !== newPriority) {
-        req.history.push({ action: `Priority set to ${newPriority}`, by: CU.name || 'Support Executive', timestamp: new Date().toLocaleTimeString() });
-      }
 
-      req.priority = newPriority;
       req.status = newStatus;
       req.assignedTo = newAssignee;
       req.updated = 'Just now';
@@ -4125,7 +3967,6 @@ window.EventFlowModules['shared'] = true;
       if (!req) req = (DB.userQueries || []).find(q => String(q.id) === String(ticketId));
       if (!req) return;
 
-      req.priority = 'High';
       req.status = 'In Progress';
       req.escalated = true;
       req.escalatedTo = 'Super Admin';
@@ -4160,6 +4001,8 @@ window.EventFlowModules['shared'] = true;
     window.resolveEventOpTaskDirect = resolveEventOpTaskDirect;
 
     function openCreateSupportExecutiveReportModal() {
+      _selectedSerFile = null;
+      _serSourceReference = `form:${Date.now()}-${Math.random().toString(36).slice(2)}`;
       const eventsOptions = (DB.events || []).map(e => `<option value="${e.title || e.name}">${e.title || e.name}</option>`).join('');
       openModal('📤 Create Support Executive Report', `
         <div class="form-group">
@@ -4172,7 +4015,7 @@ window.EventFlowModules['shared'] = true;
         </div>
         <div class="form-group">
           <label class="form-label">Report Title *</label>
-          <input class="form-control" id="ser-title" placeholder="e.g. Q3 2026 Support &amp; Operations Review">
+          <input class="form-control" id="ser-title" maxlength="200" placeholder="e.g. Q3 2026 Support &amp; Operations Review">
         </div>
         <div class="form-group">
           <label class="form-label">Associated Scope / Event *</label>
@@ -4184,20 +4027,20 @@ window.EventFlowModules['shared'] = true;
         </div>
         <div class="form-group">
           <label class="form-label">Reporting Period *</label>
-          <input class="form-control" id="ser-period" placeholder="e.g. August 2026, Q3 2026, Bi-Weekly Sprint">
+          <input class="form-control" id="ser-period" maxlength="100" placeholder="e.g. August 2026, Q3 2026, Bi-Weekly Sprint">
         </div>
         <div class="form-group">
           <label class="form-label">Summary &amp; Key Findings *</label>
-          <textarea class="form-control" id="ser-summary" rows="3" placeholder="Summary of findings, metrics, and actions taken..."></textarea>
+          <textarea class="form-control" id="ser-summary" rows="3" maxlength="10000" placeholder="Summary of findings, metrics, and actions taken..."></textarea>
         </div>
         <div class="form-group">
-          <label class="form-label">Attached Document (PDF / DOCX)</label>
+          <label class="form-label">Attached Document (optional, up to 10 MB)</label>
           <div class="file-upload-box" style="border:2px dashed var(--border);border-radius:10px;padding:16px;text-align:center;background:var(--surface2);cursor:pointer" onclick="document.getElementById('ser-file').click()">
             <input type="file" id="ser-file" accept=".pdf,.doc,.docx,.xls,.xlsx" style="display:none" onchange="handleSerFileSelect(this)">
             <div id="ser-file-preview">
               <div style="font-size:24px;margin-bottom:4px">📁</div>
               <div style="font-weight:600;font-size:13px">Click to attach document (.pdf, .docx, .xlsx)</div>
-              <div class="small muted" id="ser-file-name-display">Attached: Support_Executive_Report.pdf</div>
+              <div class="small muted" id="ser-file-name-display">No document selected</div>
             </div>
           </div>
         </div>
@@ -4209,17 +4052,25 @@ window.EventFlowModules['shared'] = true;
     }
     window.openCreateSupportExecutiveReportModal = openCreateSupportExecutiveReportModal;
 
-    let _selectedSerFileName = 'Support_Executive_Report.pdf';
+    let _selectedSerFile = null;
+    let _serSourceReference = '';
+    let _serSaving = false;
     function handleSerFileSelect(input) {
-      if (input.files && input.files[0]) {
-        _selectedSerFileName = input.files[0].name;
-        const el = document.getElementById('ser-file-name-display');
-        if (el) el.textContent = `Attached: ${_selectedSerFileName} (${(input.files[0].size / 1024).toFixed(1)} KB)`;
+      const file = input.files?.[0];
+      if (file && (file.size > 10 * 1024 * 1024 || !/\.(pdf|docx?|xlsx?)$/i.test(file.name))) {
+        toast('Choose a PDF, Word, or Excel file up to 10 MB.', 'error');
+        input.value = '';
+        _selectedSerFile = null;
+      } else {
+        _selectedSerFile = file || null;
       }
+      const el = document.getElementById('ser-file-name-display');
+      if (el) el.textContent = _selectedSerFile ? `Attached: ${_selectedSerFile.name} (${(_selectedSerFile.size / 1024).toFixed(1)} KB)` : 'No document selected';
     }
     window.handleSerFileSelect = handleSerFileSelect;
 
-    function saveSupportExecutiveReport(isSubmit) {
+    async function saveSupportExecutiveReport(isSubmit) {
+      if (_serSaving) return;
       const category = v('ser-category');
       const title = v('ser-title').trim();
       const scope = v('ser-scope');
@@ -4230,45 +4081,49 @@ window.EventFlowModules['shared'] = true;
       if (!period) { toast('Please specify a reporting period', 'error'); return; }
       if (!summary) { toast('Please provide a summary', 'error'); return; }
 
-      const newRep = {
-        id: `SER-${Date.now().toString().slice(-4)}`,
-        title: title,
-        category: category,
-        scope: scope,
-        period: period,
-        summary: summary,
-        fileName: _selectedSerFileName || 'Support_Executive_Report.pdf',
-        status: isSubmit ? 'Submitted' : 'Draft',
-        author: CU.name || 'Support Executive',
-        updated: 'Just now',
-        reviewFeedback: isSubmit ? 'Submitted to Super Admin for formal review' : 'Draft saved in workspace'
-      };
-
-      if (!DB.supportExecReports) DB.supportExecReports = [];
-      DB.supportExecReports.unshift(newRep);
-      saveDB();
-      closeModal();
-      renderPage('reports-analytics');
-      toast(isSubmit ? 'Report submitted to Super Admin successfully!' : 'Report saved as draft.', 'success');
+      _serSaving = true;
+      try {
+        const saved = await window.EventFlowSupportReports.create(CU, { title, category, scope, period, summary,
+          status: isSubmit ? 'submitted' : 'draft', sourceReference: _serSourceReference }, _selectedSerFile);
+        cacheSupportExecutiveReport(saved);
+        closeModal();
+        await renderPage('reports-analytics');
+        toast(isSubmit ? 'Report submitted. Admin can now view it in Reports.' : 'Report saved as draft.', 'success');
+      } catch (error) {
+        toast(error.message || 'Could not save the report. Please try again.', 'error');
+      } finally { _serSaving = false; }
     }
     window.saveSupportExecutiveReport = saveSupportExecutiveReport;
 
-    function submitReportToAdminDirect(reportId) {
+    const _submittingSupportReports = new Set();
+    async function submitReportToAdminDirect(reportId) {
+      if (_submittingSupportReports.has(reportId)) return;
       const all = getAllReportsList();
       const rep = all.find(r => r.id === reportId);
       if (!rep) return;
-      rep.status = 'Submitted';
-      rep.reviewFeedback = 'Submitted to Super Admin for review';
-      saveDB();
-      renderPage('reports-analytics');
-      toast(`Report ${reportId} submitted to Super Admin!`, 'success');
+      _submittingSupportReports.add(reportId);
+      try {
+        const service = window.EventFlowSupportReports;
+        const saved = rep.backendReportId ? await service.submit(CU, rep.backendReportId)
+          : await service.create(CU, supportReportPayload(rep, 'submitted'));
+        cacheSupportExecutiveReport(saved, rep.id);
+        await renderPage('reports-analytics');
+        toast('Report submitted. Admin can now view it in Reports.', 'success');
+      } catch (error) { toast(error.message || 'Could not submit the report. Please try again.', 'error'); }
+      finally { _submittingSupportReports.delete(reportId); }
     }
     window.submitReportToAdminDirect = submitReportToAdminDirect;
 
-    function previewReportDocument(reportId) {
+    async function previewReportDocument(reportId) {
       const all = getAllReportsList();
       const rep = all.find(r => r.id === reportId);
       if (!rep) return;
+
+      if (rep.backendReportId) {
+        try { await window.EventFlowSupportReports.showReport(CU, rep.backendReportId); }
+        catch (error) { toast(error.message || 'Could not load this report.', 'error'); }
+        return;
+      }
 
       openModal(`Report Document: ${rep.title}`, `
         <div class="info-row"><span class="info-label">Report ID</span><span class="info-value mono">${rep.id}</span></div>
@@ -4286,7 +4141,7 @@ window.EventFlowModules['shared'] = true;
         <div style="background:var(--surface);border:1px dashed var(--border);border-radius:8px;padding:14px;text-align:center">
           <div style="font-size:28px;margin-bottom:4px">📄</div>
           <div style="font-weight:700;font-size:13px">${rep.fileName || 'Report_Document.pdf'}</div>
-          <div class="small muted">Verified Document Attachment · Ready for Super Admin download</div>
+          <div class="small muted">This older report has no uploaded document. Its summary is available for submission.</div>
         </div>
 
         ${rep.reviewFeedback ? `
@@ -4513,7 +4368,7 @@ window.EventFlowModules['shared'] = true;
 
       const taskActivities = tasks.map(t => ({
         title: `Operational Issue ${t.id}: ${t.type}`,
-        detail: `${t.eventTitle} · Status: ${t.status} · Priority: ${t.priority}`,
+        detail: `${t.eventTitle} · Status: ${t.status}`,
         icon: '⚙️',
         time: t.updated
       }));
@@ -4801,15 +4656,13 @@ window.EventFlowModules['shared'] = true;
     function pageEventOperationsWorkspace() {
       const query = (sessionStorage.getItem('eventops_tasks_query') || '').toLowerCase();
       const statusFilter = sessionStorage.getItem('eventops_tasks_status') || '';
-      const priorityFilter = sessionStorage.getItem('eventops_tasks_priority') || '';
 
       const tasks = DB.eventOperationsTasks || [];
 
       const filtered = tasks.filter(t => {
         const matchesQuery = !query || t.eventTitle.toLowerCase().includes(query) || t.type.toLowerCase().includes(query) || t.id.toLowerCase().includes(query) || t.description.toLowerCase().includes(query);
         const matchesStatus = !statusFilter || t.status === statusFilter;
-        const matchesPriority = !priorityFilter || t.priority === priorityFilter;
-        return matchesQuery && matchesStatus && matchesPriority;
+        return matchesQuery && matchesStatus;
       });
 
       const pendingCount = tasks.filter(t => t.status === 'Pending').length;
@@ -4861,12 +4714,6 @@ window.EventFlowModules['shared'] = true;
             <option value="In Progress" ${statusFilter === 'In Progress' ? 'selected' : ''}>In Progress</option>
             <option value="Resolved" ${statusFilter === 'Resolved' ? 'selected' : ''}>Resolved</option>
           </select>
-          <select class="form-control filter-select" id="taskops-pr" onchange="refreshEventOpTasks()">
-            <option value="">All Priorities</option>
-            <option value="High" ${priorityFilter === 'High' ? 'selected' : ''}>High</option>
-            <option value="Medium" ${priorityFilter === 'Medium' ? 'selected' : ''}>Medium</option>
-            <option value="Low" ${priorityFilter === 'Low' ? 'selected' : ''}>Low</option>
-          </select>
         </div>
 
         <div class="card">
@@ -4877,7 +4724,6 @@ window.EventFlowModules['shared'] = true;
                   <th>Issue ID</th>
                   <th>Event Title</th>
                   <th>Issue Type</th>
-                  <th>Priority</th>
                   <th>Status</th>
                   <th>Updated</th>
                   <th>Actions</th>
@@ -4893,9 +4739,6 @@ window.EventFlowModules['shared'] = true;
                     </td>
                     <td><span class="badge badge-blue">${t.type}</span></td>
                     <td>
-                      <span class="badge badge-${t.priority === 'High' ? 'red' : t.priority === 'Medium' ? 'yellow' : 'gray'}">${t.priority}</span>
-                    </td>
-                    <td>
                       <span class="badge badge-${t.status === 'Pending' ? 'yellow' : t.status === 'In Progress' ? 'purple' : 'green'}">${t.status}</span>
                     </td>
                     <td class="small muted">${t.updated}</td>
@@ -4905,7 +4748,7 @@ window.EventFlowModules['shared'] = true;
                       </div>
                     </td>
                   </tr>
-                `).join('') || '<tr><td colspan="7" class="text-center py-20">No operational issues found.</td></tr>'}
+                `).join('') || '<tr><td colspan="6" class="text-center py-20">No operational issues found.</td></tr>'}
               </tbody>
             </table>
           </div>
@@ -4916,7 +4759,6 @@ window.EventFlowModules['shared'] = true;
     function refreshEventOpTasks() {
       sessionStorage.setItem('eventops_tasks_query', v('taskops-q'));
       sessionStorage.setItem('eventops_tasks_status', v('taskops-st'));
-      sessionStorage.setItem('eventops_tasks_priority', v('taskops-pr'));
       renderPage('event-requests');
     }
 
@@ -4926,7 +4768,6 @@ window.EventFlowModules['shared'] = true;
       openModal(`Operational Issue: ${t.id}`, `
         <div class="info-row"><span class="info-label">Event</span><span class="info-value"><strong>${t.eventTitle}</strong></span></div>
         <div class="info-row"><span class="info-label">Issue Type</span><span class="info-value">${t.type}</span></div>
-        <div class="info-row"><span class="info-label">Priority</span><span class="info-value">${t.priority}</span></div>
         <div class="form-group mt-12">
           <label class="form-label">Issue Status</label>
           <select class="form-control" id="task-edit-status">
@@ -4974,14 +4815,6 @@ window.EventFlowModules['shared'] = true;
           </select>
         </div>
         <div class="form-group">
-          <label class="form-label">Priority</label>
-          <select class="form-control" id="newtask-priority">
-            <option>High</option>
-            <option selected>Medium</option>
-            <option>Low</option>
-          </select>
-        </div>
-        <div class="form-group">
           <label class="form-label">Description / Issue Details *</label>
           <textarea class="form-control" id="newtask-desc" placeholder="Describe the operational issue..."></textarea>
         </div>
@@ -4993,7 +4826,6 @@ window.EventFlowModules['shared'] = true;
     function saveNewEventOpTask() {
       const eventId = v('newtask-eventid');
       const type = v('newtask-type');
-      const priority = v('newtask-priority');
       const desc = v('newtask-desc');
 
       if (!desc) { toast('Please enter issue description', 'error'); return; }
@@ -5004,7 +4836,6 @@ window.EventFlowModules['shared'] = true;
         eventId: eventId,
         eventTitle: ev.title || ev.name,
         type: type,
-        priority: priority,
         status: 'Pending',
         description: desc,
         updated: 'Just now'
@@ -5168,7 +4999,7 @@ window.EventFlowModules['shared'] = true;
           prefillEvent = e.title && e.title !== 'Unknown Event' ? e.title : '';
           // Auto-suggest route based on subject keywords
           const subjectLow = (item.subject || '').toLowerCase() + ' ' + (item.message || '').toLowerCase();
-          const emp1Keywords = ['registration', 'account', 'duplicate', 'verification', 'user', 'profile', 'email', 'login', 'password', 'access'];
+          const emp1Keywords = ['registration', 'account', 'verification', 'user', 'profile', 'email', 'login', 'password', 'access'];
           const emp2Keywords = ['event', 'venue', 'schedule', 'location', 'capacity', 'slot', 'cancel', 'speaker', 'av', 'equipment'];
           if (emp2Keywords.some(k => subjectLow.includes(k))) autoRouteTo = 'Employee 2 – Event Operations Executive';
           else if (emp1Keywords.some(k => subjectLow.includes(k))) autoRouteTo = 'Employee 1 – Registration & Verification Executive';
@@ -5203,7 +5034,6 @@ window.EventFlowModules['shared'] = true;
           <label class="form-label">Request Category *</label>
           <select class="form-control" id="route-category">
             <option>User Account Issue</option>
-            <option>Duplicate Account / Merge</option>
             <option>Registration Problem</option>
             <option>Identity Verification Issue</option>
             <option>Event Information Query</option>
@@ -5227,14 +5057,6 @@ window.EventFlowModules['shared'] = true;
         </div>
 
         <div class="grid-2 gap-12">
-          <div class="form-group">
-            <label class="form-label">Priority *</label>
-            <select class="form-control" id="route-priority">
-              <option value="Low">🟢 Low</option>
-              <option value="Medium" selected>🟡 Medium</option>
-              <option value="High">🔴 High</option>
-            </select>
-          </div>
           <div class="form-group">
             <label class="form-label">Route To *</label>
             <select class="form-control" id="route-to">
@@ -5273,7 +5095,7 @@ window.EventFlowModules['shared'] = true;
       if (routeToEl) {
         const subjectLow = (item.subject || '').toLowerCase() + ' ' + (item.message || '').toLowerCase();
         const emp2Keywords = ['event', 'venue', 'schedule', 'location', 'capacity', 'slot', 'cancel', 'speaker', 'av', 'equipment'];
-        const emp1Keywords = ['registration', 'account', 'duplicate', 'verification', 'user', 'profile', 'email', 'login', 'password'];
+        const emp1Keywords = ['registration', 'account', 'verification', 'user', 'profile', 'email', 'login', 'password'];
         if (emp2Keywords.some(k => subjectLow.includes(k))) routeToEl.value = 'Employee 2 – Event Operations Executive';
         else if (emp1Keywords.some(k => subjectLow.includes(k))) routeToEl.value = 'Employee 1 – Registration & Verification Executive';
       }
@@ -5284,7 +5106,6 @@ window.EventFlowModules['shared'] = true;
       const userEmail = v('route-user-email');
       const category = v('route-category');
       const description = v('route-description');
-      const priority = v('route-priority');
       const routeTo = v('route-to');
       const note = v('route-note');
       const relatedEvent = v('route-event');
@@ -5306,7 +5127,6 @@ window.EventFlowModules['shared'] = true;
         category: category,
         description: description,
         relatedEvent: relatedEvent || null,
-        priority: priority,
         routeTo: routeTo,
         note: note,
         source: 'Escalated by Emp 3',
@@ -5332,7 +5152,6 @@ window.EventFlowModules['shared'] = true;
           detail: description + (note ? '\n\nInternal Note: ' + note : '') + (relatedEvent ? '\nRelated Event: ' + relatedEvent : ''),
           source: 'Employee 3 Escalation',
           status: 'Pending',
-          priority: priority,
           date: routedReq.date
         });
       }
@@ -5349,7 +5168,6 @@ window.EventFlowModules['shared'] = true;
           issue: description + (note ? '\n\nInternal Note: ' + note : ''),
           source: 'Escalated by Emp 3',
           raisedBy: `${userName} (via Customer Support)`,
-          priority: priority,
           status: 'Pending',
           date: routedReq.date,
           notes: note || ''
@@ -5448,7 +5266,7 @@ window.EventFlowModules['shared'] = true;
       if (isTransactions) tasks.push(apiRequest('/finance/transactions?' + params.toString()));
       let dashboard, result;
       try { const data = await Promise.all(tasks); if (tab === 'refunds') result = data[0]; else { dashboard = data[0]; result = data[1]; } }
-      catch (error) { return '<div class="page-hd"><div><div class="page-title">Finance Executive</div><div class="page-sub">Financial operations</div></div></div><div class="card"><div class="empty-title">Finance data is unavailable</div><p class="empty-desc">' + escapeHtml(error.message) + '</p><button class="btn btn-primary" onclick="renderPage(&quot;finance&quot;)">Retry</button></div>'; }
+      catch (error) { if ((DB.financeTransactions || []).length) return pageFinanceCenterDemo(); return '<div class="page-hd"><div><div class="page-title">Finance Executive</div><div class="page-sub">Financial operations</div></div></div><div class="card"><div class="empty-title">Finance data is unavailable</div><p class="empty-desc">' + escapeHtml(error.message) + '</p><button class="btn btn-primary" onclick="renderPage(&quot;finance&quot;)">Retry</button></div>'; }
       dashboard = dashboard || { currency: 'INR', totals: {} };
       const totals = dashboard.totals || {};
       const currency = value => new Intl.NumberFormat('en-IN', { style: 'currency', currency: dashboard.currency || 'INR', maximumFractionDigits: 2 }).format(Number(value || 0));
@@ -5546,6 +5364,150 @@ window.EventFlowModules['shared'] = true;
         if (!response.ok) throw new Error('Could not export transactions (' + response.status + ')');
         const url = URL.createObjectURL(await response.blob()); const link = document.createElement('a'); link.href = url; link.download = 'eventflow-payment-transactions.csv'; link.click(); URL.revokeObjectURL(url);
       } catch (error) { alert(error.message || 'Transaction export failed'); }
+
+    }
+
+    function financeStatusBadgeDemo(status) { return { Successful: 'green', Pending: 'yellow', Failed: 'red', Requested: 'yellow', Processing: 'purple', Completed: 'green', Rejected: 'red' }[status] || 'gray'; }
+    function pageFinanceCenterDemo() {
+      const tab = sessionStorage.getItem('finance_tab') || 'transactions';
+      const query = (sessionStorage.getItem('finance_query') || '').toLowerCase();
+      const commissionRate = 0.15;
+      const allTransactions = Array.isArray(DB.financeTransactions) ? DB.financeTransactions : [];
+      const refundRecords = Array.isArray(DB.financeRefunds) ? DB.financeRefunds : [];
+      const paidRegistrations = (DB.registrations || []).filter(reg => String(reg.payment || '').toLowerCase() === 'paid' && ['confirmed', 'verified'].includes(String(reg.status || '').toLowerCase()));
+      const successfulTransactions = allTransactions.filter(tx => tx.status === 'Successful');
+      const totalRevenue = successfulTransactions.reduce((sum, item) => sum + Number(item.amount || 0), 0);
+      const platformCommission = totalRevenue * commissionRate;
+      const organizerPayout = totalRevenue - platformCommission;
+
+      const records = tab === 'transactions' ? allTransactions : refundRecords;
+      const filtered = records.filter(item => {
+        const user = DB.users.find(u => String(u.id) === String(item.userId)) || {};
+        const event = DB.events.find(e => String(e.id) === String(item.eventId)) || {};
+        const text = `${item.id || ''} ${user.name || ''} ${user.email || ''} ${event.title || ''} ${item.status || ''} ${item.reason || ''}`.toLowerCase();
+        return !query || text.includes(query);
+      });
+
+      return `
+        <div class="page-hd">
+          <div class="page-hd-left">
+            <div class="page-title">Finance &amp; Revenue</div>
+            <div class="page-sub">Track registration revenue, platform commission, organizer payouts, and customer payment activity.</div>
+          </div>
+        </div>
+
+        <div class="grid-4 mb-20">
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--green-dim);color:var(--green)">💰</div>
+            <div class="stat-value" style="color:var(--green)">₹${totalRevenue.toLocaleString('en-IN')}</div>
+            <div class="stat-label">Total Revenue</div>
+            <div class="stat-sub neutral">Completed payment records</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--accent-dim);color:var(--accent)">📈</div>
+            <div class="stat-value" style="color:var(--accent)">₹${platformCommission.toLocaleString('en-IN')}</div>
+            <div class="stat-label">Platform Commission</div>
+            <div class="stat-sub neutral">Fixed 15% fee share</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--yellow-dim);color:var(--yellow)">💸</div>
+            <div class="stat-value" style="color:var(--yellow)">₹${organizerPayout.toLocaleString('en-IN')}</div>
+            <div class="stat-label">Organizer Payouts</div>
+            <div class="stat-sub neutral">Net payout after commission</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background:var(--purple-dim);color:var(--purple)">🧾</div>
+            <div class="stat-value" style="color:var(--purple)">${successfulTransactions.length}</div>
+            <div class="stat-label">Successful Transactions</div>
+            <div class="stat-sub neutral">Monitored payment records</div>
+          </div>
+        </div>
+
+        <div class="card" style="margin-bottom:20px">
+          <div class="flex justify-between items-center mb-12">
+            <div class="h4">Event-wise Revenue &amp; Commission</div>
+            <div class="small muted">Commission formula: registration fee × 15%</div>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr>
+                  <th>Event</th>
+                  <th>Payments</th>
+                  <th>Gross Revenue</th>
+                  <th>Platform Commission</th>
+                  <th>Organizer Payout</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${(() => {
+                  const eventSummary = {};
+                  successfulTransactions.forEach(tx => {
+                    const event = DB.events.find(e => String(e.id) === String(tx.eventId)) || { title: 'Unknown Event' };
+                    const eventKey = String(tx.eventId || event.title);
+                    if (!eventSummary[eventKey]) {
+                      eventSummary[eventKey] = {
+                        eventTitle: event.title,
+                        attendeeCount: 0,
+                        revenue: 0
+                      };
+                    }
+                    eventSummary[eventKey].attendeeCount += 1;
+                    eventSummary[eventKey].revenue += Number(tx.amount || 0);
+                  });
+                  const rows = Object.values(eventSummary);
+                  return rows.length
+                    ? rows.map(row => {
+                        const commission = row.revenue * commissionRate;
+                        const payout = row.revenue - commission;
+                        return `
+                          <tr>
+                            <td>${row.eventTitle}</td>
+                            <td>${row.attendeeCount}</td>
+                            <td style="color:var(--green);font-weight:700">₹${row.revenue}</td>
+                            <td style="color:var(--accent);font-weight:700">₹${commission}</td>
+                            <td style="color:var(--yellow);font-weight:700">₹${payout}</td>
+                          </tr>
+                        `;
+                      }).join('')
+                    : '<tr><td colspan="5" class="text-center py-20">No successful event revenue data found.</td></tr>';
+                })()}
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div style="display:flex;gap:6px;margin-bottom:16px">
+          <button class="btn ${tab === 'transactions' ? 'btn-primary' : 'btn-ghost'}" onclick="switchFinanceTab('transactions')">💳 Transactions</button>
+          <button class="btn ${tab === 'refunds' ? 'btn-primary' : 'btn-ghost'}" onclick="switchFinanceTab('refunds')">↩️ Refunds</button>
+        </div>
+
+        <div class="filter-row">
+          <div class="search-box input-group">
+            <span class="input-icon">🔍</span>
+            <input class="form-control" id="finance-query" placeholder="Search finance records..." value="${query}" oninput="refreshFinanceCenter()">
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                ${tab === 'transactions' ? '<tr><th>Transaction ID</th><th>User</th><th>Event</th><th>Amount</th><th>Payment Status</th><th>Date</th></tr>' : '<tr><th>Refund ID</th><th>User</th><th>Event</th><th>Amount</th><th>Reason</th><th>Status</th><th>Date</th></tr>'}
+              </thead>
+              <tbody>
+                ${filtered.map(item => {
+                  const user = DB.users.find(u => String(u.id) === String(item.userId)) || { name: 'Unknown' };
+                  const event = DB.events.find(e => String(e.id) === String(item.eventId)) || { title: 'Unknown Event' };
+                  return tab === 'transactions'
+                    ? `<tr><td class="mono">${item.id}</td><td>${user.name}</td><td>${event.title}</td><td style="color:var(--green);font-weight:700">₹${item.amount}</td><td><span class="badge badge-${financeStatusBadgeDemo(item.status)}">${item.status}</span></td><td>${item.date}</td></tr>`
+                    : `<tr><td class="mono">${item.id}</td><td>${user.name}</td><td>${event.title}</td><td style="color:var(--green);font-weight:700">₹${item.amount}</td><td>${item.reason}</td><td><span class="badge badge-${financeStatusBadgeDemo(item.status)}">${item.status}</span></td><td>${item.date}</td></tr>`;
+                }).join('') || `<tr><td colspan="${tab === 'transactions' ? 6 : 7}" class="text-center py-20">No finance records found.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      `;
     }
 
     function pageRegistrationsForEmployee() {
@@ -5699,26 +5661,8 @@ window.EventFlowModules['shared'] = true;
       const query = (sessionStorage.getItem('usrmgt_query') || '').toLowerCase();
       const roleFilter = sessionStorage.getItem('usrmgt_role') || '';
 
-      const users = DB.users || [];
+      const users = window.EventFlowAccountPolicy.visibleAccounts(CU, DB.users || []);
 
-      // Detect Duplicate Users by email or phone
-      const emailCounts = {};
-      const phoneCounts = {};
-      users.forEach(u => {
-        if (u.email) {
-          const em = u.email.toLowerCase();
-          emailCounts[em] = (emailCounts[em] || 0) + 1;
-        }
-        if (u.phone && u.phone !== '—') {
-          phoneCounts[u.phone] = (phoneCounts[u.phone] || 0) + 1;
-        }
-      });
-
-      const duplicateUsers = users.filter(u => {
-        const em = (u.email || '').toLowerCase();
-        const ph = u.phone || '';
-        return (emailCounts[em] > 1) || (ph !== '—' && phoneCounts[ph] > 1);
-      });
 
       const filtered = users.filter(u => {
         const matchesQuery = !query || `${u.name} ${u.email} ${u.phone} ${u.role} ${u.id}`.toLowerCase().includes(query);
@@ -5730,22 +5674,10 @@ window.EventFlowModules['shared'] = true;
         <div class="page-hd">
           <div class="page-hd-left">
             <div class="page-title">User Management</div>
-            <div class="page-sub">View, update, detect duplicate accounts, and safely manage platform users.</div>
+            <div class="page-sub">View, update, and manage platform users and account access.</div>
           </div>
         </div>
 
-        ${duplicateUsers.length > 0 ? `
-          <div style="padding:14px 18px;background:rgba(234,179,8,0.12);border:1px solid var(--yellow);border-radius:10px;margin-bottom:20px" class="flex justify-between items-center">
-            <div class="flex items-center gap-10">
-              <span style="font-size:22px">⚠️</span>
-              <div>
-                <div style="font-weight:700;color:var(--yellow);font-size:14px">Duplicate Accounts Detected</div>
-                <div class="small muted">${duplicateUsers.length} user records share matching email addresses or contact numbers.</div>
-              </div>
-            </div>
-            <button class="btn btn-warning btn-sm" onclick="openDuplicateUsersModal()">🔍 Review &amp; Resolve Duplicates</button>
-          </div>
-        ` : ''}
 
         <div class="filter-row">
           <div class="search-box input-group">
@@ -5757,7 +5689,7 @@ window.EventFlowModules['shared'] = true;
             <option value="attendee" ${roleFilter === 'attendee' ? 'selected' : ''}>Attendee</option>
             <option value="client" ${roleFilter === 'client' ? 'selected' : ''}>Client</option>
             <option value="organizer" ${roleFilter === 'organizer' ? 'selected' : ''}>Organizer</option>
-            <option value="staff" ${roleFilter === 'staff' ? 'selected' : ''}>Staff</option>
+            ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<option value="staff" ${roleFilter === 'staff' ? 'selected' : ''}>Staff</option>`}
           </select>
         </div>
 
@@ -5776,17 +5708,15 @@ window.EventFlowModules['shared'] = true;
               </thead>
               <tbody>
                 ${filtered.map(u => {
-        const em = (u.email || '').toLowerCase();
-        const isDup = emailCounts[em] > 1 || (u.phone && phoneCounts[u.phone] > 1);
         const isDeactivated = u.status === 'deactivated' || u.status === 'inactive';
 
         return `
-                    <tr style="${isDup ? 'background:rgba(234,179,8,0.04)' : ''}">
+                    <tr>
                       <td>
                         <div class="flex items-center gap-10">
                           <div class="av av-xs">${u.avatar || u.name[0]}</div>
                           <div>
-                            <div style="font-weight:700;font-size:14px;color:var(--text)">${u.name} ${isDup ? '<span class="badge badge-yellow" style="font-size:10px;padding:1px 5px">Duplicate</span>' : ''}</div>
+                            <div style="font-weight:700;font-size:14px;color:var(--text)">${u.name}</div>
                             <div class="small muted">ID: ${u.id}</div>
                           </div>
                         </div>
@@ -5803,11 +5733,11 @@ window.EventFlowModules['shared'] = true;
                         <span class="badge badge-${isDeactivated ? 'red' : 'green'}">${isDeactivated ? 'Deactivated' : 'Active'}</span>
                       </td>
                       <td>
-                        <div class="flex items-center gap-6">
+                        ${window.EventFlowAccountPolicy.canManageAccount(CU, u) ? `<div class="flex items-center gap-6">
                           <button class="btn btn-ghost btn-xs" onclick="openEditUserModal('${u.id}')" title="Edit Details">✏️ Edit</button>
                           <button class="btn btn-ghost btn-xs" onclick="toggleUserStatus('${u.id}')" title="Deactivate/Activate">${isDeactivated ? '🔓 Activate' : '🔒 Deactivate'}</button>
                           <button class="btn btn-xs btn-danger" onclick="deleteUserOps('${u.id}')" title="Delete User">🗑️</button>
-                        </div>
+                        </div>` : '<span class="small muted">Admin managed</span>'}
                       </td>
                     </tr>
                   `;
@@ -5828,6 +5758,7 @@ window.EventFlowModules['shared'] = true;
     function openEditUserModal(userId) {
       const u = DB.users.find(user => String(user.id) === String(userId));
       if (!u) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, u)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       openModal(`Edit User: ${u.name}`, `
         <div class="form-group">
           <label class="form-label">Full Name *</label>
@@ -5843,11 +5774,11 @@ window.EventFlowModules['shared'] = true;
         </div>
         <div class="form-group">
           <label class="form-label">User Role</label>
-          <select class="form-control" id="edit-usr-role">
+          <select class="form-control" id="edit-usr-role" ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? 'disabled' : ''}>
             <option value="attendee" ${u.role === 'attendee' ? 'selected' : ''}>Attendee</option>
             <option value="client" ${u.role === 'client' ? 'selected' : ''}>Client</option>
             <option value="organizer" ${u.role === 'organizer' ? 'selected' : ''}>Organizer</option>
-            <option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Staff</option>
+            ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<option value="staff" ${u.role === 'staff' ? 'selected' : ''}>Staff</option>`}
           </select>
         </div>
       `, [
@@ -5858,9 +5789,12 @@ window.EventFlowModules['shared'] = true;
     function saveEditUser(userId) {
       const u = DB.users.find(user => String(user.id) === String(userId));
       if (!u) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, u)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       const name = v('edit-usr-name');
       const email = v('edit-usr-email');
       if (!name || !email) { toast('Name and email are required', 'error'); return; }
+      if (window.EventFlowAccountPolicy.isEmailInUse(DB.users, email, userId)) { toast('Email already registered', 'error'); return; }
+      if (!window.EventFlowAccountPolicy.canApplyAccountUpdate(CU, u, { role: v('edit-usr-role') })) { toast('Only an admin can change account roles.', 'error'); return; }
       u.name = name;
       u.email = email;
       u.phone = v('edit-usr-phone');
@@ -5874,6 +5808,7 @@ window.EventFlowModules['shared'] = true;
     function toggleUserStatus(userId) {
       const u = DB.users.find(user => String(user.id) === String(userId));
       if (!u) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, u)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       const newStatus = (u.status === 'deactivated' || u.status === 'inactive') ? 'active' : 'deactivated';
       u.status = newStatus;
       saveDB();
@@ -5882,39 +5817,16 @@ window.EventFlowModules['shared'] = true;
     }
 
     function deleteUserOps(userId) {
+      const target = DB.users.find(user => String(user.id) === String(userId));
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, target)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       confirm2('Delete User', 'Are you sure you want to permanently delete this user record?', () => {
+        const current = DB.users.find(user => String(user.id) === String(userId));
+        if (!window.EventFlowAccountPolicy.canManageAccount(CU, current)) { toast('This account can only be managed by an admin.', 'error'); return; }
         DB.users = DB.users.filter(u => String(u.id) !== String(userId));
         saveDB();
         renderPage(_currentPage);
         toast('User deleted successfully', 'info');
       });
-    }
-
-    function openDuplicateUsersModal() {
-      const users = DB.users || [];
-      const emailCounts = {};
-      users.forEach(u => {
-        if (u.email) {
-          const em = u.email.toLowerCase();
-          emailCounts[em] = (emailCounts[em] || 0) + 1;
-        }
-      });
-      const dupes = users.filter(u => emailCounts[(u.email || '').toLowerCase()] > 1);
-
-      openModal('Review Duplicate Accounts', `
-        <div class="small muted mb-14">The following accounts share identical email addresses. You can deactivate secondary duplicate accounts to resolve conflicts.</div>
-        <div style="display:flex;flex-direction:column;gap:10px">
-          ${dupes.map(u => `
-            <div style="padding:10px 14px;border:1px solid var(--border);border-radius:8px;background:var(--surface2)" class="flex justify-between items-center">
-              <div>
-                <div style="font-weight:700;font-size:13.5px">${u.name} <span class="mono small muted">(${u.id})</span></div>
-                <div class="small muted">${u.email} · Phone: ${u.phone || '—'}</div>
-              </div>
-              <button class="btn btn-warning btn-xs" onclick="closeModal();toggleUserStatus('${u.id}')">Deactivate Secondary</button>
-            </div>
-          `).join('') || '<div class="empty">No duplicate accounts found.</div>'}
-        </div>
-      `, []);
     }
 
     function pageAttendeeVerification() {
@@ -6520,11 +6432,6 @@ window.EventFlowModules['shared'] = true;
         const match = joinedStr.match(/(\d{4}-\d{2})/);
         if (match && monthlyBuckets[match[1]]) {
           monthlyBuckets[match[1]].count++;
-        } else {
-          const firstKey = Object.keys(monthlyBuckets)[0];
-          if (firstKey && monthlyBuckets[firstKey]) {
-            monthlyBuckets[firstKey].count++;
-          }
         }
       });
 
@@ -6824,9 +6731,12 @@ window.EventFlowModules['shared'] = true;
       const allEvents = DB.events;
       const allRegs = DB.registrations;
 
-      const regRevenue = allRegs.reduce((sum, r) => sum + (Number(r.amount) || 0), 0);
-      const eventCalculatedRevenue = allEvents.reduce((sum, e) => sum + ((Number(e.registered) || 0) * (Number(e.price) || 0)), 0);
-      const totalRevenue = Math.max(regRevenue, eventCalculatedRevenue, 134700);
+      const ticketPayments = (DB.financeTransactions || []).filter(payment => payment.kind !== 'event' && payment.status === 'Successful');
+      const eventPayments = (DB.eventWorkflowPayments || []).filter(payment => payment.status === 'completed');
+      const actualPayments = [...ticketPayments, ...eventPayments];
+      const regRevenue = ticketPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      const eventRevenue = eventPayments.reduce((sum, payment) => sum + Number(payment.amount || 0), 0);
+      const totalRevenue = regRevenue + eventRevenue;
 
       const paidEvents = allEvents.filter(e => e.price > 0);
       const freeEvents = allEvents.filter(e => !e.price || e.price === 0);
@@ -6846,47 +6756,27 @@ window.EventFlowModules['shared'] = true;
         monthlyRevenueMap[key] = { label: monthNames[d.getMonth()], amount: 0 };
       }
 
-      allRegs.forEach(r => {
-        const dateStr = (r.date || '').toString();
-        const match = dateStr.match(/(\d{4}-\d{2})/);
-        if (match && monthlyRevenueMap[match[1]]) {
-          monthlyRevenueMap[match[1]].amount += (Number(r.amount) || 0);
-        }
-      });
-
-      allEvents.forEach(e => {
-        const dateStr = (e.date || '').toString();
-        const match = dateStr.match(/(\d{4}-\d{2})/);
-        if (match && monthlyRevenueMap[match[1]]) {
-          monthlyRevenueMap[match[1]].amount += ((Number(e.registered) || 0) * (Number(e.price) || 0));
-        }
-      });
-
-      const baseRevenues = [18500, 24200, 31800, 42500, 58400, 72600, 64000, 81200, 95400, 112000, 128500, 145000];
-      const monthKeys = Object.keys(monthlyRevenueMap);
-      monthKeys.forEach((key, idx) => {
-        if (monthlyRevenueMap[key].amount < 5000) {
-          monthlyRevenueMap[key].amount += (baseRevenues[(idx + (12 - numMonths)) % baseRevenues.length] || 25000);
-        }
+      actualPayments.forEach(payment => {
+        const month = String(payment.paymentDate || payment.date || '').slice(0, 7);
+        if (monthlyRevenueMap[month]) monthlyRevenueMap[month].amount += Number(payment.amount || 0);
       });
 
       const revenueBars = Object.values(monthlyRevenueMap).map((m, idx) => ({
         label: m.label,
-        value: Math.round(m.amount / 1000),
+        value: Number((m.amount / 1000).toFixed(2)),
         color: ['linear-gradient(180deg, #22c55e, #15803d)', 'linear-gradient(180deg, #10b981, #047857)', 'linear-gradient(180deg, #3b82f6, #1d4ed8)', 'linear-gradient(180deg, #6366f1, #4338ca)', 'linear-gradient(180deg, #8b5cf6, #7c3aed)', 'linear-gradient(180deg, #f59e0b, #d97706)'][idx % 6]
       }));
 
       // 2. Category Revenue Bar Graph
       const catRevenueMap = {};
-      allEvents.forEach(e => {
-        const cat = e.category || 'General';
-        const evRev = (Number(e.registered) || 0) * (Number(e.price) || 0);
-        catRevenueMap[cat] = (catRevenueMap[cat] || 0) + (evRev || 15000);
+      actualPayments.forEach(payment => {
+        const category = allEvents.find(event => String(event.id) === String(payment.eventId))?.category || 'General';
+        catRevenueMap[category] = (catRevenueMap[category] || 0) + Number(payment.amount || 0);
       });
 
       const catRevenueBars = Object.entries(catRevenueMap).sort((a, b) => b[1] - a[1]).slice(0, 6).map(([label, value], idx) => ({
         label,
-        value: Math.round(value / 1000),
+        value: Number((value / 1000).toFixed(2)),
         color: ['linear-gradient(180deg, #22c55e, #15803d)', 'linear-gradient(180deg, #3b82f6, #1d4ed8)', 'linear-gradient(180deg, #f59e0b, #d97706)', 'linear-gradient(180deg, #8b5cf6, #7c3aed)', 'linear-gradient(180deg, #ec4899, #be185d)', 'linear-gradient(180deg, #14b8a6, #0f766e)'][idx % 6]
       }));
 
@@ -6900,8 +6790,8 @@ window.EventFlowModules['shared'] = true;
 
       // 4. Revenue Streams Contribution Bar Graph
       const streamBars = [
-        { label: 'Ticket Sales', value: Math.round((totalRevenue * 0.88) / 1000), color: 'linear-gradient(180deg, #22c55e, #15803d)' },
-        { label: 'Corporate Sponsors', value: Math.round((totalRevenue * 0.12) / 1000), color: 'linear-gradient(180deg, #3b82f6, #1d4ed8)' },
+        { label: 'Ticket Sales', value: Number((regRevenue / 1000).toFixed(2)), color: 'linear-gradient(180deg, #22c55e, #15803d)' },
+        { label: 'Client Event Payments', value: Number((eventRevenue / 1000).toFixed(2)), color: 'linear-gradient(180deg, #3b82f6, #1d4ed8)' },
       ];
 
       return `
@@ -6925,7 +6815,7 @@ window.EventFlowModules['shared'] = true;
       <div class="stat-icon" style="background:var(--green-dim);color:var(--green)">💰</div>
       <div class="stat-value" style="color:var(--green)">₹${(totalRevenue / 1000).toFixed(1)}K</div>
       <div class="stat-label">Total Platform Revenue</div>
-      <div class="stat-sub up">↑ 18.4% quarterly growth</div>
+      <div class="stat-sub up">Recorded payment revenue</div>
     </div>
     <div class="stat-card">
       <div class="glow" style="background:var(--accent)"></div>
@@ -6991,7 +6881,7 @@ window.EventFlowModules['shared'] = true;
     //  NON-ADMIN PAGES (ORGANIZER / CLIENT / ATTENDEE)
     // ════════════════════════════════════════════════
     function pageUsers() {
-      const users = DB.users.filter(u => u.role !== 'superuser');
+      const users = window.EventFlowAccountPolicy.visibleAccounts(CU, DB.users).filter(u => u.role !== 'superuser');
       return `
   <div class="page-hd">
     <div class="page-hd-left">
@@ -7007,7 +6897,7 @@ window.EventFlowModules['shared'] = true;
     <select class="form-control filter-select" id="um-role" onchange="refreshDirectoryUserManagement()">
       <option value="">All Users</option>
       <option value="attendee">Attendee</option>
-      <option value="staff">Staff</option>
+      ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<option value="staff">Staff</option>`}
       <option value="organizer">Event Manager</option>
       <option value="client">Client</option>
     </select>
@@ -7016,6 +6906,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function buildUserManagementTable(users) {
+      users = window.EventFlowAccountPolicy.visibleAccounts(CU, users);
       if (users.length === 0) {
         return `<div class="empty"><div class="empty-icon">👥</div><div class="empty-title">No users found</div><p class="empty-desc">Try changing your search or role filter.</p></div>`;
       }
@@ -7035,7 +6926,7 @@ window.EventFlowModules['shared'] = true;
       <td><span class="badge badge-${ROLE_COLORS[u.role] || 'blue'}">${u.role === 'organizer' ? 'Event Manager' : ROLE_LABELS[u.role] || u.role}</span></td>
       <td><span class="badge badge-${u.status === 'active' ? 'green' : 'red'}">${u.status || 'unknown'}</span></td>
       <td>${u.joined || u.createdAt || '—'}</td>
-      <td><div class="actions"><button class="btn btn-ghost btn-xs" onclick="openEditUserModal('${u.id}')">Edit</button><button class="btn btn-xs btn-danger" onclick="removeUser('${u.id}')">Remove</button></div></td>
+      <td>${window.EventFlowAccountPolicy.canManageAccount(CU, u) ? `<div class="actions"><button class="btn btn-ghost btn-xs" onclick="openEditUserModal('${u.id}')">Edit</button><button class="btn btn-xs btn-danger" onclick="removeUser('${u.id}')">Remove</button></div>` : '<span class="small muted">Admin managed</span>'}</td>
     </tr>`;
       }).join('')}</tbody>
   </table>`;
@@ -7044,7 +6935,7 @@ window.EventFlowModules['shared'] = true;
     function refreshDirectoryUserManagement() {
       const query = (g('um-q')?.value || '').trim().toLowerCase();
       const role = g('um-role')?.value || '';
-      const users = DB.users.filter(u => {
+      const users = window.EventFlowAccountPolicy.visibleAccounts(CU, DB.users).filter(u => {
         const matchesRole = !role || u.role === role;
         const matchesQuery = !query || [u.name, u.email, u.phone].some(value => String(value || '').toLowerCase().includes(query));
         return u.role !== 'superuser' && matchesRole && matchesQuery;
@@ -7055,12 +6946,13 @@ window.EventFlowModules['shared'] = true;
     function openEditUserModal(userId) {
       const user = DB.users.find(u => String(u.id) === String(userId));
       if (!user) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, user)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       openModal('Edit User', `
   <div class="form-group"><label class="form-label">Full Name *</label><input class="form-control" id="um-edit-name" value="${user.name || ''}"></div>
   <div class="form-group"><label class="form-label">Email *</label><input class="form-control" id="um-edit-email" type="email" value="${user.email || ''}"></div>
   <div class="form-group"><label class="form-label">Phone</label><input class="form-control" id="um-edit-phone" value="${user.phone || ''}"></div>
   <div class="grid-2">
-    <div class="form-group"><label class="form-label">Role</label><select class="form-control" id="um-edit-role"><option value="attendee" ${user.role === 'attendee' ? 'selected' : ''}>Attendee</option><option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option><option value="organizer" ${user.role === 'organizer' ? 'selected' : ''}>Event Manager</option><option value="client" ${user.role === 'client' ? 'selected' : ''}>Client</option></select></div>
+    <div class="form-group"><label class="form-label">Role</label><select class="form-control" id="um-edit-role" ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? 'disabled' : ''}><option value="attendee" ${user.role === 'attendee' ? 'selected' : ''}>Attendee</option>${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<option value="staff" ${user.role === 'staff' ? 'selected' : ''}>Staff</option>`}<option value="organizer" ${user.role === 'organizer' ? 'selected' : ''}>Event Manager</option><option value="client" ${user.role === 'client' ? 'selected' : ''}>Client</option></select></div>
     <div class="form-group"><label class="form-label">Status</label><select class="form-control" id="um-edit-status"><option value="active" ${user.status === 'active' ? 'selected' : ''}>Active</option><option value="inactive" ${user.status !== 'active' ? 'selected' : ''}>Inactive</option></select></div>
   </div>`, [{ lbl: 'Save Changes', cls: 'btn-primary', fn: `saveUser('${user.id}')` }]);
     }
@@ -7069,10 +6961,12 @@ window.EventFlowModules['shared'] = true;
       const user = DB.users.find(u => String(u.id) === String(userId));
       const name = v('um-edit-name'), email = v('um-edit-email');
       if (!user) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, user)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       if (!name) { toast('Name is required', 'error'); return; }
       if (!email || !email.includes('@')) { toast('Valid email is required', 'error'); return; }
-      const duplicate = DB.users.find(u => u.email === email && String(u.id) !== String(userId));
+      const duplicate = window.EventFlowAccountPolicy.isEmailInUse(DB.users, email, userId);
       if (duplicate) { toast('Email already registered', 'error'); return; }
+      if (!window.EventFlowAccountPolicy.canApplyAccountUpdate(CU, user, { role: v('um-edit-role') })) { toast('Only an admin can change account roles.', 'error'); return; }
       user.name = name;
       user.email = email;
       user.phone = v('um-edit-phone');
@@ -7088,7 +6982,10 @@ window.EventFlowModules['shared'] = true;
     function removeUser(userId) {
       const user = DB.users.find(u => String(u.id) === String(userId));
       if (!user) return;
+      if (!window.EventFlowAccountPolicy.canManageAccount(CU, user)) { toast('Only an admin can change employee or admin accounts.', 'error'); return; }
       confirm2('Remove User', `Remove ${user.name || 'this user'} from the user list?`, () => {
+        const current = DB.users.find(user => String(user.id) === String(userId));
+        if (!window.EventFlowAccountPolicy.canManageAccount(CU, current)) { toast('This account can only be managed by an admin.', 'error'); return; }
         const index = DB.users.findIndex(u => String(u.id) === String(userId));
         if (index === -1) return;
         DB.users.splice(index, 1);
@@ -7316,7 +7213,7 @@ window.EventFlowModules['shared'] = true;
       <div class="info-row"><span class="info-label">Capacity</span><span class="info-value">${e.registered} / ${e.capacity}</span></div>
       <div class="info-row"><span class="info-label">Price</span><span class="info-value" style="color:var(--green)">${e.price === 0 ? 'Free' : '₹' + e.price}</span></div>
       <div class="info-row"><span class="info-label">Registrations</span><span class="info-value">${regs.length}</span></div>
-      <div class="info-row"><span class="info-label">Staff Assigned</span><span class="info-value">${assigns.length}</span></div>
+      ${window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU) ? '' : `<div class="info-row"><span class="info-label">Staff Assigned</span><span class="info-value">${assigns.length}</span></div>`}
     </div>
     ${e.description ? `<div class="label mb-8">Description</div><p class="muted" style="font-size:13px;line-height:1.7">${e.description}</p>` : ''}
     ${(e.tags || []).length ? `<div class="label mt-16 mb-8">Tags</div><div class="tag-list">${e.tags.map(t => `<span class="tag">${t}</span>`).join('')}</div>` : ''}
@@ -8157,6 +8054,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageStaffAvailability() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const staff = DB.users.find(u => u.id === CU.id) || {};
       const month = parseInt(sessionStorage.getItem('avail_month') || new Date().getMonth());
       const year = parseInt(sessionStorage.getItem('avail_year') || new Date().getFullYear());
@@ -8324,6 +8222,7 @@ window.EventFlowModules['shared'] = true;
     //  STAFF MANAGEMENT
     // ════════════════════════════════════════════════
     function pageStaffCombined() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const tab = sessionStorage.getItem('staff_tab') || 'manage';
       const allStaffList = DB.users.filter(u => u.role === 'staff');
       let content = '';
@@ -8434,9 +8333,9 @@ window.EventFlowModules['shared'] = true;
     <div style="margin-bottom:16px;color:var(--text2);font-size:13px">Showing ${staffList.length} staff member${staffList.length !== 1 ? 's' : ''}</div>
     <div class="grid-3" style="gap:20px">
         ${staffList.length === 0 ? `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No staff found</div></div>` : staffList.map(s => {
-          const rating = s.rating || 4.0;
-          const reviews = Math.floor(Math.random() * 150) + 20;
-          const completedJobs = Math.floor(Math.random() * 200) + 30;
+          const rating = s.rating || 0;
+          const reviews = s.reviewCount || 0;
+          const completedJobs = s.completedJobs || 0;
           const earnings = DB.staffAssignments.filter(a => String(a.staffId) === String(s.id)).reduce((sum, a) => sum + (parseFloat(a.fee) || 0), 0);
           const staffCardAv = s.avatarImage ? `
             <img src="${s.avatarImage}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
@@ -8500,9 +8399,11 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageStaff() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       return pageStaffCombined();
     }
     function openAssignStaffModal(preStaffId = null, preEventId = null) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const staffList = DB.users.filter(u => u.role === 'staff');
       const myEvs = CU.role === 'superuser' ? DB.events : DB.events.filter(e => String(e.organizer) === String(CU.id));
       openModal('Assign Staff to Event', `
@@ -8570,11 +8471,12 @@ window.EventFlowModules['shared'] = true;
       });
     }
     function viewStaffModal(id) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const s = DB.users.find(u => String(u.id) === String(id)); if (!s) return;
       const assigns = DB.staffAssignments.filter(a => String(a.staffId) === String(id));
       const earnings = assigns.reduce((sum, a) => sum + (parseFloat(a.fee) || 0), 0);
       const acceptedAssigns = assigns.filter(a => a.status === 'accepted');
-      const rating = s.rating || 4.0;
+      const rating = s.rating || 0;
       const reviews = s.reviews || 156;
       const completedJobs = acceptedAssigns.length || 155;
 
@@ -8692,6 +8594,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageStaffEventRequests() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const requests = DB.staffAssignments.filter(a => {
         const isMe = String(a.staffId) === String(CU.id);
         const u = DB.users.find(usr => String(usr.id) === String(a.staffId));
@@ -8757,6 +8660,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function viewStaffEventDetails(eventId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const e = DB.events.find(ev => String(ev.id) === String(eventId));
       if (!e) return;
       const organizer = DB.users.find(u => String(u.id) === String(e.organizer)) || { name: 'Unknown', email: '' };
@@ -9139,6 +9043,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function viewOngoingEventDetail(eventId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return openViewEventDrawer(eventId);
       const e = DB.events.find(ev => String(ev.id) === String(eventId)); if (!e) return;
       const attendees = DB.registrations.filter(r => String(r.eventId) === String(eventId));
       const staffList = DB.staffAssignments.filter(a => String(a.eventId) === String(eventId));
@@ -10067,6 +9972,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function openSubmitStaffReportModal(eventId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       openSubmitReportModal(eventId);
     }
 
@@ -10074,6 +9980,7 @@ window.EventFlowModules['shared'] = true;
     //  STAFF REPORTS
     // ════════════════════════════════════════════════
     function pageStaffReports() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const myAssignments = DB.staffAssignments.filter(a => a.staffId === CU.id && a.status === 'accepted');
       const myEvents = myAssignments.map(a => {
         const e = DB.events.find(ev => ev.id === a.eventId);
@@ -10198,6 +10105,12 @@ window.EventFlowModules['shared'] = true;
     //  NOTIFICATIONS
     // ════════════════════════════════════════════════
     function visibleNotifications() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) {
+        return DB.notifications.filter(notification => !notification.staffId && !notification.assignmentId &&
+          !(notification.employeeType && notification.employeeType !== CU.employeeType) &&
+          !/staff|assignment|availability/i.test(notification.type || '') &&
+          !/\bstaff\b|\bassignment\b/i.test(`${notification.title || ''} ${notification.msg || ''}`));
+      }
       return CU?.role === 'staff' && CU.employeeType === 'SUPPORT_FINANCE'
         ? DB.notifications.filter(notification => notification.employeeType === 'SUPPORT_FINANCE')
         : DB.notifications;
@@ -10254,7 +10167,7 @@ window.EventFlowModules['shared'] = true;
         REGISTRATION_VERIFICATION: {
           title: 'User Executive',
           purpose: 'Protect event access by reviewing registrations, validating attendee documents, and resolving account verification issues.',
-          focus: ['Review pending registrations and identity documents', 'Verify attendee eligibility and ticket details', 'Resolve duplicate-account and registration queries'],
+          focus: ['Review pending registrations and identity documents', 'Verify attendee eligibility and ticket details', 'Resolve account access and registration queries'],
           primaryAction: "goNav('registrations')",
           primaryLabel: 'Open Registrations',
           secondaryAction: "goNav('attendees')",
@@ -10451,6 +10364,7 @@ window.EventFlowModules['shared'] = true;
       const name = v('st-name'), email = v('st-email'), phone = v('st-phone'), bio = v('st-bio');
       if (!name) { toast('Name is required', 'error'); return; }
       if (!email || !email.includes('@')) { toast('Enter a valid email', 'error'); return; }
+      if (window.EventFlowAccountPolicy.isEmailInUse(DB.users, email, CU.id || CU.userId)) { toast('Email already registered', 'error'); return; }
       CU.name = name; CU.email = email; CU.phone = phone; CU.bio = bio;
       CU.avatar = (name.split(' ').map(n => n[0]).join('').toUpperCase()).slice(0, 2);
       const u = DB.users.find(u => u.id === CU.id);
@@ -10491,7 +10405,7 @@ window.EventFlowModules['shared'] = true;
       }
       if (rating !== 'all') {
         const minRating = parseFloat(rating);
-        organizers = organizers.filter(o => (o.rating || 4) >= minRating);
+        organizers = organizers.filter(o => (o.rating || 0) >= minRating);
       }
 
       return `
@@ -10527,7 +10441,7 @@ window.EventFlowModules['shared'] = true;
   
   <div class="grid-3" style="gap:16px">
     ${organizers.length === 0 ? `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No organizers found</div><p>Try adjusting your search filters</p></div>` : organizers.map(o => {
-        const rt = o.rating || 4.2;
+        const rt = o.rating || 0;
         const rv = o.reviews || (Math.floor(rt * 38) + 12);
         const ev = o.eventsCount || (Math.floor(rt * 65) + 20);
         const orgAv = o.avatarImage ? `
@@ -10578,9 +10492,9 @@ window.EventFlowModules['shared'] = true;
       const org = DB.users.find(u => String(u.id) === String(organizerId));
       if (!org) return;
 
-      const rating = org.rating || 4.2;
-      const reviews = Math.floor(Math.random() * 200) + 50;
-      const events = Math.floor(Math.random() * 300) + 50;
+      const rating = org.rating || 0;
+      const reviews = org.reviewCount || 0;
+      const events = org.eventCount || 0;
       const completedEvents = Math.floor(events * 0.9);
 
       const orgModalAv = org.avatarImage ? `
@@ -10685,6 +10599,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageFindStaff() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const staffList = DB.users.filter(u => u.role === 'staff');
       return `
   <div class="page-hd">
@@ -10719,9 +10634,9 @@ window.EventFlowModules['shared'] = true;
   
   <div class="grid-3" style="gap:20px">
     ${staffList.length === 0 ? `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🔍</div><div class="empty-title">No staff found</div></div>` : staffList.map(s => {
-        const rating = s.rating || 4.0;
-        const reviews = Math.floor(Math.random() * 150) + 20;
-        const completedJobs = Math.floor(Math.random() * 200) + 30;
+        const rating = s.rating || 0;
+        const reviews = s.reviewCount || 0;
+        const completedJobs = s.completedJobs || 0;
         const staffAvatarContent = s.avatarImage ? `
           <img src="${s.avatarImage}" alt="${s.name}" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
           <div style="display:none;font-size:80px;font-weight:700;color:${s.color || 'var(--green)'}">${s.avatar || s.name[0]}</div>
@@ -10765,10 +10680,11 @@ window.EventFlowModules['shared'] = true;
     }
 
     function viewStaffProfile(staffId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const s = DB.users.find(u => String(u.id) === String(staffId));
       if (!s) return;
 
-      const rating = s.rating || 4.0;
+      const rating = s.rating || 0;
       const reviews = s.reviews || (Math.floor(staffId * 37) % 130 + 25);
       const completedJobs = DB.staffAssignments.filter(a => a.staffId === staffId && a.status === 'accepted').length || (Math.floor(staffId * 53) % 170 + 30);
       const avail = getAvailability(staffId);
@@ -10875,6 +10791,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function assignStaffToEvent(staffId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const s = DB.users.find(u => String(u.id) === String(staffId));
       const myEvs = DB.events.filter(e => String(e.organizer) === String(CU.id));
       if (!s) return;
@@ -10938,6 +10855,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function sendStaffRequest(staffId) {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) { toast('This page is not available in this workspace.', 'error'); return; }
       const staff = DB.users.find(u => u.id === staffId);
       if (!staff) return;
 
@@ -11137,6 +11055,7 @@ window.EventFlowModules['shared'] = true;
     }
 
     function pageStaffRequests() {
+      if (window.EventFlowAccountPolicy.isSupportExecutiveAccount(CU)) return '<div class="empty"><div class="empty-title">This page is not available in this workspace.</div></div>';
       const requests = getStaffRequests(CU.id);
       const pending = requests.filter(r => r.status === 'pending');
       const accepted = DB.staffRequests.filter(r => r.staffId === CU.id && r.status === 'accepted');

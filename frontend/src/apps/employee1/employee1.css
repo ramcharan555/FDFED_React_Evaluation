@@ -2530,3 +2530,135 @@ body[data-eventflow-role="employee1"] .role-owned-root { display: block; }
 .finance-warning{display:flex;align-items:center;gap:12px;margin:16px 0 20px;padding:16px 18px;color:#f3c55b;background:#191815;border:1px solid #594a27;border-radius:2px;font-size:13px;line-height:1.5}.finance-warning-icon{display:inline-flex;align-items:center;justify-content:center;flex:0 0 20px;width:20px;height:20px;border:1px solid #b99238;border-radius:50%;font-weight:700}.finance-filter-toolbar{display:grid;grid-template-columns:132px minmax(170px,1.5fr) 132px 138px minmax(160px,1.15fr) 168px auto;align-items:end;gap:12px;margin-bottom:22px;padding:18px;background:#0f1321;border:1px solid #252d49}.finance-filter-toolbar>label{display:flex;flex-direction:column;gap:8px;min-width:0}.finance-filter-toolbar>label>span{font-size:11px;color:#8792ba}.finance-filter-toolbar .form-control{width:100%;min-width:0;height:40px}.finance-filter-actions{display:flex;gap:10px;align-items:center}.finance-refund-table-card{padding:18px 20px 14px}.finance-refund-table{width:100%;min-width:1480px;border-collapse:collapse}.finance-refund-table thead{background:#151929}.finance-refund-table th{height:46px;padding:0 12px;color:#8994bb;font-size:10px;font-weight:500;letter-spacing:.06em;text-align:left;text-transform:uppercase;border-bottom:1px solid #252d49;white-space:nowrap}.finance-refund-table td{padding:16px 12px;border-bottom:1px solid #242b43;font-size:12px;line-height:1.5;vertical-align:middle;overflow-wrap:anywhere}.finance-refund-table tbody tr:last-child td{border-bottom:0}.finance-refund-table td:nth-child(1){min-width:190px;color:#dce2f7}.finance-refund-table td:nth-child(2){min-width:110px;color:#dce2f7}.finance-refund-table td:nth-child(3){min-width:210px}.finance-refund-table td:nth-child(4){min-width:92px}.finance-refund-table td:nth-child(5),.finance-refund-table td:nth-child(6){min-width:125px;white-space:nowrap}.finance-refund-table td:nth-child(7){min-width:220px}.finance-refund-table td:nth-child(8){min-width:90px}.finance-refund-table td:nth-child(9){min-width:150px}.finance-refund-table td:nth-child(10){min-width:115px}.finance-refund-status{display:inline-block;padding:5px 10px;font-size:11px;line-height:1.25;background:#1a1d25;color:#aeb6d0}.finance-refund-status-pending{color:#f5c21b;background:rgba(246,201,14,.12)}.finance-refund-status-completed{color:#22d3a5;background:rgba(34,211,165,.12)}.finance-refund-status-failed{color:#f56565;background:rgba(245,101,101,.12)}.finance-refund-status-not_applicable{color:#9aa3bf;background:rgba(154,163,191,.1)}.finance-refund-pagination{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:18px 0 4px;color:#8490b8;font-size:11px}.finance-refund-pagination>div{display:flex;gap:10px}.finance-refund-detail-modal{width:min(740px,100%);max-height:90vh;overflow:auto;padding:24px}.finance-policy-note{margin-top:18px;padding:14px;color:#f3c55b;background:#191815;border:1px solid #594a27;font-size:12px;line-height:1.55}.finance-refund-modal-footer{display:flex;justify-content:flex-end;margin-top:20px}@media(max-width:1450px){.finance-filter-toolbar{grid-template-columns:repeat(4,minmax(140px,1fr))}.finance-filter-actions{grid-column:span 2}}@media(max-width:760px){.finance-filter-toolbar{grid-template-columns:repeat(2,minmax(130px,1fr));padding:12px}.finance-filter-actions{grid-column:1/-1}.finance-warning{align-items:flex-start;padding:13px}.finance-refund-table-card{padding:12px}.finance-refund-pagination{align-items:flex-start;flex-direction:column}.finance-refund-detail-modal{padding:16px}.finance-detail-row{align-items:flex-start}.finance-detail-row>strong{max-width:65%}}
 
 .finance-refund-table tbody tr:hover{background:rgba(124,111,247,.035)}.finance-refund-table .small.muted{display:block;margin-top:3px;color:#7d88b0;font-size:10px}
+/* Compact reports in the Support Executive workspace. */
+body[data-eventflow-role="employee1"] .report-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+  gap: 12px;
+}
+
+body[data-eventflow-role="employee1"] .report-card {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+}
+
+body[data-eventflow-role="employee1"] .report-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+}
+
+body[data-eventflow-role="employee1"] .report-card-category {
+  min-width: 0;
+  color: var(--accent);
+  font-size: 10px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+body[data-eventflow-role="employee1"] .report-card-heading .badge {
+  flex-shrink: 0;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 10px;
+}
+
+body[data-eventflow-role="employee1"] .report-card-title {
+  display: -webkit-box;
+  overflow: hidden;
+  min-height: 38px;
+  margin: 0 0 7px;
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 19px;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+body[data-eventflow-role="employee1"] .report-card-byline,
+body[data-eventflow-role="employee1"] .report-card-context {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text3);
+  font-size: 10px;
+  line-height: 16px;
+}
+
+body[data-eventflow-role="employee1"] .report-card-context {
+  margin-top: 4px;
+  color: var(--text2);
+}
+
+body[data-eventflow-role="employee1"] .report-card-byline span,
+body[data-eventflow-role="employee1"] .report-card-context span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-eventflow-role="employee1"] .report-card-file {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  margin: 10px 0;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface2);
+  color: var(--accent);
+  font: inherit;
+  font-size: 10px;
+  text-align: left;
+  cursor: pointer;
+}
+
+body[data-eventflow-role="employee1"] .report-card-file span:last-child {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+body[data-eventflow-role="employee1"] .report-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: auto;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+body[data-eventflow-role="employee1"] .report-card-feedback {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0;
+  color: var(--text3);
+  font-size: 10px;
+  line-height: 15px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+body[data-eventflow-role="employee1"] .report-card-actions {
+  display: flex;
+  flex-shrink: 0;
+  gap: 5px;
+}
+
+body[data-eventflow-role="employee1"] .report-cards-empty {
+  grid-column: 1 / -1;
+  color: var(--text3);
+  font-size: 13px;
+  text-align: center;
+}

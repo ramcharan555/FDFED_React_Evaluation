@@ -1,6 +1,6 @@
 import {
   IsString, IsNotEmpty, IsOptional, IsEmail,
-  IsEnum, MinLength, Matches, ValidateIf,
+  IsEnum, MinLength, Matches, ValidateIf, MaxLength,
 } from 'class-validator';
 import { Transform } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -50,6 +50,12 @@ export class CreateUserDto {
 }
 
 export class UpdateUserDto {
+  @ApiPropertyOptional({ description: 'Profile biography' })
+  @IsString()
+  @IsOptional()
+  @MaxLength(2000)
+  bio?: string;
+
   @ApiPropertyOptional({ description: 'Full name' })
   @IsString()
   @IsOptional()

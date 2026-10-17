@@ -15,10 +15,40 @@ const jwt_1 = require("@nestjs/jwt");
 const data_store_1 = require("../../common/data-store");
 const jwt_config_1 = require("../../config/jwt.config");
 const password_1 = require("../../common/password");
+const users_service_1 = require("../users/users.service");
+const constants_1 = require("../../common/constants");
 let AuthService = class AuthService {
     constructor(jwtService) {
         this.jwtService = jwtService;
         this.dataStore = data_store_1.DataStore.getInstance();
+    }
+    register(dto) {
+        // Public registration never accepts administrator or department employee roles.
+        if (![constants_1.UserRole.ATTENDEE, constants_1.UserRole.CLIENT, constants_1.UserRole.EVENT_ORGANIZER, constants_1.UserRole.EVENT_STAFF].includes(dto.userRole)) {
+            throw new common_1.BadRequestException('Choose an attendee, client, organizer, or staff account');
+        }
+        const created = new users_service_1.UsersService().create(dto, constants_1.UserRole.SUPER_ADMIN).data;
+        const user = this.dataStore.findUserById(created.userId);
+        const fields = ['dateOfBirth', 'gender', 'city', 'interests', 'organizationType', 'organizationName',
+            'organizationAddress', 'yearsExperience', 'eventCategories', 'service', 'staffPosition',
+            'staffCompany', 'staffCity', 'previousExperience'];
+        user.profile = Object.fromEntries(fields.filter(field => ['string', 'number'].includes(typeof dto.profile?.[field]))
+            .map(field => [field, dto.profile[field]]));
+        user.status = dto.userRole === constants_1.UserRole.ATTENDEE ? 'active' : 'pending';
+        this.dataStore.persist();
+        if (user.status === 'active')
+            return this.login({ email: user.email, password: dto.password });
+        const { password, ...safe } = user;
+        return { success: true, message: 'Account created and awaiting approval', data: safe };
+    }
+    changePassword(dto, userId) {
+        const user = this.dataStore.findUserById(userId);
+        if (!user || !(0, password_1.verifyPassword)(dto.currentPassword, user.password))
+            throw new common_1.BadRequestException('Current password is incorrect');
+        user.password = (0, password_1.hashPassword)(dto.newPassword);
+        user.updatedAt = new Date();
+        this.dataStore.persist();
+        return { success: true, message: 'Password changed successfully' };
     }
     login(loginDto) {
         const user = this.dataStore.findUserByEmail(loginDto.email);

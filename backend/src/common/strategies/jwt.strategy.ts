@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   validate(payload: JwtPayload) {
-    const user = this.dataStore.findUserByEmail(payload.email);
+    const user = this.dataStore.findUserById(payload.userId);
 
     if (
       !user ||
@@ -35,7 +35,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     // Return user info to be attached to request
     return {
       userId: payload.userId,
-      email: payload.email,
+      email: user.email,
       userRole: user.userRole,
     };
   }
